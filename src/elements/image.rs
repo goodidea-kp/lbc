@@ -5,9 +5,7 @@ Bulma docs for images: https://bulma.io/documentation/elements/image/
 This component renders only the <img>. Wrap it with a Bulma "image" figure if needed.
 */
 
-use leptos::prelude::{
-    component, view, ClassAttribute, Get, IntoView, Signal, StyleAttribute,
-};
+use leptos::prelude::{ClassAttribute, Get, IntoView, Signal, StyleAttribute, component, view};
 
 /// Simple image element with optional classes and style.
 #[component]

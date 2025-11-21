@@ -1,6 +1,6 @@
 use leptos::prelude::{
-    AriaAttributes, Children, ClassAttribute, ElementChild, Get, IntoView, OnAttribute,
-    Set, Signal, StyleAttribute, component, view,
+    AriaAttributes, Children, ClassAttribute, ElementChild, Get, IntoView, OnAttribute, Set,
+    Signal, StyleAttribute, component, view,
 };
 use std::rc::Rc;
 

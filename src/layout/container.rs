@@ -1,4 +1,4 @@
-/*! 
+/*!
 Leptos version of Bulma Container layout.
 
 - Container: a simple responsive fixed-width container

@@ -1,4 +1,4 @@
-/*! 
+/*!
 Leptos version of the Bulma Tag element.
 
 Bulma docs: https://bulma.io/documentation/elements/tag/
@@ -48,15 +48,20 @@ impl TagColor {
 #[component]
 pub fn Tag(
     /// Optional color of the tag.
-    #[prop(optional)] color: Option<TagColor>,
+    #[prop(optional)]
+    color: Option<TagColor>,
     /// Optional size of the tag.
-    #[prop(optional)] size: Option<Size>,
+    #[prop(optional)]
+    size: Option<Size>,
     /// Render a lighter color variant when true.
-    #[prop(optional)] light: bool,
+    #[prop(optional)]
+    light: bool,
     /// Render fully rounded corners when true.
-    #[prop(optional)] rounded: bool,
+    #[prop(optional)]
+    rounded: bool,
     /// Additional CSS classes to append to the base "tag" class.
-    #[prop(optional, into)] classes: Option<Signal<String>>,
+    #[prop(optional, into)]
+    classes: Option<Signal<String>>,
     /// Child content to render inside the tag.
     children: Children,
 ) -> impl IntoView {

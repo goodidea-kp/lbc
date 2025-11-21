@@ -1,4 +1,4 @@
-/*! 
+/*!
 Leptos version of Bulma Columns layout.
 
 - Columns: responsive column container

@@ -1,6 +1,6 @@
 use leptos::prelude::{
-    AriaAttributes, Children, ClassAttribute, ElementChild, Get, GlobalAttributes,
-    IntoView, OnAttribute, Set, Signal, component, view,
+    AriaAttributes, Children, ClassAttribute, ElementChild, Get, GlobalAttributes, IntoView,
+    OnAttribute, Set, Signal, component, view,
 };
 
 /// Context signal used to close modals by ID from anywhere in the component tree.
@@ -213,8 +213,8 @@ pub fn ModalCloserProvider(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use leptos::prelude::RenderHtml;
     use leptos::prelude::IntoAny;
+    use leptos::prelude::RenderHtml;
 
     #[test]
     fn modal_renders_base_class_and_children() {
