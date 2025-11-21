@@ -2,6 +2,13 @@
 name = "lbc"
 version = "0.1.0"
 edition = "2024"
+description = "A Leptos component library based on the Bulma CSS framework."
+authors = ["Konstantin Pupkov <konstantin.pupkov@fromkos.com>"]
+license = "MIT/Apache-2.0"
+readme = "README.md"
+documentation = "https://docs.rs/lbc"
+categories = ["wasm", "web-programming"]
+keywords = ["wasm", "web", "bulma", "sass", "leptos"]
 
 [dependencies]
 console_error_panic_hook = "0.1.7"
@@ -10,3 +17,8 @@ wasm-bindgen = "0.2.105"
 
 [dev-dependencies]
 leptos = { version = "0.8.12", features = ["ssr"] }
+
+[package.metadata.docs.rs]
+features = ["docinclude"] # Activate `docinclude` during docs.rs build.
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
