@@ -1,0 +1,119 @@
+/*!
+Example page: Delete
+
+AI Pair Programming Notes:
+- Demonstrates Bulma Delete element with default and custom tags.
+*/
+
+use lbc::prelude::{Block, Title, HeaderSize, Buttons, Button, Notification, Delete};
+use leptos::prelude::{
+    AddAnyAttr, ClassAttribute, ElementChild, Get, IntoAny, IntoView, OnAttribute, Set, component,
+    create_signal, set_timeout, view,
+};
+use std::sync::Arc;
+use std::time::Duration;
+
+#[component]
+pub fn DeletePage() -> impl IntoView {
+    let (is_confirming, set_is_confirming) = create_signal(false);
+    let (user_choice, set_user_choice) = create_signal::<Option<bool>>(None);
+    let (show_toast, set_show_toast) = create_signal(false);
+
+    let prompt_text = "configration to continue for Delete";
+
+    let delete_click = Arc::new(move |_| {
+        set_is_confirming.set(true);
+        set_user_choice.set(None);
+    });
+
+    let anchor_delete_click = Arc::new(move |_| {
+        set_show_toast.set(true);
+        set_timeout(
+            move || {
+                set_show_toast.set(false);
+            },
+            Duration::from_secs(2),
+        );
+    });
+
+    view! {
+        <Block>
+            <Title size=HeaderSize::Is5>"Delete"</Title>
+
+            <p class="mb-2">"Default delete (button tag):"</p>
+            <Delete on_click=delete_click.clone() />
+
+            {move || {
+                if is_confirming.get() {
+                    view! {
+                        <Notification classes="is-warning mt-3">
+                            <p>{prompt_text}</p>
+                            <Buttons classes="mt-2">
+                                <Button
+                                    classes="is-success is-light"
+                                    on:click=move |_| {
+                                        set_user_choice.set(Some(true));
+                                        set_is_confirming.set(false);
+                                    }
+                                >
+                                    "Continue"
+                                </Button>
+                                <Button
+                                    classes="is-danger is-light"
+                                    on:click=move |_| {
+                                        set_user_choice.set(Some(false));
+                                        set_is_confirming.set(false);
+                                    }
+                                >
+                                    "Cancel"
+                                </Button>
+                            </Buttons>
+                        </Notification>
+                    }
+                    .into_any()
+                } else {
+                    view! { <></> }.into_any()
+                }
+            }}
+
+            {move || match user_choice.get() {
+                Some(true) => view! {
+                    <Notification classes="is-success mt-3">
+                        "Proceeding: configuration accepted for Delete."
+                    </Notification>
+                }
+                .into_any(),
+                Some(false) => view! {
+                    <Notification classes="is-danger mt-3">
+                        "Stopped: configuration rejected for Delete."
+                    </Notification>
+                }
+                .into_any(),
+                None => view! { <></> }.into_any(),
+            }}
+
+            <div class="mt-3"></div>
+
+            <p class="mb-2">"Anchor tag with extra classes:"</p>
+            <Delete tag="a" classes="is-large" on_click=anchor_delete_click.clone() />
+
+            {move || {
+                if show_toast.get() {
+                    view! {
+                        <Notification classes="is-success mt-3">
+                            "Successfully deleted!"
+                        </Notification>
+                    }
+                    .into_any()
+                } else {
+                    view! { <></> }.into_any()
+                }
+            }}
+
+            <div class="mt-3"></div>
+
+            <p class="mb-2">"Delete with child content (not typical in Bulma, but supported):"</p>
+            <Delete classes="mr-2">"×"</Delete>
+        </Block>
+    }
+}

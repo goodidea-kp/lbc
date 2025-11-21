@@ -1,0 +1,6 @@
+/target
+.aider*
+/lbc_catalog/.idea/
+/lbc_catalog/target/
+/lbc_catalog/dist/
+/dist/

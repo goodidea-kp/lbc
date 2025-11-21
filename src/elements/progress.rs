@@ -1,0 +1,125 @@
+use leptos::prelude::{ClassAttribute, ElementChild, Get, Signal};
+use leptos::tachys::view::any_view::IntoAny;
+use leptos::{IntoView, component, view};
+
+/// A native HTML progress bar.
+///
+/// https://bulma.io/documentation/elements/progress/
+#[component]
+pub fn Progress(
+    #[prop(optional, into)] classes: Signal<String>,
+    /// The maximum amount of progress; the 100% value.
+    #[prop(default = 1.0.into(), into)]
+    max: Signal<f32>,
+    /// The amount of progress which has been made.
+    /// Use -1.0 for an indeterminate progress bar.
+    #[prop(default = 0.0.into(), into)]
+    value: Signal<f32>,
+) -> impl IntoView {
+    let class = move || {
+        let extras = classes.get();
+        if extras.trim().is_empty() {
+            "progress".to_string()
+        } else {
+            format!("progress {}", extras.trim())
+        }
+    };
+
+    let max_value = move || max.get();
+    let current_value = move || value.get();
+    let is_indeterminate = move || current_value() == -1.0;
+
+    move || {
+        if is_indeterminate() {
+            view! {
+                <progress class=class max=move || max_value() />
+            }
+            .into_any()
+        } else {
+            view! {
+                <progress class=class max=move || max_value() value=move || current_value()>
+                    {move || format!("{:.0}%", current_value())}
+                </progress>
+            }
+            .into_any()
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use leptos::prelude::RenderHtml;
+
+    #[test]
+    fn progress_renders_with_defaults() {
+        let html = view! { <Progress /> }.to_html();
+        assert!(
+            html.contains(r#"class="progress""#),
+            "expected base progress class, got: {html}"
+        );
+        assert!(
+            html.contains(r#"max="1""#),
+            "expected default max=1, got: {html}"
+        );
+    }
+
+    #[test]
+    fn progress_renders_with_value() {
+        let html = view! { <Progress max=100.0 value=50.0 /> }.to_html();
+        assert!(
+            html.contains(r#"max="100""#),
+            "expected max=100, got: {html}"
+        );
+        assert!(
+            html.contains(r#"value="50""#),
+            "expected value=50, got: {html}"
+        );
+        assert!(
+            html.contains("50%"),
+            "expected percentage text, got: {html}"
+        );
+    }
+
+    #[test]
+    fn progress_renders_indeterminate() {
+        let html = view! { <Progress max=100.0 value=-1.0 /> }.to_html();
+        assert!(
+            html.contains(r#"class="progress""#),
+            "expected progress class, got: {html}"
+        );
+        assert!(
+            !html.contains(r#"value="#),
+            "expected no value attribute for indeterminate, got: {html}"
+        );
+    }
+
+    #[test]
+    fn progress_appends_custom_classes() {
+        let html = view! { <Progress classes="is-primary is-large" /> }.to_html();
+        assert!(
+            html.contains(r#"class="progress is-primary is-large""#),
+            "expected additional classes, got: {html}"
+        );
+    }
+
+    #[test]
+    fn progress_with_zero_value() {
+        let html = view! { <Progress max=100.0 value=0.0 /> }.to_html();
+        assert!(
+            html.contains(r#"value="0""#),
+            "expected value=0, got: {html}"
+        );
+        assert!(html.contains("0%"), "expected 0% text, got: {html}");
+    }
+
+    #[test]
+    fn progress_with_max_value() {
+        let html = view! { <Progress max=100.0 value=100.0 /> }.to_html();
+        assert!(
+            html.contains(r#"value="100""#),
+            "expected value=100, got: {html}"
+        );
+        assert!(html.contains("100%"), "expected 100% text, got: {html}");
+    }
+}

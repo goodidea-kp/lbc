@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <meta name="color-scheme" content="light dark"/>
+    <title>LBC Catalog</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@latest/css/bulma.min.css"/>
+    <!-- Font Awesome (v7.0.1) - required for the Icon component -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.0.1/css/all.min.css" crossorigin="anonymous"/>
+    <!-- bulma-calendar CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma-calendar@7.1.1/dist/css/bulma-calendar.min.css"/>
+    <!-- Bulma TagsInput CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@creativebulma/bulma-tagsinput@1.0.3/dist/css/bulma-tagsinput.min.css"/>
+    <!-- bulma-accordion CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma-accordion@2.0.1/dist/css/bulma-accordion.min.css"/>
+    <!-- bulma-calendar JS: ensure this runs before WASM bootstrap so `bulmaCalendar` exists -->
+    <script src="https://cdn.jsdelivr.net/npm/bulma-calendar@7.1.1/dist/js/bulma-calendar.min.js"></script>
+    <!-- Bulma TagsInput JS: ensure this runs before WASM bootstrap so `BulmaTagsInput` exists -->
+    <script src="https://cdn.jsdelivr.net/npm/@creativebulma/bulma-tagsinput@1.0.3/dist/js/bulma-tagsinput.min.js"></script>
+    <!-- bulma-accordion JS: ensure this runs before WASM bootstrap so `bulmaAccordion` exists -->
+    <script src="https://cdn.jsdelivr.net/npm/bulma-accordion@2.0.1/dist/js/bulma-accordion.min.js"></script>
+    <link data-trunk rel="css" href="theme.css"/>
+    <link data-trunk rel="rust" />
+  </head>
+  <body>
+    <button id="platform-toggle" type="button" class="button is-small" aria-label="Toggle platform" style="position:fixed;right:1rem;bottom:calc(env(safe-area-inset-bottom, 0) + 3.5rem);z-index:1000;">Platform: Web</button>
+    <button id="theme-toggle" type="button" class="button is-small" aria-label="Toggle color theme" aria-pressed="false" style="position:fixed;right:1rem;bottom:calc(env(safe-area-inset-bottom, 0) + 1rem);z-index:1000;">Toggle theme</button>
+    <script>
+      (function() {
+        try {
+          var themeKey = 'lbc_theme';
+          var platformKey = 'lbc_platform';
+          var root = document.documentElement;
+
+          var savedTheme = localStorage.getItem(themeKey);
+          if (!savedTheme) {
+            var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+            savedTheme = prefersDark ? 'dark' : 'light';
+          }
+          var savedPlatform = localStorage.getItem(platformKey);
+          if (!savedPlatform) {
+            var ua = (navigator.userAgent || '').toLowerCase();
+            if (/android/.test(ua)) {
+              savedPlatform = 'android';
+            } else if (/iphone|ipad|ipod|ios/.test(ua)) {
+              savedPlatform = 'iphone';
+            } else {
+              savedPlatform = 'web';
+            }
+          }
+
+          function applyTheme(theme) {
+            root.setAttribute('data-theme', theme);
+            var themeBtn = document.getElementById('theme-toggle');
+            if (themeBtn) {
+              // swap Bulma button style for contrast and set accessible state
+              var isDark = theme === 'dark';
+              themeBtn.classList.toggle('is-light', isDark);
+              themeBtn.classList.toggle('is-dark', !isDark);
+              themeBtn.textContent = isDark ? 'Light theme' : 'Dark theme';
+              themeBtn.setAttribute('aria-pressed', String(isDark));
+            }
+          }
+
+          function applyPlatform(platform) {
+            root.setAttribute('data-platform', platform);
+            var platBtn = document.getElementById('platform-toggle');
+            if (platBtn) {
+              var display = platform === 'iphone' ? 'iPhone' : (platform === 'android' ? 'Android' : 'Web');
+              platBtn.textContent = 'Platform: ' + display;
+            }
+          }
+
+          applyTheme(savedTheme);
+          applyPlatform(savedPlatform);
+
+          var themeToggle = document.getElementById('theme-toggle');
+          if (themeToggle) {
+            themeToggle.addEventListener('click', function() {
+              var next = (root.getAttribute('data-theme') === 'dark') ? 'light' : 'dark';
+              localStorage.setItem(themeKey, next);
+              applyTheme(next);
+            });
+            // keyboard activation is covered by button default; ensure Space works consistently
+            themeToggle.addEventListener('keydown', function(ev) {
+              if (ev.key === ' ' || ev.key === 'Spacebar') {
+                ev.preventDefault();
+                themeToggle.click();
+              }
+            });
+          }
+
+          var platformToggle = document.getElementById('platform-toggle');
+          if (platformToggle) {
+            platformToggle.addEventListener('click', function() {
+              var current = root.getAttribute('data-platform') || 'web';
+              var next = current === 'web' ? 'android' : (current === 'android' ? 'iphone' : 'web');
+              localStorage.setItem(platformKey, next);
+              applyPlatform(next);
+            });
+            platformToggle.addEventListener('keydown', function(ev) {
+              if (ev.key === ' ' || ev.key === 'Spacebar') {
+                ev.preventDefault();
+                platformToggle.click();
+              }
+            });
+          }
+
+          // Respect changes in system theme when user hasn't chosen explicitly
+          if (!localStorage.getItem(themeKey) && window.matchMedia) {
+            var mql = window.matchMedia('(prefers-color-scheme: dark)');
+            mql.addEventListener && mql.addEventListener('change', function(e) {
+              var next = e.matches ? 'dark' : 'light';
+              applyTheme(next);
+            });
+          }
+        } catch (e) {
+          console.warn('theme/platform toggle init failed', e);
+        }
+      })();
+    </script>
+  </body>
+</html>

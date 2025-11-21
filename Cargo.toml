@@ -1,0 +1,12 @@
+[package]
+name = "lbc"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+console_error_panic_hook = "0.1.7"
+leptos = { version = "0.8.12", features = ["csr", "ssr"] }
+wasm-bindgen = "0.2.105"
+
+[dev-dependencies]
+leptos = { version = "0.8.12", features = ["ssr"] }
