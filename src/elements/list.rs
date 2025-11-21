@@ -6,7 +6,8 @@ Leptos component to render unordered or ordered lists with optional classes.
 */
 
 use leptos::prelude::{
-    AnyView, Children, ClassAttribute, ElementChild, Get, GetUntracked, IntoAny, Signal, component, view,
+    AnyView, Children, ClassAttribute, ElementChild, Get, GetUntracked, IntoAny, Signal, component,
+    view,
 };
 
 /// A simple list component that renders an unordered (<ul>) or ordered (<ol>) list.
@@ -49,14 +50,26 @@ mod tests {
     #[test]
     fn list_renders_ul_by_default() {
         let html = view! { <List><li>"A"</li></List> }.to_html();
-        assert!(html.contains("<ul"), "expected default ul tag, got: {}", html);
-        assert!(html.contains(">A<"), "expected list item content, got: {}", html);
+        assert!(
+            html.contains("<ul"),
+            "expected default ul tag, got: {}",
+            html
+        );
+        assert!(
+            html.contains(">A<"),
+            "expected list item content, got: {}",
+            html
+        );
     }
 
     #[test]
     fn list_can_render_ol_with_classes() {
         let html = view! { <List tag="ol" classes="is-lower-alpha"><li>"a"</li></List> }.to_html();
         assert!(html.contains("<ol"), "expected ol tag, got: {}", html);
-        assert!(html.contains(r#"class="is-lower-alpha""#), "expected custom class, got: {}", html);
+        assert!(
+            html.contains(r#"class="is-lower-alpha""#),
+            "expected custom class, got: {}",
+            html
+        );
     }
 }

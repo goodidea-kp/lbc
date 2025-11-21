@@ -19,17 +19,17 @@ Required static assets
 
 use leptos::html;
 use leptos::prelude::{
-    ClassAttribute, Get, GetUntracked, GlobalAttributes, IntoView, NodeRef, NodeRefAttribute, Signal, component,
-    view,
+    ClassAttribute, Get, GetUntracked, GlobalAttributes, IntoView, NodeRef, NodeRefAttribute,
+    Signal, component, view,
 };
-#[cfg(target_arch = "wasm32")]
-use leptos::web_sys::Element;
 #[cfg(target_arch = "wasm32")]
 use leptos::wasm_bindgen::closure::Closure;
 #[cfg(target_arch = "wasm32")]
 use leptos::wasm_bindgen::prelude::wasm_bindgen;
 #[cfg(target_arch = "wasm32")]
 use leptos::wasm_bindgen::{JsCast, JsValue};
+#[cfg(target_arch = "wasm32")]
+use leptos::web_sys::Element;
 
 /// A date/time input enhanced by bulma-calendar.
 ///
@@ -268,7 +268,8 @@ mod tests {
                 date_format="yyyy-MM-dd"
                 update=noop()
             />
-        }.to_html();
+        }
+        .to_html();
         assert!(
             html.contains(r#"type="date""#),
             "expected input type=date when time_format is empty; got: {}",
@@ -286,7 +287,8 @@ mod tests {
                 time_format="HH:mm"
                 update=noop()
             />
-        }.to_html();
+        }
+        .to_html();
         assert!(
             html.contains(r#"type="datetime""#),
             "expected input type=datetime when time_format provided; got: {}",
@@ -304,6 +306,7 @@ mod tests {
                 date_format="YYYY-MM-DD"
                 update=noop()
             />
-        }.to_html();
+        }
+        .to_html();
     }
 }

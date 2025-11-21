@@ -8,7 +8,9 @@ Supports:
 - alignment: is-centered | is-right
 */
 
-use leptos::prelude::{Children, ClassAttribute, ElementChild, Get, IntoView, Signal, component, view};
+use leptos::prelude::{
+    Children, ClassAttribute, ElementChild, Get, IntoView, Signal, component, view,
+};
 
 use crate::components::tabs::Alignment;
 use crate::util::Size;

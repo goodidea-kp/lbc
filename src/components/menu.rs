@@ -1,4 +1,6 @@
-use leptos::prelude::{component, view, Children, ClassAttribute, ElementChild, Get, IntoView, Signal};
+use leptos::prelude::{
+    Children, ClassAttribute, ElementChild, Get, IntoView, Signal, component, view,
+};
 
 fn base_class(root: &str, extra: &str) -> String {
     if extra.trim().is_empty() {
@@ -86,21 +88,41 @@ mod tests {
     #[test]
     fn menu_renders_base_class_and_children() {
         let html = view! { <Menu><div>"X"</div></Menu> }.to_html();
-        assert!(html.contains(r#"class="menu""#), "expected base 'menu' class; got: {}", html);
-        assert!(html.contains("X"), "expected children rendered; got: {}", html);
+        assert!(
+            html.contains(r#"class="menu""#),
+            "expected base 'menu' class; got: {}",
+            html
+        );
+        assert!(
+            html.contains("X"),
+            "expected children rendered; got: {}",
+            html
+        );
     }
 
     #[test]
     fn menu_list_renders_container() {
         let html = view! { <MenuList><li><a>"Item"</a></li></MenuList> }.to_html();
-        assert!(html.contains(r#"class="menu-list""#), "expected 'menu-list' class; got: {}", html);
+        assert!(
+            html.contains(r#"class="menu-list""#),
+            "expected 'menu-list' class; got: {}",
+            html
+        );
         assert!(html.contains("Item"), "expected list child; got: {}", html);
     }
 
     #[test]
     fn menu_label_renders_text() {
         let html = view! { <MenuLabel text="General" /> }.to_html();
-        assert!(html.contains(r#"class="menu-label""#), "expected 'menu-label' class; got: {}", html);
-        assert!(html.contains("General"), "expected label text; got: {}", html);
+        assert!(
+            html.contains(r#"class="menu-label""#),
+            "expected 'menu-label' class; got: {}",
+            html
+        );
+        assert!(
+            html.contains("General"),
+            "expected label text; got: {}",
+            html
+        );
     }
 }

@@ -18,21 +18,23 @@ pub mod prelude {
     //! Commonly used re-exports for building UIs with LBC.
     //! Import this to bring the most frequently used components into scope.
     pub use crate::components::{
-        Alignment, Card, CardContent, CardFooter, CardHeader, CardImage, Dropdown, Calendar, Accordions, AccordionItem, Breadcrumb, BreadcrumbSeparator, BreadcrumbSize, Menu, MenuLabel, MenuList, Message,
-        MessageBody, MessageHeader, Modal, ModalCard, ModalCloserContext, ModalCloserProvider, Navbar, NavbarDivider,
-        NavbarDropdown, NavbarFixed, NavbarItem, NavbarMenuContext, Panel, PanelBlock, PanelTabs, Pagination,
-        PaginationEllipsis, PaginationItem, PaginationItemType, Tabs,
+        AccordionItem, Accordions, Alignment, Breadcrumb, BreadcrumbSeparator, BreadcrumbSize,
+        Calendar, Card, CardContent, CardFooter, CardHeader, CardImage, Dropdown, Menu, MenuLabel,
+        MenuList, Message, MessageBody, MessageHeader, Modal, ModalCard, ModalCloserContext,
+        ModalCloserProvider, Navbar, NavbarDivider, NavbarDropdown, NavbarFixed, NavbarItem,
+        NavbarMenuContext, Pagination, PaginationEllipsis, PaginationItem, PaginationItemType,
+        Panel, PanelBlock, PanelTabs, Tabs,
     };
     pub use crate::elements::block::Block;
     pub use crate::elements::r#box::Box;
     pub use crate::elements::button::{Button, ButtonColor};
     pub use crate::elements::buttons::Buttons;
     pub use crate::elements::content::Content;
-    pub use crate::elements::notification::Notification;
-    pub use crate::elements::list::List;
     pub use crate::elements::delete::Delete;
     pub use crate::elements::icon::{Icon, IconAlignment};
     pub use crate::elements::image::Image;
+    pub use crate::elements::list::List;
+    pub use crate::elements::notification::Notification;
     pub use crate::elements::progress::Progress;
     pub use crate::elements::table::Table;
     pub use crate::elements::tag::{Tag, TagColor};
