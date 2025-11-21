@@ -23,7 +23,7 @@ jobs:
         run: RUSTDOCFLAGS="--cfg docsrs" cargo doc --all-features --no-deps
 
   example_basic:
-    name: Example | Basic
+    name: Example | Lbc Catalog
     needs: build
     runs-on: ubuntu-latest
     steps:
@@ -36,5 +36,5 @@ jobs:
         uses: taiki-e/install-action@v2
         with:
           tool: trunk
-      - name: Build example
+      - name: Build LBC Catalog Example
         run: cd lbc_catalog && trunk build
