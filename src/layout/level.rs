@@ -13,7 +13,7 @@ Follows existing crate patterns:
 */
 
 use leptos::prelude::{
-    AnyView, Children, ClassAttribute, ElementChild, Get, GetUntracked, IntoAny, IntoView, Signal, component,
+    AnyView, Children, ClassAttribute, ElementChild, Get, GetUntracked, IntoAny, Signal, component,
     view,
 };
 

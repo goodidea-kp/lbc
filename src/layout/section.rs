@@ -10,7 +10,7 @@ Follows existing crate patterns:
 */
 
 use leptos::prelude::{
-    Children, ClassAttribute, ElementChild, Get, GetUntracked, IntoView, Signal, component, view,
+    Children, ClassAttribute, ElementChild, GetUntracked, IntoView, Signal, component, view,
 };
 
 /// The 2 sizes available for sections, which controls spacing.

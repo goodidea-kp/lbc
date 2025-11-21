@@ -1,46 +1,63 @@
+/*! 
+Leptos version of the Bulma Tag element.
+
+Bulma docs: https://bulma.io/documentation/elements/tag/
+*/
+
 use leptos::children::Children;
 use leptos::prelude::{ClassAttribute, ElementChild, Get, Signal};
 use leptos::{IntoView, component, view};
 
 use crate::util::Size;
 
+/// Available color variants for a Bulma tag.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum TagColor {
-    Primary,
-    Link,
-    Info,
-    Success,
-    Warning,
+    Black,
     Danger,
     Dark,
+    Info,
     Light,
-    Black,
+    Link,
+    Primary,
+    Success,
+    Warning,
     White,
 }
 impl TagColor {
+    /// Returns the Bulma CSS class for this `TagColor`.
     fn bulma(self) -> &'static str {
         match self {
-            TagColor::Primary => "is-primary",
-            TagColor::Link => "is-link",
-            TagColor::Info => "is-info",
-            TagColor::Success => "is-success",
-            TagColor::Warning => "is-warning",
+            TagColor::Black => "is-black",
             TagColor::Danger => "is-danger",
             TagColor::Dark => "is-dark",
+            TagColor::Info => "is-info",
             TagColor::Light => "is-light",
-            TagColor::Black => "is-black",
+            TagColor::Link => "is-link",
+            TagColor::Primary => "is-primary",
+            TagColor::Success => "is-success",
+            TagColor::Warning => "is-warning",
             TagColor::White => "is-white",
         }
     }
 }
 
+/// Label-like UI element useful for tagging and categorization.
+///
+/// https://bulma.io/documentation/elements/tag/
 #[component]
 pub fn Tag(
+    /// Optional color of the tag.
     #[prop(optional)] color: Option<TagColor>,
+    /// Optional size of the tag.
     #[prop(optional)] size: Option<Size>,
+    /// Render a lighter color variant when true.
     #[prop(optional)] light: bool,
+    /// Render fully rounded corners when true.
     #[prop(optional)] rounded: bool,
+    /// Additional CSS classes to append to the base "tag" class.
     #[prop(optional, into)] classes: Option<Signal<String>>,
+    /// Child content to render inside the tag.
     children: Children,
 ) -> impl IntoView {
     let class = move || {

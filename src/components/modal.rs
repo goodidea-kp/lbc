@@ -1,5 +1,5 @@
 use leptos::prelude::{
-    component, view, Children, ClassAttribute, ElementChild, Get, IntoAny, IntoView, Signal,
+    component, view, Children, ClassAttribute, ElementChild, Get, IntoView, Signal,
     OnAttribute, AriaAttributes, Set, GlobalAttributes,
 };
 
@@ -214,6 +214,7 @@ pub fn ModalCloserProvider(
 mod tests {
     use super::*;
     use leptos::prelude::RenderHtml;
+    use leptos::prelude::IntoAny;
 
     #[test]
     fn modal_renders_base_class_and_children() {

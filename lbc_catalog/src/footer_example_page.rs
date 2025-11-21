@@ -20,7 +20,7 @@ pub fn FooterPage() -> impl IntoView {
                         " by "
                         <a href="https://linkedin.com/in/konstantinpupkov">"Konstantin Pupkov"</a>
                         ". The source code is licensed "
-                        <a href="http://opensource.org/licenses/mit-license.php">"MIT"</a>
+                        <a href="https://opensource.org/licenses/mit-license.php">"MIT"</a>
                         "."
                     </p>
                 </Content>
