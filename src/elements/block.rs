@@ -5,7 +5,7 @@ Bulma docs: https://bulma.io/documentation/elements/block/
 */
 
 use leptos::prelude::{
-    Children, ClassAttribute, ElementChild, Get, GetUntracked, IntoView, Signal, component, view,
+    Children, ClassAttribute, ElementChild, GetUntracked, IntoView, Signal, component, view,
 };
 
 /// Bulma’s most basic spacer block

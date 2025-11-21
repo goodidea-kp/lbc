@@ -9,7 +9,7 @@ Follows existing crate patterns:
 */
 
 use leptos::prelude::{
-    Children, ClassAttribute, ElementChild, Get, GetUntracked, IntoView, Signal, component, view,
+    Children, ClassAttribute, ElementChild, GetUntracked, IntoView, Signal, component, view,
 };
 
 /// A simple responsive footer which can include anything.

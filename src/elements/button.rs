@@ -7,17 +7,17 @@ use crate::util::Size;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ButtonColor {
-    Primary,
-    Link,
-    Info,
-    Success,
-    Warning,
+    Black,
     Danger,
     Dark,
+    Info,
     Light,
-    Black,
-    White,
+    Link,
+    Primary,
+    Success,
     Text,
+    Warning,
+    White,
 }
 impl ButtonColor {
     fn bulma(self) -> &'static str {

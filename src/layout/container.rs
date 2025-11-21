@@ -1,7 +1,20 @@
+/*!
+Leptos version of Bulma Container layout.
+
+- Container: a simple responsive fixed-width container
+
+Follows existing crate patterns:
+- optional props via #[prop(optional)] / #[prop(optional, into)]
+- classes as Option<Signal<String>>
+*/
+
 use leptos::children::Children;
 use leptos::prelude::{ClassAttribute, ElementChild, Get, Signal};
 use leptos::{IntoView, component, view};
 
+/// A simple responsive container to center and constrain your content.
+///
+/// https://bulma.io/documentation/layout/container/
 #[component]
 pub fn Container(
     #[prop(optional)] fluid: bool,

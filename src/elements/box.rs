@@ -5,7 +5,7 @@ Bulma docs: https://bulma.io/documentation/elements/box/
 */
 
 use leptos::prelude::{
-    Children, ClassAttribute, ElementChild, Get, GetUntracked, IntoView, Signal, component, view,
+    Children, ClassAttribute, ElementChild, GetUntracked, IntoView, Signal, component, view,
 };
 
 /// A white box to contain other elements.

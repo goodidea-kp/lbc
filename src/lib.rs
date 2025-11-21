@@ -1,3 +1,13 @@
+//! LBC: Leptos + Bulma Components
+//!
+//! This crate provides a collection of Leptos components that render
+//! Bulma CSS elements and layouts. Most modules mirror Bulma's
+//! structure (elements, components, layout, form) and expose a
+//! convenient prelude for common types.
+//!
+//! See each module and component for specific usage details and links
+//! to the corresponding Bulma documentation.
+
 pub mod components;
 pub mod elements;
 pub mod form;
@@ -5,6 +15,8 @@ pub mod layout;
 pub mod util;
 
 pub mod prelude {
+    //! Commonly used re-exports for building UIs with LBC.
+    //! Import this to bring the most frequently used components into scope.
     pub use crate::components::{
         AccordionItem, Accordions, Alignment, Breadcrumb, BreadcrumbSeparator, BreadcrumbSize,
         Calendar, Card, CardContent, CardFooter, CardHeader, CardImage, Dropdown, Menu, MenuLabel,

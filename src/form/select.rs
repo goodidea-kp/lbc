@@ -9,10 +9,10 @@ use crate::util::Size;
 
 fn size_class(size: Size) -> &'static str {
     match size {
-        Size::Small => "is-small",
-        Size::Normal => "is-normal",
-        Size::Medium => "is-medium",
         Size::Large => "is-large",
+        Size::Medium => "is-medium",
+        Size::Normal => "is-normal",
+        Size::Small => "is-small",
     }
 }
 

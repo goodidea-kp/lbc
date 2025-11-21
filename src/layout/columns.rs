@@ -1,7 +1,20 @@
+/*!
+Leptos version of Bulma Columns layout.
+
+- Columns: responsive column container
+- Column: single column with optional width and narrow modifier
+- ColumnSize: maps to Bulma width helpers (e.g. is-half, is-one-third)
+
+Follows existing crate patterns:
+- optional props via #[prop(optional)] / #[prop(optional, into)]
+- classes as Option<Signal<String>>
+*/
+
 use leptos::children::Children;
 use leptos::prelude::{ClassAttribute, ElementChild, Get, Signal};
 use leptos::{IntoView, component, view};
 
+/// Available widths for a `Column`, mapped to Bulma classes.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ColumnSize {
     OneFifth,
@@ -17,6 +30,7 @@ pub enum ColumnSize {
 }
 
 impl ColumnSize {
+    /// Returns the Bulma CSS class corresponding to this `ColumnSize`.
     fn bulma(self) -> &'static str {
         match self {
             ColumnSize::OneFifth => "is-one-fifth",
@@ -33,6 +47,9 @@ impl ColumnSize {
     }
 }
 
+/// A responsive container for arranging content in columns.
+///
+/// https://bulma.io/documentation/columns/basics/
 #[component]
 pub fn Columns(
     #[prop(optional)] gapless: bool,
@@ -72,6 +89,9 @@ pub fn Columns(
     view! { <div class=class>{children()}</div> }
 }
 
+/// A single column inside a `Columns` container.
+///
+/// Use `size` to set a fixed width, and `narrow` to reduce the column's width to content.
 #[component]
 pub fn Column(
     #[prop(optional)] size: Option<ColumnSize>,
