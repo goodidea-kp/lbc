@@ -37,4 +37,4 @@ jobs:
         with:
           tool: trunk
       - name: Build example
-        run: cd examples/basic && trunk build
+        run: cd lbc_catalog && trunk build
