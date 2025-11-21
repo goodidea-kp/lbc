@@ -9,6 +9,7 @@ Note:
 - Add tests in each component module mirroring existing patterns.
 */
 
+pub mod autocomplete;
 pub mod checkbox;
 pub mod control;
 pub mod field;
@@ -17,7 +18,6 @@ pub mod input;
 pub mod radio;
 pub mod select;
 pub mod textarea;
-pub mod autocomplete;
 
 // Re-export common items here as they are implemented.
 pub mod prelude {

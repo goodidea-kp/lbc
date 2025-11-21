@@ -1,8 +1,8 @@
-use leptos::prelude::{
-    component, view, Children, ClassAttribute, ElementChild, Get, IntoAny, IntoView, OnAttribute,
-    Signal, Set, StyleAttribute, AddAnyAttr, GlobalAttributes,
-};
 use crate::elements::button::Button;
+use leptos::prelude::{
+    AddAnyAttr, Children, ClassAttribute, ElementChild, Get, GlobalAttributes, IntoAny, IntoView,
+    OnAttribute, Set, Signal, StyleAttribute, component, view,
+};
 
 /// A Bulma dropdown menu with a trigger button.
 /// https://bulma.io/documentation/components/dropdown/
@@ -91,12 +91,29 @@ mod tests {
                 <a class="dropdown-item">"Item 1"</a>
                 <a class="dropdown-item">"Item 2"</a>
             </Dropdown>
-        }.to_html();
+        }
+        .to_html();
 
-        assert!(html.contains(r#"class="dropdown""#), "expected base 'dropdown' class; got: {}", html);
-        assert!(html.contains("dropdown-menu") && html.contains("dropdown-content"), "expected dropdown structure; got: {}", html);
-        assert!(html.contains("Open"), "expected button content rendered; got: {}", html);
-        assert!(html.contains("Item 1") && html.contains("Item 2"), "expected children rendered; got: {}", html);
+        assert!(
+            html.contains(r#"class="dropdown""#),
+            "expected base 'dropdown' class; got: {}",
+            html
+        );
+        assert!(
+            html.contains("dropdown-menu") && html.contains("dropdown-content"),
+            "expected dropdown structure; got: {}",
+            html
+        );
+        assert!(
+            html.contains("Open"),
+            "expected button content rendered; got: {}",
+            html
+        );
+        assert!(
+            html.contains("Item 1") && html.contains("Item 2"),
+            "expected children rendered; got: {}",
+            html
+        );
     }
 
     #[test]
@@ -105,8 +122,13 @@ mod tests {
             <Dropdown hoverable=true button=Box::new(|| view!{ "Btn" }.into_any())>
                 <a class="dropdown-item">"X"</a>
             </Dropdown>
-        }.to_html();
+        }
+        .to_html();
 
-        assert!(html.contains("is-hoverable"), "expected is-hoverable class; got: {}", html);
+        assert!(
+            html.contains("is-hoverable"),
+            "expected is-hoverable class; got: {}",
+            html
+        );
     }
 }

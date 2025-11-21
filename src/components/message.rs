@@ -1,4 +1,7 @@
-use leptos::prelude::{component, view, Children, ClassAttribute, ElementChild, Get, IntoAny, IntoView, OnAttribute, Set, Signal, StyleAttribute, AriaAttributes};
+use leptos::prelude::{
+    AriaAttributes, Children, ClassAttribute, ElementChild, Get, IntoAny, IntoView, OnAttribute,
+    Set, Signal, StyleAttribute, component, view,
+};
 use std::rc::Rc;
 
 fn base_class(extra: &str) -> String {
@@ -145,10 +148,19 @@ mod tests {
             <Message>
                 <p>"Hello"</p>
             </Message>
-        }.to_html();
+        }
+        .to_html();
 
-        assert!(html.contains(r#"class="message""#), "expected base 'message' class; got: {}", html);
-        assert!(html.contains("Hello"), "expected children rendered; got: {}", html);
+        assert!(
+            html.contains(r#"class="message""#),
+            "expected base 'message' class; got: {}",
+            html
+        );
+        assert!(
+            html.contains("Hello"),
+            "expected children rendered; got: {}",
+            html
+        );
     }
 
     #[test]
@@ -158,10 +170,23 @@ mod tests {
                 <MessageHeader><p>"Header"</p></MessageHeader>
                 <MessageBody><p>"Body"</p></MessageBody>
             </Message>
-        }.to_html();
+        }
+        .to_html();
 
-        assert!(html.contains("message-header"), "expected header class; got: {}", html);
-        assert!(html.contains("message-body"), "expected body class; got: {}", html);
-        assert!(html.contains(r#"class="message is-primary""#) || html.contains("message is-primary "), "expected color class on message; got: {}", html);
+        assert!(
+            html.contains("message-header"),
+            "expected header class; got: {}",
+            html
+        );
+        assert!(
+            html.contains("message-body"),
+            "expected body class; got: {}",
+            html
+        );
+        assert!(
+            html.contains(r#"class="message is-primary""#) || html.contains("message is-primary "),
+            "expected color class on message; got: {}",
+            html
+        );
     }
 }

@@ -15,21 +15,21 @@ Notes
 */
 
 use leptos::prelude::{
-    component, view, ClassAttribute, ElementChild, Get, GlobalAttributes, CustomAttribute, IntoAny,
-    IntoView, Signal,
+    ClassAttribute, CustomAttribute, ElementChild, Get, GlobalAttributes, IntoAny, IntoView,
+    Signal, component, view,
 };
 use std::sync::Arc;
 
 #[cfg(target_arch = "wasm32")]
-use leptos::web_sys::Element;
+use leptos::wasm_bindgen::JsCast;
+#[cfg(target_arch = "wasm32")]
+use leptos::wasm_bindgen::JsValue;
 #[cfg(target_arch = "wasm32")]
 use leptos::wasm_bindgen::closure::Closure;
 #[cfg(target_arch = "wasm32")]
 use leptos::wasm_bindgen::prelude::wasm_bindgen;
 #[cfg(target_arch = "wasm32")]
-use leptos::wasm_bindgen::JsValue;
-#[cfg(target_arch = "wasm32")]
-use leptos::wasm_bindgen::JsCast;
+use leptos::web_sys::Element;
 
 /// A tags autocomplete input based on Bulma TagsInput.
 ///
@@ -103,10 +103,7 @@ pub fn AutoComplete(
     };
 
     // Render structure based on props.
-    let static_mode = items
-        .as_ref()
-        .map(|v| !v.is_empty())
-        .unwrap_or(false)
+    let static_mode = items.as_ref().map(|v| !v.is_empty()).unwrap_or(false)
         && data_item_text.get().trim().is_empty()
         && data_item_value.get().trim().is_empty();
 
@@ -191,55 +188,54 @@ pub fn AutoComplete(
         leptos::prelude::Effect::new(move |_| {
             let document = leptos::prelude::document();
             if let Some(element) = document.get_element_by_id(&id_for_js) {
-                    // Build callback to route ops to on_update/on_remove
-                    let cb = {
-                        let on_update = on_update.clone();
-                        let on_remove = on_remove.clone();
-                        Closure::wrap(Box::new(move |json: JsValue| {
-                            if let Some(s) = json.as_string() {
-                                if let Some((op, value)) = s
-                                    .trim_matches(|c| c == '{' || c == '}')
-                                    .split_once(",")
-                                {
-                                    // naive parse: "op":"add","value":"X"
-                                    let op_is_add = op.contains(r#""add""#);
-                                    let value_str = value.split(':').nth(1).unwrap_or("").trim();
-                                    let value_clean = value_str.trim_matches('"').to_string();
-                                    if op_is_add {
-                                        (on_update)(value_clean);
-                                    } else {
-                                        (on_remove)(value_clean);
-                                    }
+                // Build callback to route ops to on_update/on_remove
+                let cb = {
+                    let on_update = on_update.clone();
+                    let on_remove = on_remove.clone();
+                    Closure::wrap(Box::new(move |json: JsValue| {
+                        if let Some(s) = json.as_string() {
+                            if let Some((op, value)) =
+                                s.trim_matches(|c| c == '{' || c == '}').split_once(",")
+                            {
+                                // naive parse: "op":"add","value":"X"
+                                let op_is_add = op.contains(r#""add""#);
+                                let value_str = value.split(':').nth(1).unwrap_or("").trim();
+                                let value_clean = value_str.trim_matches('"').to_string();
+                                if op_is_add {
+                                    (on_update)(value_clean);
+                                } else {
+                                    (on_remove)(value_clean);
                                 }
                             }
-                        }) as Box<dyn FnMut(JsValue)>)
-                    };
+                        }
+                    }) as Box<dyn FnMut(JsValue)>)
+                };
 
-                    let url = url_for_fetch.get();
-                    if url.trim().is_empty() {
-                        // Static
-                        setup_static_autocomplete(
-                            &element.unchecked_into::<Element>(),
-                            cb.as_ref(),
-                            &JsValue::from(max_items),
-                            &JsValue::from(case_sensitive.get()),
-                        );
-                    } else {
-                        // Dynamic
-                        setup_dynamic_autocomplete(
-                            &element.unchecked_into::<Element>(),
-                            cb.as_ref(),
-                            &JsValue::from(max_items),
-                            &JsValue::from(url),
-                            &JsValue::from(auth_header.get()),
-                            &JsValue::from(case_sensitive.get()),
-                            &JsValue::from(data_item_value.get()),
-                            &JsValue::from(current_selector.get()),
-                        );
-                    }
-                    cb.forget();
+                let url = url_for_fetch.get();
+                if url.trim().is_empty() {
+                    // Static
+                    setup_static_autocomplete(
+                        &element.unchecked_into::<Element>(),
+                        cb.as_ref(),
+                        &JsValue::from(max_items),
+                        &JsValue::from(case_sensitive.get()),
+                    );
+                } else {
+                    // Dynamic
+                    setup_dynamic_autocomplete(
+                        &element.unchecked_into::<Element>(),
+                        cb.as_ref(),
+                        &JsValue::from(max_items),
+                        &JsValue::from(url),
+                        &JsValue::from(auth_header.get()),
+                        &JsValue::from(case_sensitive.get()),
+                        &JsValue::from(data_item_value.get()),
+                        &JsValue::from(current_selector.get()),
+                    );
                 }
-            });
+                cb.forget();
+            }
+        });
 
         // Cleanup detach
         let id_cleanup = id.clone();
@@ -359,9 +355,14 @@ mod tests {
                 on_update=noop()
                 on_remove=noop()
             />
-        }.to_html();
+        }
+        .to_html();
 
-        assert!(html.contains(r#"data-type="tags""#), "expected tags select; got: {}", html);
+        assert!(
+            html.contains(r#"data-type="tags""#),
+            "expected tags select; got: {}",
+            html
+        );
         assert!(html.contains("<option"), "expected options; got: {}", html);
     }
 
@@ -376,10 +377,19 @@ mod tests {
                 on_update=noop()
                 on_remove=noop()
             />
-        }.to_html();
+        }
+        .to_html();
 
-        assert!(html.contains(r#"data-item-text="name""#), "expected data-item-text; got: {}", html);
-        assert!(html.contains(r#"class="input""#), "expected input class; got: {}", html);
+        assert!(
+            html.contains(r#"data-item-text="name""#),
+            "expected data-item-text; got: {}",
+            html
+        );
+        assert!(
+            html.contains(r#"class="input""#),
+            "expected input class; got: {}",
+            html
+        );
     }
 
     #[test]
@@ -391,8 +401,13 @@ mod tests {
                 on_update=noop()
                 on_remove=noop()
             />
-        }.to_html();
+        }
+        .to_html();
 
-        assert!(html.contains(r#"class="input""#) && html.contains(r#"id="ac3""#), "expected plain input; got: {}", html);
+        assert!(
+            html.contains(r#"class="input""#) && html.contains(r#"id="ac3""#),
+            "expected plain input; got: {}",
+            html
+        );
     }
 }

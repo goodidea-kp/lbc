@@ -14,14 +14,17 @@ Notes
 - SSR tests only verify the rendered HTML structure.
 */
 
-use leptos::prelude::{component, view, Children, ClassAttribute, ElementChild, Get, GlobalAttributes, IntoView, OnAttribute, Signal, AriaAttributes};
+use leptos::prelude::{
+    AriaAttributes, Children, ClassAttribute, ElementChild, Get, GlobalAttributes, IntoView,
+    OnAttribute, Signal, component, view,
+};
 
 #[cfg(target_arch = "wasm32")]
-use leptos::web_sys::Element;
+use leptos::wasm_bindgen::JsValue;
 #[cfg(target_arch = "wasm32")]
 use leptos::wasm_bindgen::prelude::wasm_bindgen;
 #[cfg(target_arch = "wasm32")]
-use leptos::wasm_bindgen::JsValue;
+use leptos::web_sys::Element;
 
 /// A single accordion item (article.accordion ...).
 #[component]
@@ -179,12 +182,29 @@ mod tests {
                     <p>"Body"</p>
                 </AccordionItem>
             </Accordions>
-        }.to_html();
+        }
+        .to_html();
 
-        assert!(html.contains(r#"class="accordions""#), "expected accordions wrapper; got: {}", html);
-        assert!(html.contains(r#"id="acc1""#), "expected id attribute; got: {}", html);
-        assert!(html.contains(r#"class="accordion""#), "expected accordion item; got: {}", html);
-        assert!(html.contains("One") && html.contains("Body"), "expected title and body; got: {}", html);
+        assert!(
+            html.contains(r#"class="accordions""#),
+            "expected accordions wrapper; got: {}",
+            html
+        );
+        assert!(
+            html.contains(r#"id="acc1""#),
+            "expected id attribute; got: {}",
+            html
+        );
+        assert!(
+            html.contains(r#"class="accordion""#),
+            "expected accordion item; got: {}",
+            html
+        );
+        assert!(
+            html.contains("One") && html.contains("Body"),
+            "expected title and body; got: {}",
+            html
+        );
     }
 
     #[test]
@@ -193,8 +213,13 @@ mod tests {
             <AccordionItem title="T" open=true>
                 <p>"B"</p>
             </AccordionItem>
-        }.to_html();
+        }
+        .to_html();
 
-        assert!(html.contains("is-active"), "expected is-active when open=true; got: {}", html);
+        assert!(
+            html.contains("is-active"),
+            "expected is-active when open=true; got: {}",
+            html
+        );
     }
 }

@@ -4,7 +4,9 @@ Leptos version of Bulma Tags container.
 Bulma docs: https://bulma.io/documentation/elements/tag/#list-of-tags
 */
 
-use leptos::prelude::{Children, ClassAttribute, ElementChild, Get, IntoView, Signal, component, view};
+use leptos::prelude::{
+    Children, ClassAttribute, ElementChild, Get, IntoView, Signal, component, view,
+};
 
 /// A simple wrapper for a group of tags (`<div class="tags">`).
 #[component]

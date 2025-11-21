@@ -1,5 +1,6 @@
 use leptos::prelude::{
-    component, view, Children, ClassAttribute, ElementChild, Get, GlobalAttributes, IntoView, OnAttribute, AriaAttributes, Signal,
+    AriaAttributes, Children, ClassAttribute, ElementChild, Get, GlobalAttributes, IntoView,
+    OnAttribute, Signal, component, view,
 };
 
 use crate::util::Size;
@@ -202,11 +203,24 @@ mod tests {
                 <li><a class="pagination-link">"1"</a></li>
                 <li><a class="pagination-link">"2"</a></li>
             </Pagination>
-        }.to_html();
+        }
+        .to_html();
 
-        assert!(html.contains(r#"class="pagination""#), "expected base 'pagination' class; got: {}", html);
-        assert!(html.contains(r#"class="pagination-list""#), "expected pagination-list; got: {}", html);
-        assert!(html.contains("Prev") && html.contains("Next"), "expected prev/next labels; got: {}", html);
+        assert!(
+            html.contains(r#"class="pagination""#),
+            "expected base 'pagination' class; got: {}",
+            html
+        );
+        assert!(
+            html.contains(r#"class="pagination-list""#),
+            "expected pagination-list; got: {}",
+            html
+        );
+        assert!(
+            html.contains("Prev") && html.contains("Next"),
+            "expected prev/next labels; got: {}",
+            html
+        );
     }
 
     #[test]
@@ -223,16 +237,34 @@ mod tests {
                     {"1"}
                 </PaginationItem>
             </>
-        }.to_html();
+        }
+        .to_html();
 
-        assert!(html.contains("pagination-next"), "expected pagination-next class; got: {}", html);
-        assert!(html.contains("pagination-previous"), "expected pagination-previous class; got: {}", html);
-        assert!(html.contains(r#"class="pagination-link is-current""#) || html.contains("pagination-link is-current "), "expected current class on link; got: {}", html);
+        assert!(
+            html.contains("pagination-next"),
+            "expected pagination-next class; got: {}",
+            html
+        );
+        assert!(
+            html.contains("pagination-previous"),
+            "expected pagination-previous class; got: {}",
+            html
+        );
+        assert!(
+            html.contains(r#"class="pagination-link is-current""#)
+                || html.contains("pagination-link is-current "),
+            "expected current class on link; got: {}",
+            html
+        );
     }
 
     #[test]
     fn pagination_ellipsis_renders() {
         let html = view! { <PaginationEllipsis character="..." /> }.to_html();
-        assert!(html.contains("pagination-ellipsis") && html.contains("..."), "expected ellipsis; got: {}", html);
+        assert!(
+            html.contains("pagination-ellipsis") && html.contains("..."),
+            "expected ellipsis; got: {}",
+            html
+        );
     }
 }

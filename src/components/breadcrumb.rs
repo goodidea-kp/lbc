@@ -1,5 +1,7 @@
-use leptos::prelude::{component, view, Children, ClassAttribute, ElementChild, Get, IntoView, Signal, AriaAttributes};
 use crate::components::tabs::Alignment;
+use leptos::prelude::{
+    AriaAttributes, Children, ClassAttribute, ElementChild, Get, IntoView, Signal, component, view,
+};
 
 /// The 3 sizes available for a breadcrumb.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -111,11 +113,20 @@ mod tests {
                 <li><a href="#">"Bulma"</a></li>
                 <li class="is-active"><a href="#" aria-current="page">"Breadcrumb"</a></li>
             </Breadcrumb>
-        }.to_html();
+        }
+        .to_html();
 
-        assert!(html.contains(r#"class="breadcrumb""#), "expected base 'breadcrumb' class; got: {}", html);
+        assert!(
+            html.contains(r#"class="breadcrumb""#),
+            "expected base 'breadcrumb' class; got: {}",
+            html
+        );
         assert!(html.contains("<ul"), "expected inner list; got: {}", html);
-        assert!(html.contains("Bulma") && html.contains("Breadcrumb"), "expected children; got: {}", html);
+        assert!(
+            html.contains("Bulma") && html.contains("Breadcrumb"),
+            "expected children; got: {}",
+            html
+        );
     }
 
     #[test]
@@ -130,11 +141,28 @@ mod tests {
                 <li><a href="#">"A"</a></li>
                 <li class="is-active"><a href="#" aria-current="page">"B"</a></li>
             </Breadcrumb>
-        }.to_html();
+        }
+        .to_html();
 
-        assert!(html.contains("breadcrumb extra"), "expected extra classes; got: {}", html);
-        assert!(html.contains("is-small"), "expected size class; got: {}", html);
-        assert!(html.contains("is-right"), "expected alignment class; got: {}", html);
-        assert!(html.contains("has-dot-separator"), "expected separator class; got: {}", html);
+        assert!(
+            html.contains("breadcrumb extra"),
+            "expected extra classes; got: {}",
+            html
+        );
+        assert!(
+            html.contains("is-small"),
+            "expected size class; got: {}",
+            html
+        );
+        assert!(
+            html.contains("is-right"),
+            "expected alignment class; got: {}",
+            html
+        );
+        assert!(
+            html.contains("has-dot-separator"),
+            "expected separator class; got: {}",
+            html
+        );
     }
 }
