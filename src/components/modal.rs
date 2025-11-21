@@ -1,6 +1,6 @@
 use leptos::prelude::{
-    component, view, Children, ClassAttribute, ElementChild, Get, IntoAny, IntoView, Signal,
-    OnAttribute, AriaAttributes, Set, GlobalAttributes,
+    AriaAttributes, Children, ClassAttribute, ElementChild, Get, GlobalAttributes, IntoAny,
+    IntoView, OnAttribute, Set, Signal, component, view,
 };
 
 /// Context signal used to close modals by ID from anywhere in the component tree.
@@ -223,8 +223,16 @@ mod tests {
             </Modal>
         }.to_html();
 
-        assert!(html.contains(r#"class="modal""#), "expected base 'modal' class; got: {}", html);
-        assert!(html.contains("Hello"), "expected modal children rendered; got: {}", html);
+        assert!(
+            html.contains(r#"class="modal""#),
+            "expected base 'modal' class; got: {}",
+            html
+        );
+        assert!(
+            html.contains("Hello"),
+            "expected modal children rendered; got: {}",
+            html
+        );
     }
 
     #[test]
@@ -235,9 +243,14 @@ mod tests {
                 body=Box::new(|| view!{ <p>"Body"</p> }.into_any())
                 footer=Box::new(|| view!{ <button>"OK"</button> }.into_any())
             />
-        }.to_html();
+        }
+        .to_html();
 
-        assert!(html.contains("modal-card"), "expected modal-card structure; got: {}", html);
+        assert!(
+            html.contains("modal-card"),
+            "expected modal-card structure; got: {}",
+            html
+        );
         assert!(html.contains("Title"), "expected title; got: {}", html);
         assert!(html.contains("Body"), "expected body; got: {}", html);
     }

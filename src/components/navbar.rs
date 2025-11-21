@@ -1,6 +1,6 @@
 use leptos::prelude::{
-    component, view, Children, ClassAttribute, ElementChild, Get, GetUntracked, GlobalAttributes, IntoAny,
-    IntoView, OnAttribute, Signal, Set, StyleAttribute, AriaAttributes,
+    AriaAttributes, Children, ClassAttribute, ElementChild, Get, GetUntracked, GlobalAttributes,
+    IntoAny, IntoView, OnAttribute, Set, Signal, StyleAttribute, component, view,
 };
 use std::rc::Rc;
 
@@ -102,7 +102,6 @@ pub fn Navbar(
     let brand_view = brand.map(|children| children().into_any());
     let start_view = start.map(|children| children().into_any());
     let end_view = end.map(|children| children().into_any());
-
 
     let padded_initial = padded.get_untracked();
 
@@ -220,10 +219,8 @@ pub fn NavbarItem(
     /// Attributes for anchor usage.
     #[prop(optional, into)]
     href: Signal<String>,
-    #[prop(optional, into)]
-    rel: Signal<String>,
-    #[prop(optional, into)]
-    target: Signal<String>,
+    #[prop(optional, into)] rel: Signal<String>,
+    #[prop(optional, into)] target: Signal<String>,
 ) -> impl IntoView {
     let class = {
         let classes = classes.clone();

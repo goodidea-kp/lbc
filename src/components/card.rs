@@ -1,4 +1,6 @@
-use leptos::prelude::{component, view, Children, ClassAttribute, ElementChild, Get, IntoView, Signal};
+use leptos::prelude::{
+    Children, ClassAttribute, ElementChild, Get, IntoView, Signal, component, view,
+};
 
 fn base_class(root: &str, extra: &str) -> String {
     if extra.trim().is_empty() {
@@ -134,10 +136,19 @@ mod tests {
             <Card>
                 <div>"X"</div>
             </Card>
-        }.to_html();
+        }
+        .to_html();
 
-        assert!(html.contains(r#"class="card""#), "expected base 'card' class; got: {}", html);
-        assert!(html.contains(">X<"), "expected child content; got: {}", html);
+        assert!(
+            html.contains(r#"class="card""#),
+            "expected base 'card' class; got: {}",
+            html
+        );
+        assert!(
+            html.contains(">X<"),
+            "expected child content; got: {}",
+            html
+        );
     }
 
     #[test]
@@ -152,12 +163,34 @@ mod tests {
                     <a class="card-footer-item">"Two"</a>
                 </CardFooter>
             </Card>
-        }.to_html();
+        }
+        .to_html();
 
-        assert!(html.contains(r#"class="card-header has-background-light""#) || html.contains("card-header has-background-light "), "expected header classes; got: {}", html);
-        assert!(html.contains(r#"class="card-image""#), "expected card-image class; got: {}", html);
-        assert!(html.contains(r#"class="card-content""#), "expected card-content class; got: {}", html);
-        assert!(html.contains(r#"class="card-footer""#), "expected card-footer class; got: {}", html);
-        assert!(html.contains("card-footer-item"), "expected footer items; got: {}", html);
+        assert!(
+            html.contains(r#"class="card-header has-background-light""#)
+                || html.contains("card-header has-background-light "),
+            "expected header classes; got: {}",
+            html
+        );
+        assert!(
+            html.contains(r#"class="card-image""#),
+            "expected card-image class; got: {}",
+            html
+        );
+        assert!(
+            html.contains(r#"class="card-content""#),
+            "expected card-content class; got: {}",
+            html
+        );
+        assert!(
+            html.contains(r#"class="card-footer""#),
+            "expected card-footer class; got: {}",
+            html
+        );
+        assert!(
+            html.contains("card-footer-item"),
+            "expected footer items; got: {}",
+            html
+        );
     }
 }

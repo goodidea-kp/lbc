@@ -1,4 +1,7 @@
-use leptos::prelude::{component, view, Children, ClassAttribute, ElementChild, Get, IntoAny, IntoView, OnAttribute, Signal};
+use leptos::prelude::{
+    Children, ClassAttribute, ElementChild, Get, IntoAny, IntoView, OnAttribute, Signal, component,
+    view,
+};
 use std::rc::Rc;
 
 /// A composable panel, for compact controls.
@@ -31,9 +34,9 @@ pub fn Panel(
     let heading_node = {
         let heading = heading.clone();
         move || {
-            heading.as_ref().map(|h| {
-                view! { <p class="panel-heading">{h.get()}</p> }.into_any()
-            })
+            heading
+                .as_ref()
+                .map(|h| view! { <p class="panel-heading">{h.get()}</p> }.into_any())
         }
     };
 
@@ -126,36 +129,70 @@ mod tests {
             <Panel heading="Heading">
                 <div class="panel-block">"Child"</div>
             </Panel>
-        }.to_html();
+        }
+        .to_html();
 
-        assert!(html.contains(r#"class="panel""#), "expected base 'panel' class; got: {}", html);
-        assert!(html.contains(r#"class="panel-heading""#) && html.contains("Heading"), "expected heading; got: {}", html);
-        assert!(html.contains("Child"), "expected children rendered; got: {}", html);
+        assert!(
+            html.contains(r#"class="panel""#),
+            "expected base 'panel' class; got: {}",
+            html
+        );
+        assert!(
+            html.contains(r#"class="panel-heading""#) && html.contains("Heading"),
+            "expected heading; got: {}",
+            html
+        );
+        assert!(
+            html.contains("Child"),
+            "expected children rendered; got: {}",
+            html
+        );
     }
 
     #[test]
     fn panel_with_extra_classes() {
         let html = view! { <Panel classes="is-primary">"X"</Panel> }.to_html();
-        assert!(html.contains(r#"class="panel is-primary""#) || html.contains(r#"class="panel is-primary ""#), "expected combined classes; got: {}", html);
+        assert!(
+            html.contains(r#"class="panel is-primary""#)
+                || html.contains(r#"class="panel is-primary ""#),
+            "expected combined classes; got: {}",
+            html
+        );
     }
 
     #[test]
     fn panel_tabs_renders_container() {
         let html = view! { <PanelTabs><a>"All"</a></PanelTabs> }.to_html();
-        assert!(html.contains(r#"class="panel-tabs""#), "expected 'panel-tabs' class; got: {}", html);
+        assert!(
+            html.contains(r#"class="panel-tabs""#),
+            "expected 'panel-tabs' class; got: {}",
+            html
+        );
         assert!(html.contains("All"), "expected tab child; got: {}", html);
     }
 
     #[test]
     fn panel_block_default_tag_and_active() {
         let html = view! { <PanelBlock active=true>"Item"</PanelBlock> }.to_html();
-        assert!(html.contains("<div") && html.contains("panel-block"), "expected default div with panel-block; got: {}", html);
-        assert!(html.contains("is-active"), "expected is-active when active=true; got: {}", html);
+        assert!(
+            html.contains("<div") && html.contains("panel-block"),
+            "expected default div with panel-block; got: {}",
+            html
+        );
+        assert!(
+            html.contains("is-active"),
+            "expected is-active when active=true; got: {}",
+            html
+        );
     }
 
     #[test]
     fn panel_block_custom_tag_anchor() {
         let html = view! { <PanelBlock tag="a">"Link"</PanelBlock> }.to_html();
-        assert!(html.contains("<a") && html.contains("panel-block"), "expected <a> tag with panel-block class; got: {}", html);
+        assert!(
+            html.contains("<a") && html.contains("panel-block"),
+            "expected <a> tag with panel-block class; got: {}",
+            html
+        );
     }
 }
