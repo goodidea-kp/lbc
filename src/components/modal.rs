@@ -1,5 +1,5 @@
 use leptos::prelude::{
-    AriaAttributes, Children, ClassAttribute, ElementChild, Get, GlobalAttributes, IntoAny,
+    AriaAttributes, Children, ClassAttribute, ElementChild, Get, GlobalAttributes,
     IntoView, OnAttribute, Set, Signal, component, view,
 };
 
