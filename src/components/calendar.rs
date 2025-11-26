@@ -234,9 +234,7 @@ export function setup_date_picker(element, callback, initial_date, date_format, 
             let container = null;
 
             // Strategy A: data-target attribute
-            container = doc.querySelector(
-                '.datetimepicker[data-target="#' + element.id + '"]'
-            );
+            container = doc.querySelector('.datetimepicker');
 
             // Strategy B: first datetimepicker next to the input
             if (!container) {
