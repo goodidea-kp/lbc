@@ -91,7 +91,7 @@ pub fn AutoComplete(
     #[prop(optional, into)]
     test_id: Option<String>,
 ) -> impl IntoView {
-    let max_items_value = max_items.unwrap_or(10);
+    let _max_items_value = max_items.unwrap_or(10);
 
     // Build base input class
     let input_class = {
@@ -184,7 +184,7 @@ pub fn AutoComplete(
     #[cfg(target_arch = "wasm32")]
     {
         let id_for_js = id.clone();
-        let max_items = max_items_value;
+        let max_items = _max_items_value;
         let current_selector = current_selector.clone();
         let case_sensitive = _case_sensitive.clone();
         let url_for_fetch = _url_for_fetch.clone();
