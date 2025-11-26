@@ -114,10 +114,8 @@ pub fn Calendar(
                     let update = update.clone();
                     Closure::wrap(Box::new(move |date: JsValue| {
                         let s = date.as_string().unwrap_or_default();
-                        web_sys::console::log_2(
-                            &JsValue::from_str("[Calendar] Rust cb_change received"),
-                            &JsValue::from_str(&s),
-                        );
+                        // Use console_error_panic_hook's console via wasm-bindgen (no direct web_sys dependency).
+                        leptos::logging::log!("[Calendar] Rust cb_change received: {s}");
                         (update)(s);
                     }) as Box<dyn FnMut(JsValue)>)
                 };
@@ -147,9 +145,8 @@ pub fn Calendar(
                     "datetime".to_string()
                 };
 
-                web_sys::console::log_2(
-                    &JsValue::from_str("[Calendar] Rust calling setup_date_picker with picker_type"),
-                    &JsValue::from_str(&picker_type),
+                leptos::logging::log!(
+                    "[Calendar] Rust calling setup_date_picker with picker_type={picker_type}"
                 );
 
                 // Seed initial value, attach plugin, and keep the closure alive.
@@ -164,9 +161,7 @@ pub fn Calendar(
                 // Prevent GC of the closure by leaking it intentionally for widget lifetime.
                 cb_change.forget();
             } else {
-                web_sys::console::log_1(
-                    &JsValue::from_str("[Calendar] Rust Effect: input_ref.get() returned None"),
-                );
+                leptos::logging::log!("[Calendar] Rust Effect: input_ref.get() returned None");
             }
         });
     }
@@ -174,9 +169,9 @@ pub fn Calendar(
     // Detach JS state on unmount.
     #[cfg(target_arch = "wasm32")]
     leptos::prelude::on_cleanup(move || {
-        web_sys::console::log_2(
-            &JsValue::from_str("[Calendar] Rust on_cleanup detaching date picker for id"),
-            &JsValue::from_str(&_id_for_cleanup),
+        leptos::logging::log!(
+            "[Calendar] Rust on_cleanup detaching date picker for id={}",
+            _id_for_cleanup
         );
         detach_date_picker(&JsValue::from(_id_for_cleanup.as_str()));
     });
