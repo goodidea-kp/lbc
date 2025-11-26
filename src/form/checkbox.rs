@@ -92,7 +92,7 @@ mod tests {
 
     #[test]
     fn checkbox_sets_name_attribute() {
-        let html = view! { <Checkbox name="terms" checked=false>{"X"</Checkbox> }.to_html();
+        let html = view! { <Checkbox name="terms" checked=false>{"X"}</Checkbox> }.to_html();
         assert!(
             html.contains(r#"name="terms""#),
             "expected name attribute in: {}",
