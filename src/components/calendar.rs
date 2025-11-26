@@ -213,6 +213,11 @@ let init = new Map();
 /**
  * Attach bulmaCalendar to the given element and wire up Rust callbacks.
  *
+ * NOTE: bulma-calendar v6+ `bulmaCalendar.attach` returns an array of instances.
+ * We normalize to the first instance and use its public API:
+ *   - instance.on(eventName, handler)
+ *   - instance.value([newValue])
+ *
  * @param {Element} element - the input element
  * @param {Function} on_change - Rust callback for general value changes (select/validate/clear/cancel/today)
  * @param {string} initial_date - initial value
@@ -241,8 +246,8 @@ export function setup_date_picker(element, on_change, initial_date, date_format,
             console.error('[Calendar] bulmaCalendar is undefined at setup_date_picker time');
         }
 
-        // Use the documented API: bulmaCalendar.attach returns a single instance, not an array.
-        let calendarInstance = bulmaCalendar.attach(element, {
+        // v6+ returns an array; normalize to the first instance.
+        let instances = bulmaCalendar.attach(element, {
             type: picker_type || (String(time_format || '').trim() ? 'datetime' : 'date'),
             color: 'info',
             lang: 'en',
@@ -250,11 +255,21 @@ export function setup_date_picker(element, on_change, initial_date, date_format,
             timeFormat: time_format,
         });
 
-        console.log('[Calendar] bulmaCalendar.attach returned instance', calendarInstance);
+        console.log('[Calendar] bulmaCalendar.attach returned', instances);
+
+        let calendarInstance = Array.isArray(instances) ? instances[0] : instances;
 
         if (!calendarInstance) {
             console.error('[Calendar] bulmaCalendar.attach did not return an instance for element', element.id);
             return;
+        }
+
+        if (typeof calendarInstance.on !== 'function') {
+            console.error('[Calendar] calendarInstance.on is not a function; instance=', calendarInstance);
+        }
+
+        if (typeof calendarInstance.value !== 'function') {
+            console.error('[Calendar] calendarInstance.value is not a function; instance=', calendarInstance);
         }
 
         init.set(element.id, calendarInstance);
