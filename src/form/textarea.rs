@@ -109,9 +109,10 @@ pub fn TextArea(
 
     // Render an optional "GenAI ribbon" icon overlay if requested.
     move || {
+        let test_id_clone = test_id.clone();
+
         if is_genai.get() {
             let update_ai = update.clone();
-            let test_id_clone = test_id.clone();
             view! {
                 <div id="context" style="position:relative" data-testid=test_id_clone>
                     <Icon size=Size::Small classes="is-pulled-right ribbon">
@@ -148,7 +149,7 @@ pub fn TextArea(
                     disabled=disabled.get()
                     readonly=readonly.get()
                     rows=rows.unwrap_or(0).to_string()
-                    data-testid=test_id
+                    data-testid=test_id_clone
                 />
             }
             .into_any()
