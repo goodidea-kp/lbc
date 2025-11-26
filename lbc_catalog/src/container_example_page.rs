@@ -5,7 +5,7 @@ AI Pair Programming Notes:
 - Minimal example of Container with the fluid prop.
 */
 
-use lbc::prelude::{Block, Title, HeaderSize, Notification, Container};
+use lbc::prelude::{Block, Container, HeaderSize, Notification, Title};
 use leptos::prelude::{IntoView, component, view};
 
 #[component]

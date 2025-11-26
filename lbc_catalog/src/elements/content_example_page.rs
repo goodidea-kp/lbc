@@ -5,7 +5,7 @@ AI Pair Programming Notes:
 - Demonstrates Bulma Content element with various tags and classes.
 */
 
-use lbc::prelude::{Block, Title, HeaderSize, Content};
+use lbc::prelude::{Block, Content, HeaderSize, Title};
 use leptos::prelude::{ClassAttribute, ElementChild, IntoView, component, view};
 
 #[component]

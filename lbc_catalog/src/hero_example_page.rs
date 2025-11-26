@@ -5,7 +5,9 @@ AI Pair Programming Notes:
 - Shows Bulma hero component in different colors and sizes using lbc Hero component.
 */
 
-use lbc::prelude::{Block, Title, Subtitle, HeaderSize, Hero, HeroSize, Container, Navbar, NavbarItem, Tabs};
+use lbc::prelude::{
+    Block, Container, HeaderSize, Hero, HeroSize, Navbar, NavbarItem, Subtitle, Tabs, Title,
+};
 use leptos::prelude::{ClassAttribute, ElementChild, IntoAny, IntoView, component, view};
 
 #[component]

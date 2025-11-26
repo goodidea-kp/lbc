@@ -1,13 +1,13 @@
+use lbc::prelude::{Block, Content, HeaderSize, Menu, MenuLabel, MenuList, Title};
 use leptos::prelude::{
-    component, create_signal, view, ClassAttribute, ElementChild, Get, IntoAny, IntoView, OnAttribute, Set,
+    ClassAttribute, ElementChild, Get, IntoAny, IntoView, OnAttribute, Set, component, view, signal
 };
-use lbc::prelude::{Block, Content, HeaderSize, Title, Menu, MenuLabel, MenuList};
 
 #[component]
 pub fn MenuPage() -> impl IntoView {
     // Track the currently selected menu item and whether "Manage Your Team" submenu is open.
-    let (selected, set_selected) = create_signal(String::from("Dashboard"));
-    let (is_team_open, set_is_team_open) = create_signal(false);
+    let (selected, set_selected) = signal(String::from("Dashboard"));
+    let (is_team_open, set_is_team_open) = signal(false);
 
     view! {
         <Block>

@@ -1,16 +1,22 @@
-use leptos::prelude::{component, create_signal, view, ClassAttribute, Get, IntoView, Set, ElementChild};
-use lbc::prelude::{Block, Content, Title, Subtitle, HeaderSize, Field, Control, Notification, Calendar};
+use lbc::prelude::{
+    Block, Calendar, Content, Control, Field, HeaderSize, Notification, Subtitle, Title,
+};
+use leptos::prelude::{ClassAttribute, ElementChild, Get, IntoView, Set, component, view, signal};
 use std::sync::Arc;
+use gloo_console::info;
 
 #[component]
 pub fn CalendarPage() -> impl IntoView {
     // Example 1: date + time
-    let (selected_dt, set_selected_dt) = create_signal(String::new());
+    let (selected_dt, set_selected_dt) = signal(String::new());
     let on_change_dt = Arc::new(move |v: String| set_selected_dt.set(v));
 
     // Example 2: date only (no time)
-    let (selected_d, set_selected_d) = create_signal(String::new());
-    let on_change_d = Arc::new(move |v: String| set_selected_d.set(v));
+    let (selected_d, set_selected_d) = signal(String::new());
+    let on_change_d = Arc::new(move |v: String| {
+        info!("Selected date: {}", &v);
+        set_selected_d.set(v);
+    });
 
     view! {
         <Block>

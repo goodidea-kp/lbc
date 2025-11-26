@@ -1,10 +1,13 @@
-use leptos::prelude::{component, view, IntoView, ClassAttribute, ElementChild, Get, Set, Signal, create_signal};
-use lbc::prelude::{Block, Content, HeaderSize, Subtitle, Title, Pagination, PaginationEllipsis, PaginationItem, PaginationItemType, Size, Alignment};
+use lbc::prelude::{
+    Alignment, Block, Content, HeaderSize, Pagination, PaginationEllipsis, PaginationItem,
+    PaginationItemType, Size, Subtitle, Title,
+};
+use leptos::prelude::{ClassAttribute, ElementChild, Get, IntoView, Set, signal, Signal, component, view};
 use std::sync::Arc;
 
 #[component]
 pub fn PaginationPage() -> impl IntoView {
-    let (current_page, set_current_page) = create_signal(1usize);
+    let (current_page, set_current_page) = signal(1usize);
     let total_pages = 5usize;
 
     let on_prev = {

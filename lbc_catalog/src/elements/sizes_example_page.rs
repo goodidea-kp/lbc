@@ -6,8 +6,11 @@ AI Pair Programming Notes:
 - Tests verify Size -> Bulma class mapping without requiring SSR.
 */
 
-use lbc::prelude::{Block, Title, Subtitle, HeaderSize, Content, Buttons, Button, ButtonColor, Size, Tag, TagColor, Tags};
-use leptos::prelude::{ClassAttribute, ElementChild, IntoView, component, view};
+use lbc::prelude::{
+    Block, Button, ButtonColor, Buttons, Content, HeaderSize, Size, Subtitle, Tag, TagColor, Tags,
+    Title,
+};
+use leptos::prelude::{ IntoView, component, view};
 
 #[component]
 pub fn SizesPage() -> impl IntoView {

@@ -4,7 +4,7 @@ Example page: Footer
 Demonstrates the lbc Footer component.
 */
 
-use lbc::prelude::{Block, Title, HeaderSize, Content, Footer};
+use lbc::prelude::{Block, Content, Footer, HeaderSize, Title};
 use leptos::prelude::{ClassAttribute, ElementChild, IntoView, component, view};
 
 #[component]

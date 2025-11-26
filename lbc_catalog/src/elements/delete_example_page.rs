@@ -5,19 +5,19 @@ AI Pair Programming Notes:
 - Demonstrates Bulma Delete element with default and custom tags.
 */
 
-use lbc::prelude::{Block, Title, HeaderSize, Buttons, Button, Notification, Delete};
+use lbc::prelude::{Block, Button, Buttons, Delete, HeaderSize, Notification, Title};
 use leptos::prelude::{
-    AddAnyAttr, ClassAttribute, ElementChild, Get, IntoAny, IntoView, OnAttribute, Set, component,
-    create_signal, set_timeout, view,
+    AddAnyAttr, ClassAttribute, ElementChild, Get, IntoAny, IntoView, Set, component,
+    set_timeout, view, signal
 };
 use std::sync::Arc;
 use std::time::Duration;
 
 #[component]
 pub fn DeletePage() -> impl IntoView {
-    let (is_confirming, set_is_confirming) = create_signal(false);
-    let (user_choice, set_user_choice) = create_signal::<Option<bool>>(None);
-    let (show_toast, set_show_toast) = create_signal(false);
+    let (is_confirming, set_is_confirming) = signal(false);
+    let (user_choice, set_user_choice) = signal::<Option<bool>>(None);
+    let (show_toast, set_show_toast) = signal(false);
 
     let prompt_text = "configration to continue for Delete";
 

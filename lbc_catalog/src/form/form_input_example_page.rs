@@ -1,22 +1,24 @@
-use leptos::prelude::{component, view, IntoView, ClassAttribute, ElementChild, Get, Set, create_signal};
-use lbc::prelude::{Block, Content, Control, Field, HeaderSize, Input, InputType, Size, Subtitle, Title};
+use lbc::prelude::{
+    Block, Content, Control, Field, HeaderSize, Input, InputType, Size, Subtitle, Title,
+};
+use leptos::prelude::{ClassAttribute, ElementChild, Get, IntoView, Set, component, view, signal};
 use std::rc::Rc;
 
 /// Example page showcasing the Input form component.
 #[component]
 pub fn FormInputPage() -> impl IntoView {
-    let (text_value, set_text_value) = create_signal(String::new());
-    let (number_value, set_number_value) = create_signal("0".to_string());
+    let (text_value, set_text_value) = signal(String::new());
+    let (number_value, set_number_value) = signal("0".to_string());
 
     // Signals for the "Sizes & Styles" examples
-    let (small_value, set_small_value) = create_signal(String::new());
-    let (normal_value, set_normal_value) = create_signal(String::new());
-    let (medium_value, set_medium_value) = create_signal(String::new());
-    let (large_value, set_large_value) = create_signal(String::new());
-    let (rounded_value, set_rounded_value) = create_signal(String::new());
-    let (readonly_value, set_readonly_value) = create_signal("Read-only value".to_string());
-    let (disabled_value, set_disabled_value) = create_signal("Disabled value".to_string());
-    let (static_value, set_static_value) = create_signal("Static value".to_string());
+    let (small_value, set_small_value) = signal(String::new());
+    let (normal_value, set_normal_value) = signal(String::new());
+    let (medium_value, set_medium_value) = signal(String::new());
+    let (large_value, set_large_value) = signal(String::new());
+    let (rounded_value, set_rounded_value) = signal(String::new());
+    let (readonly_value, set_readonly_value) = signal("Read-only value".to_string());
+    let (disabled_value, set_disabled_value) = signal("Disabled value".to_string());
+    let (static_value, set_static_value) = signal("Static value".to_string());
 
     view! {
         <Block>

@@ -1,9 +1,11 @@
-use leptos::prelude::{component, create_signal, view, ClassAttribute, ElementChild, Get, IntoAny, IntoView, OnAttribute, Set};
-use lbc::prelude::{Block, Content, HeaderSize, Title, Button, ButtonColor, Dropdown};
+use lbc::prelude::{Block, Content, Dropdown, HeaderSize, Title};
+use leptos::prelude::{
+    ClassAttribute, ElementChild, Get, IntoAny, IntoView, OnAttribute, Set, component, view, signal
+};
 
 #[component]
 pub fn DropdownPage() -> impl IntoView {
-    let (selected, set_selected) = create_signal(String::from("-"));
+    let (selected, set_selected) = signal(String::from("-"));
 
     let select_item = move |label: &'static str| {
         let set_selected = set_selected.clone();

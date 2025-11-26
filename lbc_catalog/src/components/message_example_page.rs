@@ -1,10 +1,15 @@
-use leptos::prelude::{component, view, IntoView, IntoAny, ClassAttribute, ElementChild, Get, Set, OnAttribute, AddAnyAttr, create_signal};
-use lbc::prelude::{Block, HeaderSize, Title, Button, Buttons, Message, MessageBody, MessageHeader};
+use lbc::prelude::{
+    Block, Button, Buttons, HeaderSize, Message, MessageBody, MessageHeader, Title,
+};
+use leptos::prelude::{
+    AddAnyAttr, ElementChild, Get, IntoAny, IntoView, Set, component,
+    view, signal
+};
 
 #[component]
 pub fn MessagePage() -> impl IntoView {
-    let (show_primary, set_show_primary) = create_signal(true);
-    let (color_class, set_color_class) = create_signal("is-primary".to_string());
+    let (show_primary, set_show_primary) = signal(true);
+    let (color_class, set_color_class) = signal("is-primary".to_string());
 
     view! {
         <Block>

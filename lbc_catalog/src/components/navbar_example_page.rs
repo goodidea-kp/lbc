@@ -1,10 +1,14 @@
-use leptos::prelude::{component, view, create_signal, IntoView, IntoAny, ClassAttribute, ElementChild, Get, Signal, AddAnyAttr, Set};
-use lbc::prelude::{Block, Title, HeaderSize, Content, Navbar, NavbarDivider, NavbarDropdown, NavbarItem, Buttons};
+use lbc::prelude::{
+    Block, Buttons, Content, HeaderSize, Navbar, NavbarDivider, NavbarDropdown, NavbarItem, Title,
+};
+use leptos::prelude::{
+    ClassAttribute, ElementChild, Get, IntoAny, IntoView, Set, signal, Signal, component, view,
+};
 use std::rc::Rc;
 
 #[component]
 pub fn NavbarPage() -> impl IntoView {
-    let (selected, set_selected) = create_signal(String::from("Home"));
+    let (selected, set_selected) = signal(String::from("Home"));
 
     // Create click handlers inline to satisfy 'static closure requirements.
 

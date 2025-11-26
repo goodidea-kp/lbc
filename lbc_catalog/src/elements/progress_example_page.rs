@@ -7,13 +7,15 @@ AI Pair Programming Notes:
 - Keep examples deterministic and small; avoid hidden state outside this module.
 */
 
-use lbc::prelude::{Block, Title, Subtitle, HeaderSize, Buttons, Button, ButtonColor, Size, Progress};
-use leptos::prelude::{ClassAttribute, ElementChild, Get, IntoView, Set, Update, component, create_signal, view};
+use lbc::prelude::{
+    Block, Button, ButtonColor, Buttons, HeaderSize, Progress, Size, Subtitle, Title,
+};
+use leptos::prelude::{ClassAttribute, ElementChild, Get, IntoView, Set, Update, component, view, signal};
 use std::rc::Rc;
 
 #[component]
 pub fn ProgressPage() -> impl IntoView {
-    let (progress_value, set_progress_value) = create_signal(25.0);
+    let (progress_value, set_progress_value) = signal(25.0);
 
     view! {
         <Block>

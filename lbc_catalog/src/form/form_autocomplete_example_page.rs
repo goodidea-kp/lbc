@@ -1,12 +1,12 @@
-use leptos::prelude::{component, view, IntoView, ClassAttribute, ElementChild, Get, Set, Update, create_signal};
 use lbc::prelude::{AutoComplete, Block, Content, HeaderSize, Subtitle, Title};
+use leptos::prelude::{ClassAttribute, ElementChild, Get, IntoView, Update, component, view, signal};
 use std::sync::Arc;
 
 /// Example page showcasing the AutoComplete component powered by Bulma TagsInput.
 #[component]
 pub fn FormAutoCompletePage() -> impl IntoView {
     // Track selected tags from callbacks.
-    let (selected, set_selected) = create_signal::<Vec<String>>(Vec::new());
+    let (selected, set_selected) = signal::<Vec<String>>(Vec::new());
 
     // Merge new value into the set
     let on_add = {

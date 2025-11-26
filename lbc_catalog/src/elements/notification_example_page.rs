@@ -1,4 +1,4 @@
-use lbc::prelude::{Block, Title, HeaderSize, Content, Notification};
+use lbc::prelude::{Block, Content, HeaderSize, Notification, Title};
 use leptos::prelude::{IntoView, component, view};
 
 #[component]

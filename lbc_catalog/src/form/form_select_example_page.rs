@@ -1,16 +1,18 @@
-use leptos::prelude::{component, view, IntoView, ClassAttribute, ElementChild, Get, Set, create_signal};
-use lbc::prelude::{Block, Content, Control, Field, HeaderSize, MultiSelect, Select, Subtitle, Title};
+use lbc::prelude::{
+    Block, Content, Control, Field, HeaderSize, MultiSelect, Select, Subtitle, Title
+};
+use leptos::prelude::{ClassAttribute, ElementChild, Get, IntoView, Set, component, view, signal};
 use std::sync::Arc;
 
 /// Example page showcasing the Select and MultiSelect form components.
 #[component]
 pub fn FormSelectPage() -> impl IntoView {
     // Single-select value
-    let (selected, set_selected) = create_signal(String::from("b"));
+    let (selected, set_selected) = signal(String::from("b"));
     let update_select = Arc::new(move |v: String| set_selected.set(v));
 
     // Multi-select values
-    let (selected_list, set_selected_list) = create_signal(vec!["a".to_string(), "c".to_string()]);
+    let (selected_list, set_selected_list) = signal(vec!["a".to_string(), "c".to_string()]);
     let update_multi = Arc::new(move |v: Vec<String>| set_selected_list.set(v));
 
     view! {

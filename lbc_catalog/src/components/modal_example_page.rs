@@ -1,12 +1,17 @@
-use leptos::prelude::{component, view, IntoView, IntoAny, ClassAttribute, ElementChild, Get, Set, AddAnyAttr, OnAttribute, create_signal, set_timeout};
+use lbc::prelude::{
+    Block, Button, Content, HeaderSize, Modal, ModalCard, ModalCloserContext, Notification, Title,
+};
 use leptos::context::provide_context;
-use lbc::prelude::{Block, Content, HeaderSize, Notification, Title, Button, Modal, ModalCard, ModalCloserContext};
+use leptos::prelude::{
+    AddAnyAttr, ClassAttribute, ElementChild, Get, IntoAny, IntoView, Set, component,
+    set_timeout, view, signal
+};
 
 #[component]
 pub fn ModalPage() -> impl IntoView {
     let closer = leptos::prelude::RwSignal::new(String::new());
     provide_context::<ModalCloserContext>(closer);
-    let (show_toast, set_show_toast) = create_signal(false);
+    let (show_toast, set_show_toast) = signal(false);
     view! {
             <Block>
                 <Title size=HeaderSize::Is5>"Modal"</Title>

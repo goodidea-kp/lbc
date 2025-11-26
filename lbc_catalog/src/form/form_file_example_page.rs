@@ -1,5 +1,5 @@
 use lbc::prelude::{Block, Content, Control, Field, File, HeaderSize, Size, Subtitle, Title};
-use leptos::prelude::{component, create_signal, view, IntoView, ClassAttribute, ElementChild, Set};
+use leptos::prelude::{ IntoView, Set, component, view, signal};
 
 #[component]
 pub fn FormFilePage() -> impl IntoView {
@@ -7,7 +7,7 @@ pub fn FormFilePage() -> impl IntoView {
 
     // In this catalog example we don't inspect real files; the File component
     // uses a platform-neutral placeholder type internally, so Vec<()> is fine.
-    let (selected_files, set_selected_files) = create_signal(Vec::<()>::new());
+    let (selected_files, set_selected_files) = signal(Vec::<()>::new());
 
     // Controlled component: update selected files on change.
     let on_update: Arc<dyn Fn(Vec<()>) + Send + Sync> = Arc::new(move |files: Vec<()>| {

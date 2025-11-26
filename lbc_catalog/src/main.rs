@@ -6,9 +6,9 @@ use leptos_router::{
 };
 
 mod columns_example_page;
+mod components;
 mod container_example_page;
 mod elements;
-mod components;
 mod footer_example_page;
 mod form;
 mod hero_example_page;
@@ -18,19 +18,19 @@ mod section_example_page;
 mod tile_example_page;
 
 use columns_example_page::ColumnsPage;
-use container_example_page::ContainerPage;
-use components::tabs_example_page::TabsPage;
-use components::panel_example_page::PanelPage;
-use components::pagination_example_page::PaginationPage;
-use components::navbar_example_page::NavbarPage;
-use components::modal_example_page::ModalPage;
-use components::message_example_page::MessagePage;
-use components::menu_example_page::MenuPage;
-use components::dropdown_example_page::DropdownPage;
-use components::card_example_page::CardPage;
-use components::calendar_example_page::CalendarPage;
-use components::breadcrumb_example_page::BreadcrumbPage;
 use components::accordion_example_page::AccordionPage;
+use components::breadcrumb_example_page::BreadcrumbPage;
+use components::calendar_example_page::CalendarPage;
+use components::card_example_page::CardPage;
+use components::dropdown_example_page::DropdownPage;
+use components::menu_example_page::MenuPage;
+use components::message_example_page::MessagePage;
+use components::modal_example_page::ModalPage;
+use components::navbar_example_page::NavbarPage;
+use components::pagination_example_page::PaginationPage;
+use components::panel_example_page::PanelPage;
+use components::tabs_example_page::TabsPage;
+use container_example_page::ContainerPage;
 
 use elements::notification_example_page::NotificationPage;
 use elements::progress_example_page::ProgressPage;
@@ -43,6 +43,7 @@ use elements::{
     tag_example_page::TagPage,
 };
 use footer_example_page::FooterPage;
+use form::form_autocomplete_example_page::FormAutoCompletePage;
 use form::form_control_example_page::FormControlPage;
 use form::form_example_page::FormCheckboxPage;
 use form::form_field_example_page::FormFieldPage;
@@ -51,7 +52,6 @@ use form::form_input_example_page::FormInputPage;
 use form::form_radio_example_page::FormRadioPage;
 use form::form_select_example_page::FormSelectPage;
 use form::form_text_area_example_page::FormTextAreaPage;
-use form::form_autocomplete_example_page::FormAutoCompletePage;
 use hero_example_page::HeroPage;
 use level_example_page::LevelPage;
 use media_example_page::MediaPage;

@@ -5,8 +5,8 @@ AI Pair Programming Notes:
 - Shows responsive Columns + Column sizing with clear, labeled content.
 */
 
-use lbc::prelude::{Block, Title, HeaderSize, Notification, Column, ColumnSize, Columns};
-use leptos::prelude::{ClassAttribute, ElementChild, IntoView, component, view};
+use lbc::prelude::{Block, Column, ColumnSize, Columns, HeaderSize, Notification, Title};
+use leptos::prelude::{ IntoView, component, view};
 
 #[component]
 pub fn ColumnsPage() -> impl IntoView {

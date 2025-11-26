@@ -6,7 +6,7 @@ AI Pair Programming Notes:
 - Keep markup flat and readable; avoid deep nesting.
 */
 
-use lbc::prelude::{Block, Title, HeaderSize, Tag, TagColor, Tags};
+use lbc::prelude::{Block, HeaderSize, Tag, TagColor, Tags, Title};
 use leptos::prelude::{IntoView, component, view};
 
 #[component]
