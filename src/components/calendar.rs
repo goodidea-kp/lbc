@@ -3,12 +3,12 @@ Calendar component: a thin Leptos wrapper around the bulma-calendar JS date/time
 
 Summary
 - Enhances a plain <input> with bulmaCalendar for date and time selection.
-- Emits changes through a Rust callback whenever the user selects, validates, or clears.
+- Emits changes through a Rust callback whenever the user selects, validates, clears, or clicks Today/Cancel.
 - Requires bulmaCalendar JS and CSS to be loaded globally (available as `bulmaCalendar`).
 
 Value format
 - The emitted string follows the configured `date_format` and `time_format` patterns understood by bulmaCalendar.
-- Clearing the picker emits an empty string.
+- Clearing or canceling the picker emits an empty string.
 
 Required static assets
 - CSS (add in <head>):
@@ -51,7 +51,7 @@ pub fn Calendar(
     #[prop(optional)]
     date: Option<String>,
 
-    /// Callback invoked when the date/time changes; receives empty string on clear.
+    /// Callback invoked when the date/time changes; receives empty string on clear/cancel.
     update: std::sync::Arc<dyn Fn(String) + Send + Sync>,
 
     /// Extra classes appended after Bulma "input".
@@ -117,14 +117,6 @@ pub fn Calendar(
                         (update)(s);
                     }) as Box<dyn FnMut(JsValue)>)
                 };
-                // Separate bridge for "today" click event (can reuse same behavior).
-                let cb_today = {
-                    let update = update.clone();
-                    Closure::wrap(Box::new(move |date: JsValue| {
-                        let s = date.as_string().unwrap_or_default();
-                        (update)(s);
-                    }) as Box<dyn FnMut(JsValue)>)
-                };
 
                 // Resolve effective formats with sane defaults.
                 let df = {
@@ -155,15 +147,13 @@ pub fn Calendar(
                 setup_date_picker(
                     &element,
                     cb_change.as_ref(),
-                    cb_today.as_ref(),
                     &JsValue::from(initial_for_js.clone()),
                     &JsValue::from(df),
                     &JsValue::from(tf),
                     &JsValue::from(picker_type),
                 );
-                // Prevent GC of the closures by leaking them intentionally for widget lifetime.
+                // Prevent GC of the closure by leaking it intentionally for widget lifetime.
                 cb_change.forget();
-                cb_today.forget();
             }
         });
     }
@@ -204,7 +194,7 @@ pub fn Calendar(
 // - "clear" / "onCancelClickDateTimePicker" for clearing the value
 // - "onTodayClickDateTimePicker" / "today" for clicking the Today button
 //
-// All of these events call back into Rust via `on_change` or `on_today`.
+// All of these events call back into Rust via `on_change`.
 #[cfg(target_arch = "wasm32")]
 #[leptos::wasm_bindgen::prelude::wasm_bindgen(inline_js = r#"
 let init = new Map();
@@ -214,13 +204,12 @@ let init = new Map();
  *
  * @param {Element} element - the input element
  * @param {Function} on_change - Rust callback for general value changes (select/validate/clear/cancel/today)
- * @param {Function} on_today - Rust callback specifically for Today button clicks (kept for future extension)
  * @param {string} initial_date - initial value
  * @param {string} date_format - date format string
  * @param {string} time_format - time format string
  * @param {string} picker_type - "date" or "datetime"
  */
-export function setup_date_picker(element, on_change, on_today, initial_date, date_format, time_format, picker_type) {
+export function setup_date_picker(element, on_change, initial_date, date_format, time_format, picker_type) {
     if (!init.has(element.id)) {
         let calendarInstances = bulmaCalendar.attach(element, {
             type: picker_type || (String(time_format || '').trim() ? 'datetime' : 'date'),
@@ -411,7 +400,6 @@ extern "C" {
     fn setup_date_picker(
         element: &Element,
         on_change: &JsValue,
-        on_today: &JsValue,
         initial_date: &JsValue,
         date_format: &JsValue,
         time_format: &JsValue,
