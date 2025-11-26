@@ -83,10 +83,11 @@ impl From<&str> for TestAttr {
 /// - `None`  => no attribute is rendered
 /// - `Some(TestAttr { key, value })` => renders `key="value"`.
 pub fn test_attr_attr(test_attr: Option<TestAttr>) -> impl CustomAttribute<String, String> {
-    move |mut element| {
+    move |element| {
         if let Some(attr) = &test_attr {
-            element = element.attr(&attr.key, &attr.value);
+            element.attr(&attr.key, &attr.value)
+        } else {
+            element
         }
-        element
     }
 }
