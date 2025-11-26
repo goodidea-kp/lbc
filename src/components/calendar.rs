@@ -191,8 +191,19 @@ pub fn Calendar(
 #[leptos::wasm_bindgen::prelude::wasm_bindgen(inline_js = r#"
 let init = new Map();
 
+/**
+ * Attach bulma-calendar to the given input element and wire native DOM events
+ * back to the provided callback.
+ *
+ * We do NOT rely on calendarInstance.on(...) because the CDN build of
+ * bulma-calendar@7.1.1 does not expose a stable .on API. Instead we:
+ *   - listen to the input's native 'change' event
+ *   - best-effort hook the Today button's click
+ */
 export function setup_date_picker(element, callback, initial_date, date_format, time_format, picker_type) {
+    // Only initialize once per element id
     if (!init.has(element.id)) {
+        // Attach bulma-calendar to the input element
         let calendarInstances = bulmaCalendar.attach(element, {
             type: picker_type || (String(time_format || '').trim() ? 'datetime' : 'date'),
             color: 'info',
@@ -201,64 +212,95 @@ export function setup_date_picker(element, callback, initial_date, date_format, 
             timeFormat: time_format,
         });
 
+        // Normalize instance (array vs single)
         let calendarInstance = Array.isArray(calendarInstances) ? calendarInstances[0] : calendarInstances;
         init.set(element.id, calendarInstance);
 
-        // Helper to get current value across versions
-        function getCurrentValue(instance, datepicker) {
-            if (datepicker && datepicker.data && typeof datepicker.data.value === 'function') {
-                return datepicker.data.value();
+        // 1) Native input change event: fires when bulma-calendar updates the value
+        element.addEventListener('change', function () {
+            const value = element.value || '';
+            console.debug('bulma-calendar input change →', value);
+            callback(value);
+        });
+
+        // 2) Best-effort Today button hook
+        try {
+            // The calendar popup is usually rendered as a sibling or descendant.
+            // We search the document for a calendar container associated with this input.
+            // This is heuristic but works for the catalog.
+            const doc = element.ownerDocument || document;
+            // Look for a calendar container that references this input by id
+            // or is near it in the DOM.
+            let container = null;
+
+            // Strategy A: data-target attribute
+            container = doc.querySelector('.datetimepicker[data-target="#' + element.id + '"]');
+
+            // Strategy B: first datetimepicker next to the input
+            if (!container) {
+                const candidates = doc.querySelectorAll('.datetimepicker');
+                if (candidates.length === 1) {
+                    container = candidates[0];
+                } else if (candidates.length > 1) {
+                    // pick the one closest in the DOM tree
+                    let best = null;
+                    let bestDistance = Infinity;
+                    candidates.forEach(function (node) {
+                        let distance = 0;
+                        let current = node;
+                        while (current && current !== element && distance < 10) {
+                            current = current.parentElement;
+                            distance++;
+                        }
+                        if (current === element && distance < bestDistance) {
+                            best = node;
+                            bestDistance = distance;
+                        }
+                    });
+                    if (best) container = best;
+                }
             }
-            if (instance && typeof instance.value === 'function') {
-                return instance.value();
+
+            if (container && container.querySelector) {
+                // Today button usually has data-action="today" or a specific class
+                const todayButton =
+                    container.querySelector('[data-action="today"]') ||
+                    container.querySelector('.datetimepicker-today') ||
+                    container.querySelector('.is-today');
+
+                if (todayButton) {
+                    todayButton.addEventListener('click', function () {
+                        // Let bulma-calendar update the input value first
+                        setTimeout(function () {
+                            const value = element.value || '';
+                            console.debug('bulma-calendar Today click →', value);
+                            callback(value);
+                        }, 0);
+                    });
+                } else {
+                    console.debug('bulma-calendar: Today button not found for element id=', element.id);
+                }
+            } else {
+                console.debug('bulma-calendar: calendar container not found for element id=', element.id);
             }
-            if (instance && instance.data && typeof instance.data.value === 'function') {
-                return instance.data.value();
-            }
-            return '';
-        }
-
-        // Wire up official bulma-calendar events
-        if (typeof calendarInstance.on === 'function') {
-            // Fired when a date is selected (including via Today in most flows)
-            calendarInstance.on('select', function(datepicker) {
-                const value = getCurrentValue(calendarInstance, datepicker);
-                console.debug('bulma-calendar select →', value);
-                callback(value);
-            });
-
-            // Fired when the input is validated/confirmed
-            calendarInstance.on('validate', function(datepicker) {
-                const value = getCurrentValue(calendarInstance, datepicker);
-                console.debug('bulma-calendar validate →', value);
-                callback(value);
-            });
-
-            // Fired when the clear button is used
-            calendarInstance.on('clear', function(_datepicker) {
-                console.debug('bulma-calendar clear → ""');
-                callback('');
-            });
-
-            // Fired specifically when the Today button is clicked
-            calendarInstance.on('today', function(datepicker) {
-                const value = getCurrentValue(calendarInstance, datepicker);
-                console.debug('bulma-calendar today →', value);
-                callback(value);
-            });
-        } else {
-            console.warn('bulma-calendar instance has no .on() method; events will not fire');
+        } catch (e) {
+            console.warn('bulma-calendar: failed to hook Today button', e);
         }
     }
 
-    let instance = init.get(element.id);
-    if (instance && typeof instance.value === 'function') {
-        instance.value(initial_date);
-    } else if (instance && instance.data && typeof instance.data.value === 'function') {
-        instance.data.value(initial_date);
+    // Set initial value on the input; bulma-calendar will pick it up
+    if (typeof initial_date === 'string') {
+        element.value = initial_date;
+    } else if (initial_date && typeof initial_date.toString === 'function') {
+        element.value = initial_date.toString();
     }
 }
 
+/**
+ * Detach bookkeeping for the given id.
+ * (We do not destroy the JS widget explicitly; bulma-calendar v7 does not
+ * expose a stable destroy API in the CDN build.)
+ */
 export function detach_date_picker(id) {
     init.delete(id);
 }
