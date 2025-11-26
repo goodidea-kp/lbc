@@ -1,6 +1,6 @@
 use leptos::prelude::{
-    AriaAttributes, Children, ClassAttribute, ElementChild, Get, GlobalAttributes, IntoView,
-    OnAttribute, Signal, component, view,
+    AriaAttributes, Children, ClassAttribute, CustomAttribute, ElementChild, Get, GlobalAttributes,
+    IntoView, OnAttribute, Signal, component, view,
 };
 
 use crate::util::Size;
