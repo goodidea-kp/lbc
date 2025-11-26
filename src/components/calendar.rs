@@ -264,13 +264,21 @@ export function setup_date_picker(element, on_change, initial_date, date_format,
             return;
         }
 
-        if (typeof calendarInstance.on !== 'function') {
-            console.error('[Calendar] calendarInstance.on is not a function; instance=', calendarInstance);
-        }
-
-        if (typeof calendarInstance.value !== 'function') {
-            console.error('[Calendar] calendarInstance.value is not a function; instance=', calendarInstance);
-        }
+        // In bulma-calendar v6, the instance is a plain object; events are registered via addEventListener.
+        // See: https://github.com/michael-hack/bulma-calendar/blob/master/src/js/index.js
+        const addEvent = (name, handler) => {
+            if (typeof calendarInstance.on === 'function') {
+                // Older API (if present)
+                calendarInstance.on(name, handler);
+            } else if (typeof calendarInstance.addEventListener === 'function') {
+                calendarInstance.addEventListener(name, handler);
+            } else if (calendarInstance._events && typeof calendarInstance._events.on === 'function') {
+                // Internal event bus (fallback)
+                calendarInstance._events.on(name, handler);
+            } else {
+                console.warn('[Calendar] no known event API on instance for event', name, calendarInstance);
+            }
+        };
 
         init.set(element.id, calendarInstance);
         console.log('[Calendar] setup_date_picker: attached', {
@@ -285,7 +293,11 @@ export function setup_date_picker(element, on_change, initial_date, date_format,
         // Helper: read current value from instance
         const readValue = (source) => {
             try {
-                const v = calendarInstance.value();
+                const v = typeof calendarInstance.value === 'function'
+                    ? calendarInstance.value()
+                    : (calendarInstance.data && typeof calendarInstance.data.value === 'function'
+                        ? calendarInstance.data.value()
+                        : undefined);
                 console.log('[Calendar] readValue from', source, '->', v);
                 return v == null ? '' : String(v);
             } catch (e) {
@@ -295,40 +307,40 @@ export function setup_date_picker(element, on_change, initial_date, date_format,
         };
 
         // Normal selection: user picks a date/time
-        calendarInstance.on('select', function(_datepicker) {
+        addEvent('select', function(_datepicker) {
             const v = readValue('select');
             console.log('[Calendar] event: select -> calling on_change with', v);
             on_change(v);
         });
 
         // Validation event (e.g., user confirms selection)
-        calendarInstance.on('validate', function(_datepicker) {
+        addEvent('validate', function(_datepicker) {
             const v = readValue('validate');
             console.log('[Calendar] event: validate -> calling on_change with', v);
             on_change(v);
         });
 
         // Clear via clear button
-        calendarInstance.on('clear', function(_datepicker) {
+        addEvent('clear', function(_datepicker) {
             console.log('[Calendar] event: clear -> calling on_change with empty string');
             on_change('');
         });
 
         // Cancel button in datetime picker (bulma-calendar specific event)
-        calendarInstance.on('onCancelClickDateTimePicker', function(_dp) {
+        addEvent('onCancelClickDateTimePicker', function(_dp) {
             console.log('[Calendar] event: onCancelClickDateTimePicker -> calling on_change with empty string');
             on_change('');
         });
 
         // Today button click in datetime picker (bulma-calendar specific event)
-        calendarInstance.on('onTodayClickDateTimePicker', function(_dp) {
+        addEvent('onTodayClickDateTimePicker', function(_dp) {
             const v = readValue('onTodayClickDateTimePicker');
             console.log('[Calendar] event: onTodayClickDateTimePicker -> calling on_change with', v);
             on_change(v);
         });
 
         // Generic "today" event (older/newer versions)
-        calendarInstance.on('today',  function(_dp) {
+        addEvent('today',  function(_dp) {
             const v = readValue('today');
             console.log('[Calendar] event: today -> calling on_change with', v);
             on_change(v);
@@ -362,7 +374,7 @@ export function setup_date_picker(element, on_change, initial_date, date_format,
         }
 
         // Additionally, when popup opens, try to bind directly to the Today button if we can find it
-        calendarInstance.on('open', (_dp) => {
+        addEvent('open', (_dp) => {
             console.log('[Calendar] event: open for', element.id);
             // Delay to allow DOM to render
             setTimeout(() => {
@@ -419,7 +431,7 @@ export function setup_date_picker(element, on_change, initial_date, date_format,
         });
 
         // On close, remove container capture listener if present
-        calendarInstance.on('close', (_dp) => {
+        addEvent('close', (_dp) => {
             console.log('[Calendar] event: close for', element.id);
             const root = document.querySelector(`.datetimepicker[data-id="${element.id}"]`) 
                       || document.querySelector(`.bulma-calendar[data-id="${element.id}"]`);
@@ -437,7 +449,11 @@ export function setup_date_picker(element, on_change, initial_date, date_format,
     try {
         const inst = init.get(element.id);
         if (inst) {
-            const currentValue = inst.value();
+            const currentValue = typeof inst.value === 'function'
+                ? inst.value()
+                : (inst.data && typeof inst.data.value === 'function'
+                    ? inst.data.value()
+                    : undefined);
             console.log('[Calendar] post-init state', {
                 id: element.id,
                 currentValue,
@@ -457,8 +473,11 @@ export function setup_date_picker(element, on_change, initial_date, date_format,
         if (inst && typeof inst.value === 'function') {
             console.log('[Calendar] setting initial value via instance.value()', initial_date);
             inst.value(initial_date);
+        } else if (inst && inst.data && typeof inst.data.value === 'function') {
+            console.log('[Calendar] setting initial value via inst.data.value()', initial_date);
+            inst.data.value(initial_date);
         } else {
-            console.warn('[Calendar] instance.value is not a function for', element.id, inst);
+            console.warn('[Calendar] no known value setter for', element.id, inst);
         }
     } catch (e) {
         console.warn('[Calendar] failed to set initial value for', element.id, e);
