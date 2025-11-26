@@ -14,6 +14,8 @@ use leptos::children::Children;
 use leptos::prelude::{ClassAttribute, CustomAttribute, ElementChild, Get, Signal};
 use leptos::{IntoView, component, view};
 
+use crate::util::TestAttr;
+
 /// Available widths for a `Column`, mapped to Bulma classes.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ColumnSize {
@@ -59,9 +61,12 @@ pub fn Columns(
     #[prop(optional)] mobile: bool,
     #[prop(optional, into)] classes: Option<Signal<String>>,
 
-    /// Optional test identifier (renders as data-testid attribute)
+    /// Optional test attribute (renders as data-* attribute) on the root <div>.
+    ///
+    /// When provided as a &str or String, this becomes `data-testid="value"`.
+    /// You can also pass a full `TestAttr` to override the attribute key (e.g., `data-cy`).
     #[prop(optional, into)]
-    test_id: Option<String>,
+    test_attr: Option<TestAttr>,
 
     children: Children,
 ) -> impl IntoView {
@@ -91,7 +96,21 @@ pub fn Columns(
         parts.join(" ")
     };
 
-    view! { <div class=class data-testid=test_id>{children()}</div> }
+    let (data_testid, data_cy) = match &test_attr {
+        Some(attr) if attr.key == "data-testid" => (Some(attr.value.clone()), None),
+        Some(attr) if attr.key == "data-cy" => (None, Some(attr.value.clone())),
+        _ => (None, None),
+    };
+
+    view! {
+        <div
+            class=class
+            attr:data-testid=move || data_testid.clone()
+            attr:data-cy=move || data_cy.clone()
+        >
+            {children()}
+        </div>
+    }
 }
 
 /// A single column inside a `Columns` container.
@@ -103,9 +122,12 @@ pub fn Column(
     #[prop(optional)] narrow: bool,
     #[prop(optional, into)] classes: Option<Signal<String>>,
 
-    /// Optional test identifier (renders as data-testid attribute)
+    /// Optional test attribute (renders as data-* attribute) on the root <div>.
+    ///
+    /// When provided as a &str or String, this becomes `data-testid="value"`.
+    /// You can also pass a full `TestAttr` to override the attribute key (e.g., `data-cy`).
     #[prop(optional, into)]
-    test_id: Option<String>,
+    test_attr: Option<TestAttr>,
 
     children: Children,
 ) -> impl IntoView {
@@ -126,7 +148,21 @@ pub fn Column(
         parts.join(" ")
     };
 
-    view! { <div class=class data-testid=test_id>{children()}</div> }
+    let (data_testid, data_cy) = match &test_attr {
+        Some(attr) if attr.key == "data-testid" => (Some(attr.value.clone()), None),
+        Some(attr) if attr.key == "data-cy" => (None, Some(attr.value.clone())),
+        _ => (None, None),
+    };
+
+    view! {
+        <div
+            class=class
+            attr:data-testid=move || data_testid.clone()
+            attr:data-cy=move || data_cy.clone()
+        >
+            {children()}
+        </div>
+    }
 }
 
 #[cfg(test)]
@@ -156,15 +192,16 @@ mod tests {
 #[cfg(all(test, target_arch = "wasm32"))]
 mod wasm_tests {
     use super::*;
+    use crate::util::TestAttr;
     use leptos::prelude::*;
     use wasm_bindgen_test::*;
 
     wasm_bindgen_test_configure!(run_in_browser);
 
     #[wasm_bindgen_test]
-    fn columns_renders_test_id() {
+    fn columns_renders_test_attr_as_data_testid() {
         let html = view! {
-            <Columns centered=true multiline=true test_id="columns-test">
+            <Columns centered=true multiline=true test_attr=TestAttr::test_id("columns-test")>
                 <Column>"A"</Column>
             </Columns>
         }
@@ -178,7 +215,7 @@ mod wasm_tests {
     }
 
     #[wasm_bindgen_test]
-    fn columns_no_test_id_when_not_provided() {
+    fn columns_no_test_attr_when_not_provided() {
         let html = view! {
             <Columns centered=true multiline=true>
                 <Column>"A"</Column>
@@ -187,16 +224,16 @@ mod wasm_tests {
         .to_html();
 
         assert!(
-            !html.contains("data-testid"),
-            "expected no data-testid attribute on Columns when not provided; got: {}",
+            !html.contains("data-testid") && !html.contains("data-cy"),
+            "expected no data attribute on Columns when not provided; got: {}",
             html
         );
     }
 
     #[wasm_bindgen_test]
-    fn column_renders_test_id() {
+    fn column_renders_test_attr_as_data_testid() {
         let html = view! {
-            <Column size=ColumnSize::Half narrow=true test_id="column-test">
+            <Column size=ColumnSize::Half narrow=true test_attr=TestAttr::test_id("column-test")>
                 "X"
             </Column>
         }
@@ -210,7 +247,7 @@ mod wasm_tests {
     }
 
     #[wasm_bindgen_test]
-    fn column_no_test_id_when_not_provided() {
+    fn column_no_test_attr_when_not_provided() {
         let html = view! {
             <Column size=ColumnSize::Half narrow=true>
                 "X"
@@ -219,8 +256,8 @@ mod wasm_tests {
         .to_html();
 
         assert!(
-            !html.contains("data-testid"),
-            "expected no data-testid attribute on Column when not provided; got: {}",
+            !html.contains("data-testid") && !html.contains("data-cy"),
+            "expected no data attribute on Column when not provided; got: {}",
             html
         );
     }

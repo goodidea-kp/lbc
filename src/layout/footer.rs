@@ -13,6 +13,8 @@ use leptos::prelude::{
     component, view,
 };
 
+use crate::util::TestAttr;
+
 /// A simple responsive footer which can include anything.
 ///
 /// https://bulma.io/documentation/layout/footer/
@@ -20,9 +22,12 @@ use leptos::prelude::{
 pub fn Footer(
     #[prop(optional, into)] classes: Option<Signal<String>>,
 
-    /// Optional test identifier (renders as data-testid attribute)
+    /// Optional test attribute (renders as data-* attribute)
+    ///
+    /// When provided as a &str or String, this becomes `data-testid="value"`.
+    /// You can also pass a full `TestAttr` to override the attribute key.
     #[prop(optional, into)]
-    test_id: Option<String>,
+    test_attr: Option<TestAttr>,
 
     children: Children,
 ) -> impl IntoView {
@@ -37,8 +42,18 @@ pub fn Footer(
         }
     }
 
+    let (data_testid, data_cy) = match &test_attr {
+        Some(attr) if attr.key == "data-testid" => (Some(attr.value.clone()), None),
+        Some(attr) if attr.key == "data-cy" => (None, Some(attr.value.clone())),
+        _ => (None, None),
+    };
+
     view! {
-        <footer class=class_attr data-testid=test_id>
+        <footer
+            class=class_attr
+            attr:data-testid=move || data_testid.clone()
+            attr:data-cy=move || data_cy.clone()
+        >
             {children()}
         </footer>
     }
@@ -75,15 +90,16 @@ mod tests {
 #[cfg(all(test, target_arch = "wasm32"))]
 mod wasm_tests {
     use super::*;
+    use crate::util::TestAttr;
     use leptos::prelude::*;
     use wasm_bindgen_test::*;
 
     wasm_bindgen_test_configure!(run_in_browser);
 
     #[wasm_bindgen_test]
-    fn footer_renders_test_id() {
+    fn footer_renders_test_attr_as_data_testid() {
         let html = view! {
-            <Footer classes="has-background-dark" test_id="footer-test">
+            <Footer classes="has-background-dark" test_attr=TestAttr::test_id("footer-test")>
                 "X"
             </Footer>
         }
@@ -97,7 +113,7 @@ mod wasm_tests {
     }
 
     #[wasm_bindgen_test]
-    fn footer_no_test_id_when_not_provided() {
+    fn footer_no_test_attr_when_not_provided() {
         let html = view! {
             <Footer classes="has-background-dark">
                 "X"
@@ -106,8 +122,8 @@ mod wasm_tests {
         .to_html();
 
         assert!(
-            !html.contains("data-testid"),
-            "expected no data-testid attribute on Footer when not provided; got: {}",
+            !html.contains("data-testid") && !html.contains("data-cy"),
+            "expected no data attribute on Footer when not provided; got: {}",
             html
         );
     }

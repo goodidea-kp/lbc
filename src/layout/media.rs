@@ -17,6 +17,8 @@ use leptos::prelude::{
     Signal, component, view,
 };
 
+use crate::util::TestAttr;
+
 /// A UI element for repeatable and nestable content.
 /// https://bulma.io/documentation/layout/media-object/
 #[component]
@@ -26,9 +28,12 @@ pub fn Media(
     #[prop(optional, into)]
     tag: Option<Signal<String>>,
 
-    /// Optional test identifier (renders as data-testid attribute)
+    /// Optional test attribute (renders as data-* attribute)
+    ///
+    /// When provided as a &str or String, this becomes `data-testid="value"`.
+    /// You can also pass a full `TestAttr` to override the attribute key.
     #[prop(optional, into)]
-    test_id: Option<String>,
+    test_attr: Option<TestAttr>,
 
     children: Children,
 ) -> AnyView {
@@ -48,13 +53,73 @@ pub fn Media(
         .map(|t| t.get().to_lowercase())
         .unwrap_or_else(|| "div".to_string());
 
+    let (data_testid, data_cy) = match &test_attr {
+        Some(attr) if attr.key == "data-testid" => (Some(attr.value.clone()), None),
+        Some(attr) if attr.key == "data-cy" => (None, Some(attr.value.clone())),
+        _ => (None, None),
+    };
+
     match tag_name.as_str() {
-        "article" => view! { <article class=class_attr.clone() data-testid=test_id.clone()>{children()}</article> }.into_any(),
-        "section" => view! { <section class=class_attr.clone() data-testid=test_id.clone()>{children()}</section> }.into_any(),
-        "nav" => view! { <nav class=class_attr.clone() data-testid=test_id.clone()>{children()}</nav> }.into_any(),
-        "p" => view! { <p class=class_attr.clone() data-testid=test_id.clone()>{children()}</p> }.into_any(),
-        "span" => view! { <span class=class_attr.clone() data-testid=test_id.clone()>{children()}</span> }.into_any(),
-        _ => view! { <div class=class_attr.clone() data-testid=test_id>{children()}</div> }.into_any(),
+        "article" => view! {
+            <article
+                class=class_attr.clone()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
+                {children()}
+            </article>
+        }
+        .into_any(),
+        "section" => view! {
+            <section
+                class=class_attr.clone()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
+                {children()}
+            </section>
+        }
+        .into_any(),
+        "nav" => view! {
+            <nav
+                class=class_attr.clone()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
+                {children()}
+            </nav>
+        }
+        .into_any(),
+        "p" => view! {
+            <p
+                class=class_attr.clone()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
+                {children()}
+            </p>
+        }
+        .into_any(),
+        "span" => view! {
+            <span
+                class=class_attr.clone()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
+                {children()}
+            </span>
+        }
+        .into_any(),
+        _ => view! {
+            <div
+                class=class_attr.clone()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
+                {children()}
+            </div>
+        }
+        .into_any(),
     }
 }
 
@@ -66,9 +131,12 @@ pub fn MediaLeft(
     #[prop(optional, into)]
     tag: Option<Signal<String>>,
 
-    /// Optional test identifier (renders as data-testid attribute)
+    /// Optional test attribute (renders as data-* attribute)
+    ///
+    /// When provided as a &str or String, this becomes `data-testid="value"`.
+    /// You can also pass a full `TestAttr` to override the attribute key.
     #[prop(optional, into)]
-    test_id: Option<String>,
+    test_attr: Option<TestAttr>,
 
     children: Children,
 ) -> AnyView {
@@ -87,13 +155,73 @@ pub fn MediaLeft(
         .map(|t| t.get().to_lowercase())
         .unwrap_or_else(|| "div".to_string());
 
+    let (data_testid, data_cy) = match &test_attr {
+        Some(attr) if attr.key == "data-testid" => (Some(attr.value.clone()), None),
+        Some(attr) if attr.key == "data-cy" => (None, Some(attr.value.clone())),
+        _ => (None, None),
+    };
+
     match tag_name.as_str() {
-        "article" => view! { <article class=class_attr.clone() data-testid=test_id.clone()>{children()}</article> }.into_any(),
-        "section" => view! { <section class=class_attr.clone() data-testid=test_id.clone()>{children()}</section> }.into_any(),
-        "nav" => view! { <nav class=class_attr.clone() data-testid=test_id.clone()>{children()}</nav> }.into_any(),
-        "p" => view! { <p class=class_attr.clone() data-testid=test_id.clone()>{children()}</p> }.into_any(),
-        "span" => view! { <span class=class_attr.clone() data-testid=test_id.clone()>{children()}</span> }.into_any(),
-        _ => view! { <div class=class_attr.clone() data-testid=test_id>{children()}</div> }.into_any(),
+        "article" => view! {
+            <article
+                class=class_attr.clone()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
+                {children()}
+            </article>
+        }
+        .into_any(),
+        "section" => view! {
+            <section
+                class=class_attr.clone()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
+                {children()}
+            </section>
+        }
+        .into_any(),
+        "nav" => view! {
+            <nav
+                class=class_attr.clone()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
+                {children()}
+            </nav>
+        }
+        .into_any(),
+        "p" => view! {
+            <p
+                class=class_attr.clone()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
+                {children()}
+            </p>
+        }
+        .into_any(),
+        "span" => view! {
+            <span
+                class=class_attr.clone()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
+                {children()}
+            </span>
+        }
+        .into_any(),
+        _ => view! {
+            <div
+                class=class_attr.clone()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
+                {children()}
+            </div>
+        }
+        .into_any(),
     }
 }
 
@@ -105,9 +233,12 @@ pub fn MediaRight(
     #[prop(optional, into)]
     tag: Option<Signal<String>>,
 
-    /// Optional test identifier (renders as data-testid attribute)
+    /// Optional test attribute (renders as data-* attribute)
+    ///
+    /// When provided as a &str or String, this becomes `data-testid="value"`.
+    /// You can also pass a full `TestAttr` to override the attribute key.
     #[prop(optional, into)]
-    test_id: Option<String>,
+    test_attr: Option<TestAttr>,
 
     children: Children,
 ) -> AnyView {
@@ -126,13 +257,73 @@ pub fn MediaRight(
         .map(|t| t.get().to_lowercase())
         .unwrap_or_else(|| "div".to_string());
 
+    let (data_testid, data_cy) = match &test_attr {
+        Some(attr) if attr.key == "data-testid" => (Some(attr.value.clone()), None),
+        Some(attr) if attr.key == "data-cy" => (None, Some(attr.value.clone())),
+        _ => (None, None),
+    };
+
     match tag_name.as_str() {
-        "article" => view! { <article class=class_attr.clone() data-testid=test_id.clone()>{children()}</article> }.into_any(),
-        "section" => view! { <section class=class_attr.clone() data-testid=test_id.clone()>{children()}</section> }.into_any(),
-        "nav" => view! { <nav class=class_attr.clone() data-testid=test_id.clone()>{children()}</nav> }.into_any(),
-        "p" => view! { <p class=class_attr.clone() data-testid=test_id.clone()>{children()}</p> }.into_any(),
-        "span" => view! { <span class=class_attr.clone() data-testid=test_id.clone()>{children()}</span> }.into_any(),
-        _ => view! { <div class=class_attr.clone() data-testid=test_id>{children()}</div> }.into_any(),
+        "article" => view! {
+            <article
+                class=class_attr.clone()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
+                {children()}
+            </article>
+        }
+        .into_any(),
+        "section" => view! {
+            <section
+                class=class_attr.clone()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
+                {children()}
+            </section>
+        }
+        .into_any(),
+        "nav" => view! {
+            <nav
+                class=class_attr.clone()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
+                {children()}
+            </nav>
+        }
+        .into_any(),
+        "p" => view! {
+            <p
+                class=class_attr.clone()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
+                {children()}
+            </p>
+        }
+        .into_any(),
+        "span" => view! {
+            <span
+                class=class_attr.clone()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
+                {children()}
+            </span>
+        }
+        .into_any(),
+        _ => view! {
+            <div
+                class=class_attr.clone()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
+                {children()}
+            </div>
+        }
+        .into_any(),
     }
 }
 
@@ -144,9 +335,12 @@ pub fn MediaContent(
     #[prop(optional, into)]
     tag: Option<Signal<String>>,
 
-    /// Optional test identifier (renders as data-testid attribute)
+    /// Optional test attribute (renders as data-* attribute)
+    ///
+    /// When provided as a &str or String, this becomes `data-testid="value"`.
+    /// You can also pass a full `TestAttr` to override the attribute key.
     #[prop(optional, into)]
-    test_id: Option<String>,
+    test_attr: Option<TestAttr>,
 
     children: Children,
 ) -> AnyView {
@@ -165,13 +359,73 @@ pub fn MediaContent(
         .map(|t| t.get().to_lowercase())
         .unwrap_or_else(|| "div".to_string());
 
+    let (data_testid, data_cy) = match &test_attr {
+        Some(attr) if attr.key == "data-testid" => (Some(attr.value.clone()), None),
+        Some(attr) if attr.key == "data-cy" => (None, Some(attr.value.clone())),
+        _ => (None, None),
+    };
+
     match tag_name.as_str() {
-        "article" => view! { <article class=class_attr.clone() data-testid=test_id.clone()>{children()}</article> }.into_any(),
-        "section" => view! { <section class=class_attr.clone() data-testid=test_id.clone()>{children()}</section> }.into_any(),
-        "nav" => view! { <nav class=class_attr.clone() data-testid=test_id.clone()>{children()}</nav> }.into_any(),
-        "p" => view! { <p class=class_attr.clone() data-testid=test_id.clone()>{children()}</p> }.into_any(),
-        "span" => view! { <span class=class_attr.clone() data-testid=test_id.clone()>{children()}</span> }.into_any(),
-        _ => view! { <div class=class_attr.clone() data-testid=test_id>{children()}</div> }.into_any(),
+        "article" => view! {
+            <article
+                class=class_attr.clone()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
+                {children()}
+            </article>
+        }
+        .into_any(),
+        "section" => view! {
+            <section
+                class=class_attr.clone()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
+                {children()}
+            </section>
+        }
+        .into_any(),
+        "nav" => view! {
+            <nav
+                class=class_attr.clone()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
+                {children()}
+            </nav>
+        }
+        .into_any(),
+        "p" => view! {
+            <p
+                class=class_attr.clone()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
+                {children()}
+            </p>
+        }
+        .into_any(),
+        "span" => view! {
+            <span
+                class=class_attr.clone()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
+                {children()}
+            </span>
+        }
+        .into_any(),
+        _ => view! {
+            <div
+                class=class_attr.clone()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
+                {children()}
+            </div>
+        }
+        .into_any(),
     }
 }
 
@@ -238,15 +492,16 @@ mod tests {
 #[cfg(all(test, target_arch = "wasm32"))]
 mod wasm_tests {
     use super::*;
+    use crate::util::TestAttr;
     use leptos::prelude::*;
     use wasm_bindgen_test::*;
 
     wasm_bindgen_test_configure!(run_in_browser);
 
     #[wasm_bindgen_test]
-    fn media_renders_test_id() {
+    fn media_renders_test_attr_as_data_testid() {
         let html = view! {
-            <Media classes="custom" tag="article" test_id="media-test">
+            <Media classes="custom" tag="article" test_attr=TestAttr::test_id("media-test")>
                 "X"
             </Media>
         }
@@ -260,7 +515,7 @@ mod wasm_tests {
     }
 
     #[wasm_bindgen_test]
-    fn media_no_test_id_when_not_provided() {
+    fn media_no_test_attr_when_not_provided() {
         let html = view! {
             <Media classes="custom" tag="article">
                 "X"
@@ -269,16 +524,16 @@ mod wasm_tests {
         .to_html();
 
         assert!(
-            !html.contains("data-testid"),
-            "expected no data-testid attribute on Media when not provided; got: {}",
+            !html.contains("data-testid") && !html.contains("data-cy"),
+            "expected no data attribute on Media when not provided; got: {}",
             html
         );
     }
 
     #[wasm_bindgen_test]
-    fn media_left_renders_test_id() {
+    fn media_left_renders_test_attr_as_data_testid() {
         let html = view! {
-            <MediaLeft classes="custom" tag="section" test_id="media-left-test">
+            <MediaLeft classes="custom" tag="section" test_attr=TestAttr::test_id("media-left-test")>
                 "L"
             </MediaLeft>
         }
@@ -292,9 +547,9 @@ mod wasm_tests {
     }
 
     #[wasm_bindgen_test]
-    fn media_right_renders_test_id() {
+    fn media_right_renders_test_attr_as_data_testid() {
         let html = view! {
-            <MediaRight classes="custom" tag="section" test_id="media-right-test">
+            <MediaRight classes="custom" tag="section" test_attr=TestAttr::test_id("media-right-test")>
                 "R"
             </MediaRight>
         }
@@ -308,9 +563,9 @@ mod wasm_tests {
     }
 
     #[wasm_bindgen_test]
-    fn media_content_renders_test_id() {
+    fn media_content_renders_test_attr_as_data_testid() {
         let html = view! {
-            <MediaContent classes="custom" tag="section" test_id="media-content-test">
+            <MediaContent classes="custom" tag="section" test_attr=TestAttr::test_id("media-content-test")>
                 "C"
             </MediaContent>
         }

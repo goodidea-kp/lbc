@@ -14,6 +14,8 @@ use leptos::prelude::{
     component, view,
 };
 
+use crate::util::TestAttr;
+
 /// The 4 sizes available for heroes.
 ///
 /// https://bulma.io/documentation/layout/hero/#sizes
@@ -74,9 +76,12 @@ pub fn Hero<B, BIV>(
     #[prop(optional)]
     fixed_nav: bool,
 
-    /// Optional test identifier (renders as data-testid attribute) on the root <section>.
+    /// Optional test attribute (renders as data-* attribute) on the root <section>.
+    ///
+    /// When provided as a &str or String, this becomes `data-testid="value"`.
+    /// You can also pass a full `TestAttr` to override the attribute key.
     #[prop(optional, into)]
-    test_id: Option<String>,
+    test_attr: Option<TestAttr>,
 ) -> impl IntoView
 where
     B: Fn() -> BIV + 'static,
@@ -147,8 +152,18 @@ where
     let head_view: AnyView = head.unwrap_or_else(|| view! { <div></div> }.into_any());
     let foot_view: AnyView = foot.unwrap_or_else(|| view! { <div></div> }.into_any());
 
+    let (data_testid, data_cy) = match &test_attr {
+        Some(attr) if attr.key == "data-testid" => (Some(attr.value.clone()), None),
+        Some(attr) if attr.key == "data-cy" => (None, Some(attr.value.clone())),
+        _ => (None, None),
+    };
+
     view! {
-        <section class=class data-testid=test_id>
+        <section
+            class=class
+            attr:data-testid=move || data_testid.clone()
+            attr:data-cy=move || data_cy.clone()
+        >
             <div class=head_class>{head_view}</div>
             <div class=body_class>{body()}</div>
             <div class=foot_class>{foot_view}</div>
@@ -307,6 +322,7 @@ mod tests {
 #[cfg(all(test, target_arch = "wasm32"))]
 mod wasm_tests {
     use super::*;
+    use crate::util::TestAttr;
     use leptos::prelude::*;
     use leptos::prelude::IntoAny;
     use wasm_bindgen_test::*;
@@ -318,7 +334,7 @@ mod wasm_tests {
     }
 
     #[wasm_bindgen_test]
-    fn hero_renders_test_id() {
+    fn hero_renders_test_attr_as_data_testid() {
         let html = view! {
             <Hero
                 body=body()
@@ -326,7 +342,7 @@ mod wasm_tests {
                 bold=true
                 fixed_nav=true
                 classes="is-primary"
-                test_id="hero-test"
+                test_attr=TestAttr::test_id("hero-test")
                 head={view! { <div>"H"</div> }.into_any()}
                 foot={view! { <div>"F"</div> }.into_any()}
             />
@@ -341,7 +357,7 @@ mod wasm_tests {
     }
 
     #[wasm_bindgen_test]
-    fn hero_no_test_id_when_not_provided() {
+    fn hero_no_test_attr_when_not_provided() {
         let html = view! {
             <Hero
                 body=body()
@@ -356,8 +372,8 @@ mod wasm_tests {
         .to_html();
 
         assert!(
-            !html.contains("data-testid"),
-            "expected no data-testid attribute on Hero when not provided; got: {}",
+            !html.contains("data-testid") && !html.contains("data-cy"),
+            "expected no data attribute on Hero when not provided; got: {}",
             html
         );
     }

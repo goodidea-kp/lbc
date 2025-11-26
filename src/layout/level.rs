@@ -17,6 +17,8 @@ use leptos::prelude::{
     Signal, component, view,
 };
 
+use crate::util::TestAttr;
+
 /// A multi-purpose horizontal level, which can contain almost any other element.
 ///
 /// https://bulma.io/documentation/layout/level/
@@ -27,9 +29,12 @@ pub fn Level(
     #[prop(optional, into)]
     tag: Option<Signal<String>>,
 
-    /// Optional test identifier (renders as data-testid attribute)
+    /// Optional test attribute (renders as data-* attribute)
+    ///
+    /// When provided as a &str or String, this becomes `data-testid="value"`.
+    /// You can also pass a full `TestAttr` to override the attribute key.
     #[prop(optional, into)]
-    test_id: Option<String>,
+    test_attr: Option<TestAttr>,
 
     children: Children,
 ) -> AnyView {
@@ -49,12 +54,63 @@ pub fn Level(
         .map(|t| t.get().to_lowercase())
         .unwrap_or_else(|| "nav".to_string());
 
+    let (data_testid, data_cy) = match &test_attr {
+        Some(attr) if attr.key == "data-testid" => (Some(attr.value.clone()), None),
+        Some(attr) if attr.key == "data-cy" => (None, Some(attr.value.clone())),
+        _ => (None, None),
+    };
+
     let node: AnyView = match tag_name.as_str() {
-        "div" => view! { <div class=class_attr.clone() data-testid=test_id.clone()>{children()}</div> }.into_any(),
-        "section" => view! { <section class=class_attr.clone() data-testid=test_id.clone()>{children()}</section> }.into_any(),
-        "header" => view! { <header class=class_attr.clone() data-testid=test_id.clone()>{children()}</header> }.into_any(),
-        "footer" => view! { <footer class=class_attr.clone() data-testid=test_id.clone()>{children()}</footer> }.into_any(),
-        _ => view! { <nav class=class_attr.clone() data-testid=test_id>{children()}</nav> }.into_any(),
+        "div" => view! {
+            <div
+                class=class_attr.clone()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
+                {children()}
+            </div>
+        }
+        .into_any(),
+        "section" => view! {
+            <section
+                class=class_attr.clone()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
+                {children()}
+            </section>
+        }
+        .into_any(),
+        "header" => view! {
+            <header
+                class=class_attr.clone()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
+                {children()}
+            </header>
+        }
+        .into_any(),
+        "footer" => view! {
+            <footer
+                class=class_attr.clone()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
+                {children()}
+            </footer>
+        }
+        .into_any(),
+        _ => view! {
+            <nav
+                class=class_attr.clone()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
+                {children()}
+            </nav>
+        }
+        .into_any(),
     };
     node
 }
@@ -69,9 +125,12 @@ pub fn LevelLeft(
     #[prop(optional, into)]
     tag: Option<Signal<String>>,
 
-    /// Optional test identifier (renders as data-testid attribute)
+    /// Optional test attribute (renders as data-* attribute)
+    ///
+    /// When provided as a &str or String, this becomes `data-testid="value"`.
+    /// You can also pass a full `TestAttr` to override the attribute key.
     #[prop(optional, into)]
-    test_id: Option<String>,
+    test_attr: Option<TestAttr>,
 
     children: Children,
 ) -> AnyView {
@@ -91,10 +150,43 @@ pub fn LevelLeft(
         .map(|t| t.get().to_lowercase())
         .unwrap_or_else(|| "div".to_string());
 
+    let (data_testid, data_cy) = match &test_attr {
+        Some(attr) if attr.key == "data-testid" => (Some(attr.value.clone()), None),
+        Some(attr) if attr.key == "data-cy" => (None, Some(attr.value.clone())),
+        _ => (None, None),
+    };
+
     let node: AnyView = match tag_name.as_str() {
-        "section" => view! { <section class=class_attr.clone() data-testid=test_id.clone()>{children()}</section> }.into_any(),
-        "nav" => view! { <nav class=class_attr.clone() data-testid=test_id.clone()>{children()}</nav> }.into_any(),
-        _ => view! { <div class=class_attr.clone() data-testid=test_id>{children()}</div> }.into_any(),
+        "section" => view! {
+            <section
+                class=class_attr.clone()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
+                {children()}
+            </section>
+        }
+        .into_any(),
+        "nav" => view! {
+            <nav
+                class=class_attr.clone()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
+                {children()}
+            </nav>
+        }
+        .into_any(),
+        _ => view! {
+            <div
+                class=class_attr.clone()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
+                {children()}
+            </div>
+        }
+        .into_any(),
     };
     node
 }
@@ -109,9 +201,12 @@ pub fn LevelRight(
     #[prop(optional, into)]
     tag: Option<Signal<String>>,
 
-    /// Optional test identifier (renders as data-testid attribute)
+    /// Optional test attribute (renders as data-* attribute)
+    ///
+    /// When provided as a &str or String, this becomes `data-testid="value"`.
+    /// You can also pass a full `TestAttr` to override the attribute key.
     #[prop(optional, into)]
-    test_id: Option<String>,
+    test_attr: Option<TestAttr>,
 
     children: Children,
 ) -> AnyView {
@@ -131,10 +226,43 @@ pub fn LevelRight(
         .map(|t| t.get().to_lowercase())
         .unwrap_or_else(|| "div".to_string());
 
+    let (data_testid, data_cy) = match &test_attr {
+        Some(attr) if attr.key == "data-testid" => (Some(attr.value.clone()), None),
+        Some(attr) if attr.key == "data-cy" => (None, Some(attr.value.clone())),
+        _ => (None, None),
+    };
+
     let node: AnyView = match tag_name.as_str() {
-        "section" => view! { <section class=class_attr.clone() data-testid=test_id.clone()>{children()}</section> }.into_any(),
-        "nav" => view! { <nav class=class_attr.clone() data-testid=test_id.clone()>{children()}</nav> }.into_any(),
-        _ => view! { <div class=class_attr.clone() data-testid=test_id>{children()}</div> }.into_any(),
+        "section" => view! {
+            <section
+                class=class_attr.clone()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
+                {children()}
+            </section>
+        }
+        .into_any(),
+        "nav" => view! {
+            <nav
+                class=class_attr.clone()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
+                {children()}
+            </nav>
+        }
+        .into_any(),
+        _ => view! {
+            <div
+                class=class_attr.clone()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
+                {children()}
+            </div>
+        }
+        .into_any(),
     };
     node
 }
@@ -149,9 +277,12 @@ pub fn LevelItem(
     #[prop(optional, into)]
     tag: Option<Signal<String>>,
 
-    /// Optional test identifier (renders as data-testid attribute)
+    /// Optional test attribute (renders as data-* attribute)
+    ///
+    /// When provided as a &str or String, this becomes `data-testid="value"`.
+    /// You can also pass a full `TestAttr` to override the attribute key.
     #[prop(optional, into)]
-    test_id: Option<String>,
+    test_attr: Option<TestAttr>,
 
     children: Children,
 ) -> AnyView {
@@ -171,11 +302,53 @@ pub fn LevelItem(
         .map(|t| t.get().to_lowercase())
         .unwrap_or_else(|| "div".to_string());
 
+    let (data_testid, data_cy) = match &test_attr {
+        Some(attr) if attr.key == "data-testid" => (Some(attr.value.clone()), None),
+        Some(attr) if attr.key == "data-cy" => (None, Some(attr.value.clone())),
+        _ => (None, None),
+    };
+
     let node: AnyView = match tag_name.as_str() {
-        "p" => view! { <p class=class_attr.clone() data-testid=test_id.clone()>{children()}</p> }.into_any(),
-        "a" => view! { <a class=class_attr.clone() data-testid=test_id.clone()>{children()}</a> }.into_any(),
-        "span" => view! { <span class=class_attr.clone() data-testid=test_id.clone()>{children()}</span> }.into_any(),
-        _ => view! { <div class=class_attr.clone() data-testid=test_id>{children()}</div> }.into_any(),
+        "p" => view! {
+            <p
+                class=class_attr.clone()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
+                {children()}
+            </p>
+        }
+        .into_any(),
+        "a" => view! {
+            <a
+                class=class_attr.clone()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
+                {children()}
+            </a>
+        }
+        .into_any(),
+        "span" => view! {
+            <span
+                class=class_attr.clone()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
+                {children()}
+            </span>
+        }
+        .into_any(),
+        _ => view! {
+            <div
+                class=class_attr.clone()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
+                {children()}
+            </div>
+        }
+        .into_any(),
     };
     node
 }
@@ -290,15 +463,16 @@ mod tests {
 #[cfg(all(test, target_arch = "wasm32"))]
 mod wasm_tests {
     use super::*;
+    use crate::util::TestAttr;
     use leptos::prelude::*;
     use wasm_bindgen_test::*;
 
     wasm_bindgen_test_configure!(run_in_browser);
 
     #[wasm_bindgen_test]
-    fn level_renders_test_id() {
+    fn level_renders_test_attr_as_data_testid() {
         let html = view! {
-            <Level classes="custom" test_id="level-test">
+            <Level classes="custom" test_attr=TestAttr::test_id("level-test")>
                 "X"
             </Level>
         }
@@ -312,7 +486,7 @@ mod wasm_tests {
     }
 
     #[wasm_bindgen_test]
-    fn level_no_test_id_when_not_provided() {
+    fn level_no_test_attr_when_not_provided() {
         let html = view! {
             <Level classes="custom">
                 "X"
@@ -321,16 +495,16 @@ mod wasm_tests {
         .to_html();
 
         assert!(
-            !html.contains("data-testid"),
-            "expected no data-testid attribute on Level when not provided; got: {}",
+            !html.contains("data-testid") && !html.contains("data-cy"),
+            "expected no data attribute on Level when not provided; got: {}",
             html
         );
     }
 
     #[wasm_bindgen_test]
-    fn level_item_renders_test_id() {
+    fn level_item_renders_test_attr_as_data_testid() {
         let html = view! {
-            <LevelItem classes="custom" tag="p" test_id="level-item-test">
+            <LevelItem classes="custom" tag="p" test_attr=TestAttr::test_id("level-item-test")>
                 "Item"
             </LevelItem>
         }
@@ -344,7 +518,7 @@ mod wasm_tests {
     }
 
     #[wasm_bindgen_test]
-    fn level_item_no_test_id_when_not_provided() {
+    fn level_item_no_test_attr_when_not_provided() {
         let html = view! {
             <LevelItem classes="custom" tag="p">
                 "Item"
@@ -353,8 +527,8 @@ mod wasm_tests {
         .to_html();
 
         assert!(
-            !html.contains("data-testid"),
-            "expected no data-testid attribute on LevelItem when not provided; got: {}",
+            !html.contains("data-testid") && !html.contains("data-cy"),
+            "expected no data attribute on LevelItem when not provided; got: {}",
             html
         );
     }

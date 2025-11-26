@@ -234,7 +234,7 @@ mod tests {
 #[cfg(all(test, target_arch = "wasm32"))]
 mod wasm_tests {
     use super::*;
-    use crate::util::{Size, TestAttr};
+    use crate::util::TestAttr;
     use leptos::prelude::*;
     use wasm_bindgen_test::*;
 
@@ -248,7 +248,7 @@ mod wasm_tests {
                 vertical=true
                 size=TileSize::Four
                 classes="box"
-                test_attr="tile-test"
+                test_attr=TestAttr::test_id("tile-test")
             >
                 "X"
             </Tile>
@@ -272,8 +272,8 @@ mod wasm_tests {
         .to_html();
 
         assert!(
-            !html.contains("data-testid"),
-            "expected no data-testid attribute on Tile when not provided; got: {}",
+            !html.contains("data-testid") && !html.contains("data-cy"),
+            "expected no data attribute on Tile when not provided; got: {}",
             html
         );
     }
