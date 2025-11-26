@@ -83,11 +83,8 @@ impl From<&str> for TestAttr {
 /// - `None`  => no attribute is rendered
 /// - `Some(TestAttr { key, value })` => renders `key="value"`.
 pub fn test_attr_attr(test_attr: Option<TestAttr>) -> impl CustomAttribute<String, String> {
-    move |element| {
-        if let Some(attr) = &test_attr {
-            element.attr(&attr.key, &attr.value)
-        } else {
-            element
-        }
-    }
+    // In Tachys/Leptos 0.8, `attr:..=` accepts a zero-arg reactive function
+    // that yields an Attribute. We return either a key/value tuple or `()`.
+    let ta = test_attr;
+    move || ta.as_ref().map(|attr| (attr.key.clone(), attr.value.clone()))
 }
