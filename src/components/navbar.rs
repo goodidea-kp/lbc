@@ -1,6 +1,6 @@
 use leptos::prelude::{
-    AriaAttributes, Children, ClassAttribute, ElementChild, Get, GetUntracked, GlobalAttributes,
-    IntoAny, IntoView, OnAttribute, Set, Signal, StyleAttribute, component, view,
+    AriaAttributes, Children, ClassAttribute, CustomAttribute, ElementChild, Get, GetUntracked,
+    GlobalAttributes, IntoAny, IntoView, OnAttribute, Set, Signal, StyleAttribute, component, view,
 };
 use std::rc::Rc;
 
@@ -70,6 +70,10 @@ pub fn Navbar(
     /// "navbar-end" slot (right part of the menu).
     #[prop(optional)]
     end: Option<Children>,
+
+    /// Optional test identifier (renders as data-testid attribute) on the root <nav>.
+    #[prop(optional, into)]
+    test_id: Option<String>,
 ) -> impl IntoView {
     let class = {
         let classes = classes.clone();
@@ -106,7 +110,7 @@ pub fn Navbar(
     let padded_initial = padded.get_untracked();
 
     view! {
-        <nav class=move || class() role="navigation" aria-label="main navigation">
+        <nav class=move || class() role="navigation" aria-label="main navigation" data-testid=test_id>
             {
                 if padded_initial {
                     view! {
@@ -221,6 +225,10 @@ pub fn NavbarItem(
     href: Signal<String>,
     #[prop(optional, into)] rel: Signal<String>,
     #[prop(optional, into)] target: Signal<String>,
+
+    /// Optional test identifier (renders as data-testid attribute)
+    #[prop(optional, into)]
+    test_id: Option<String>,
 ) -> impl IntoView {
     let class = {
         let classes = classes.clone();
@@ -268,13 +276,14 @@ pub fn NavbarItem(
                rel=rel.get()
                target=target.get()
                on:click=click_cb.clone()
+               data-testid=test_id
             >
                 {children()}
             </a>
         }
         .into_any(),
         NavbarItemTag::Div => view! {
-            <div class=move || class() on:click=click_cb.clone()>
+            <div class=move || class() on:click=click_cb.clone() data-testid=test_id>
                 {children()}
             </div>
         }
@@ -288,6 +297,10 @@ pub fn NavbarDivider(
     /// Extra classes to apply to the divider.
     #[prop(optional, into)]
     classes: Signal<String>,
+
+    /// Optional test identifier (renders as data-testid attribute)
+    #[prop(optional, into)]
+    test_id: Option<String>,
 ) -> impl IntoView {
     let class = {
         let classes = classes.clone();
@@ -300,7 +313,7 @@ pub fn NavbarDivider(
             }
         }
     };
-    view! { <hr class=move || class() /> }
+    view! { <hr class=move || class() data-testid=test_id /> }
 }
 
 /// A navbar dropdown menu: "navbar-item has-dropdown" parent + "navbar-dropdown".
@@ -335,6 +348,10 @@ pub fn NavbarDropdown(
     /// Use the boxed style for the dropdown.
     #[prop(optional, into)]
     boxed: Signal<bool>,
+
+    /// Optional test identifier (renders as data-testid attribute)
+    #[prop(optional, into)]
+    test_id: Option<String>,
 ) -> impl IntoView {
     let (is_active, set_is_active) = leptos::prelude::signal(false);
 
@@ -399,7 +416,7 @@ pub fn NavbarDropdown(
     };
 
     view! {
-        <div class=move || container_class()>
+        <div class=move || container_class() data-testid=test_id>
             {move || if is_active.get() && !hoverable.get() {
                 // overlay to close when clicking outside
                 view! {

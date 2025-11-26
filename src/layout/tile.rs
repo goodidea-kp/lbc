@@ -11,8 +11,8 @@ Follows existing crate patterns:
 */
 
 use leptos::prelude::{
-    AnyView, Children, ClassAttribute, ElementChild, Get, GetUntracked, IntoAny, Signal, component,
-    view,
+    AnyView, Children, ClassAttribute, CustomAttribute, ElementChild, Get, GetUntracked, IntoAny,
+    Signal, component, view,
 };
 
 /// Tile context modifiers.
@@ -83,6 +83,11 @@ pub fn Tile(
     /// The HTML tag to use for this component (div, article, section, nav, span)
     #[prop(optional, into)]
     tag: Option<Signal<String>>,
+
+    /// Optional test identifier (renders as data-testid attribute)
+    #[prop(optional, into)]
+    test_id: Option<String>,
+
     children: Children,
 ) -> AnyView {
     // Build class attribute: "tile [ctx] [is-vertical] [is-N] [extra classes]"
@@ -116,11 +121,11 @@ pub fn Tile(
         .unwrap_or_else(|| "div".to_string());
 
     let node: AnyView = match tag_name.as_str() {
-        "article" => view! { <article class=class_attr.clone()>{children()}</article> }.into_any(),
-        "section" => view! { <section class=class_attr.clone()>{children()}</section> }.into_any(),
-        "nav" => view! { <nav class=class_attr.clone()>{children()}</nav> }.into_any(),
-        "span" => view! { <span class=class_attr.clone()>{children()}</span> }.into_any(),
-        _ => view! { <div class=class_attr.clone()>{children()}</div> }.into_any(),
+        "article" => view! { <article class=class_attr.clone() data-testid=test_id.clone()>{children()}</article> }.into_any(),
+        "section" => view! { <section class=class_attr.clone() data-testid=test_id.clone()>{children()}</section> }.into_any(),
+        "nav" => view! { <nav class=class_attr.clone() data-testid=test_id.clone()>{children()}</nav> }.into_any(),
+        "span" => view! { <span class=class_attr.clone() data-testid=test_id.clone()>{children()}</span> }.into_any(),
+        _ => view! { <div class=class_attr.clone() data-testid=test_id>{children()}</div> }.into_any(),
     };
     node
 }
@@ -163,6 +168,47 @@ mod tests {
         assert!(
             html.contains("tile is-child box"),
             "expected child and box classes, got: {}",
+            html
+        );
+    }
+}
+
+#[cfg(all(test, target_arch = "wasm32"))]
+mod wasm_tests {
+    use super::*;
+    use leptos::prelude::*;
+    use wasm_bindgen_test::*;
+
+    wasm_bindgen_test_configure!(run_in_browser);
+
+    #[wasm_bindgen_test]
+    fn tile_renders_test_id() {
+        let html = view! {
+            <Tile ctx=TileCtx::Parent vertical=true size=TileSize::Four classes="box" test_id="tile-test">
+                "X"
+            </Tile>
+        }
+        .to_html();
+
+        assert!(
+            html.contains(r#"data-testid="tile-test""#),
+            "expected data-testid attribute on Tile; got: {}",
+            html
+        );
+    }
+
+    #[wasm_bindgen_test]
+    fn tile_no_test_id_when_not_provided() {
+        let html = view! {
+            <Tile ctx=TileCtx::Parent vertical=true size=TileSize::Four classes="box">
+                "X"
+            </Tile>
+        }
+        .to_html();
+
+        assert!(
+            !html.contains("data-testid"),
+            "expected no data-testid attribute on Tile when not provided; got: {}",
             html
         );
     }

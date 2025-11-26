@@ -1,5 +1,5 @@
 use leptos::prelude::{
-    Children, ClassAttribute, ElementChild, Get, IntoView, Signal, component, view,
+    Children, ClassAttribute, CustomAttribute, ElementChild, Get, IntoView, Signal, component, view,
 };
 
 fn base_class(root: &str, extra: &str) -> String {
@@ -18,6 +18,10 @@ pub fn Card(
     #[prop(optional, into)]
     classes: Signal<String>,
 
+    /// Optional test identifier (renders as data-testid attribute)
+    #[prop(optional, into)]
+    test_id: Option<String>,
+
     /// Card body content (header, image, content, footer, etc.).
     children: Children,
 ) -> impl IntoView {
@@ -27,7 +31,7 @@ pub fn Card(
     };
 
     view! {
-        <div class=class>
+        <div class=class data-testid=test_id>
             {children()}
         </div>
     }
@@ -41,6 +45,10 @@ pub fn CardHeader(
     #[prop(optional, into)]
     classes: Signal<String>,
 
+    /// Optional test identifier (renders as data-testid attribute)
+    #[prop(optional, into)]
+    test_id: Option<String>,
+
     /// Children rendered in the header (e.g., title, icons).
     children: Children,
 ) -> impl IntoView {
@@ -50,7 +58,7 @@ pub fn CardHeader(
     };
 
     view! {
-        <header class=class>
+        <header class=class data-testid=test_id>
             {children()}
         </header>
     }
@@ -64,6 +72,10 @@ pub fn CardImage(
     #[prop(optional, into)]
     classes: Signal<String>,
 
+    /// Optional test identifier (renders as data-testid attribute)
+    #[prop(optional, into)]
+    test_id: Option<String>,
+
     /// Typically contains a Bulma "image" container.
     children: Children,
 ) -> impl IntoView {
@@ -73,7 +85,7 @@ pub fn CardImage(
     };
 
     view! {
-        <div class=class>
+        <div class=class data-testid=test_id>
             {children()}
         </div>
     }
@@ -87,6 +99,10 @@ pub fn CardContent(
     #[prop(optional, into)]
     classes: Signal<String>,
 
+    /// Optional test identifier (renders as data-testid attribute)
+    #[prop(optional, into)]
+    test_id: Option<String>,
+
     /// Body content of the card.
     children: Children,
 ) -> impl IntoView {
@@ -96,7 +112,7 @@ pub fn CardContent(
     };
 
     view! {
-        <div class=class>
+        <div class=class data-testid=test_id>
             {children()}
         </div>
     }
@@ -110,6 +126,10 @@ pub fn CardFooter(
     #[prop(optional, into)]
     classes: Signal<String>,
 
+    /// Optional test identifier (renders as data-testid attribute)
+    #[prop(optional, into)]
+    test_id: Option<String>,
+
     /// Footer items (commonly multiple <a class="card-footer-item">).
     children: Children,
 ) -> impl IntoView {
@@ -119,7 +139,7 @@ pub fn CardFooter(
     };
 
     view! {
-        <footer class=class>
+        <footer class=class data-testid=test_id>
             {children()}
         </footer>
     }
@@ -190,6 +210,111 @@ mod tests {
         assert!(
             html.contains("card-footer-item"),
             "expected footer items; got: {}",
+            html
+        );
+    }
+}
+
+#[cfg(all(test, target_arch = "wasm32"))]
+mod wasm_tests {
+    use super::*;
+    use leptos::prelude::*;
+    use wasm_bindgen_test::*;
+
+    wasm_bindgen_test_configure!(run_in_browser);
+
+    #[wasm_bindgen_test]
+    fn card_renders_test_id() {
+        let html = view! {
+            <Card classes="extra" test_id="card-test">
+                <div>"X"</div>
+            </Card>
+        }
+        .to_html();
+
+        assert!(
+            html.contains(r#"data-testid="card-test""#),
+            "expected data-testid attribute on Card; got: {}",
+            html
+        );
+    }
+
+    #[wasm_bindgen_test]
+    fn card_no_test_id_when_not_provided() {
+        let html = view! {
+            <Card>
+                <div>"X"</div>
+            </Card>
+        }
+        .to_html();
+
+        assert!(
+            !html.contains("data-testid"),
+            "expected no data-testid on Card when not provided; got: {}",
+            html
+        );
+    }
+
+    #[wasm_bindgen_test]
+    fn card_header_renders_test_id() {
+        let html = view! {
+            <CardHeader classes="extra" test_id="card-header-test">
+                <p>"Header"</p>
+            </CardHeader>
+        }
+        .to_html();
+
+        assert!(
+            html.contains(r#"data-testid="card-header-test""#),
+            "expected data-testid on CardHeader; got: {}",
+            html
+        );
+    }
+
+    #[wasm_bindgen_test]
+    fn card_image_renders_test_id() {
+        let html = view! {
+            <CardImage test_id="card-image-test">
+                <figure class="image is-4by3"><img src="#" alt=""/></figure>
+            </CardImage>
+        }
+        .to_html();
+
+        assert!(
+            html.contains(r#"data-testid="card-image-test""#),
+            "expected data-testid on CardImage; got: {}",
+            html
+        );
+    }
+
+    #[wasm_bindgen_test]
+    fn card_content_renders_test_id() {
+        let html = view! {
+            <CardContent test_id="card-content-test">
+                <p>"Body"</p>
+            </CardContent>
+        }
+        .to_html();
+
+        assert!(
+            html.contains(r#"data-testid="card-content-test""#),
+            "expected data-testid on CardContent; got: {}",
+            html
+        );
+    }
+
+    #[wasm_bindgen_test]
+    fn card_footer_renders_test_id() {
+        let html = view! {
+            <CardFooter test_id="card-footer-test">
+                <a class="card-footer-item">"One"</a>
+            </CardFooter>
+        }
+        .to_html();
+
+        assert!(
+            html.contains(r#"data-testid="card-footer-test""#),
+            "expected data-testid on CardFooter; got: {}",
             html
         );
     }

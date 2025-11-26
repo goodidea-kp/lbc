@@ -1,5 +1,5 @@
 use leptos::prelude::{
-    Children, ClassAttribute, ElementChild, Get, IntoView, Signal, component, view,
+    Children, ClassAttribute, CustomAttribute, ElementChild, Get, IntoView, Signal, component, view,
 };
 
 use crate::util::Size;
@@ -65,6 +65,10 @@ pub fn Tabs(
     /// Make this component fullwidth.
     #[prop(optional, into)]
     fullwidth: Signal<bool>,
+
+    /// Optional test identifier (renders as data-testid attribute)
+    #[prop(optional, into)]
+    test_id: Option<String>,
 ) -> impl IntoView {
     let class = {
         let classes = classes.clone();
@@ -104,7 +108,7 @@ pub fn Tabs(
     };
 
     view! {
-        <div class=move || class()>
+        <div class=move || class() data-testid=test_id>
             <ul>
                 {children()}
             </ul>
@@ -115,6 +119,7 @@ pub fn Tabs(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::util::Size;
     use leptos::prelude::RenderHtml;
 
     #[test]
@@ -182,5 +187,56 @@ mod tests {
                 html
             );
         }
+    }
+}
+
+#[cfg(all(test, target_arch = "wasm32"))]
+mod wasm_tests {
+    use super::*;
+    use crate::util::Size;
+    use leptos::prelude::*;
+    use wasm_bindgen_test::*;
+
+    wasm_bindgen_test_configure!(run_in_browser);
+
+    #[wasm_bindgen_test]
+    fn tabs_renders_test_id() {
+        let html = view! {
+            <Tabs
+                classes="is-toggle"
+                alignment=Alignment::Centered
+                size=Size::Small
+                boxed=true
+                toggle=true
+                rounded=true
+                fullwidth=true
+                test_id="tabs-test"
+            >
+                <li class="is-active"><a>"One"</a></li>
+            </Tabs>
+        }
+        .to_html();
+
+        assert!(
+            html.contains(r#"data-testid="tabs-test""#),
+            "expected data-testid attribute on Tabs; got: {}",
+            html
+        );
+    }
+
+    #[wasm_bindgen_test]
+    fn tabs_no_test_id_when_not_provided() {
+        let html = view! {
+            <Tabs>
+                <li class="is-active"><a>"One"</a></li>
+            </Tabs>
+        }
+        .to_html();
+
+        assert!(
+            !html.contains("data-testid"),
+            "expected no data-testid attribute on Tabs when not provided; got: {}",
+            html
+        );
     }
 }

@@ -1,6 +1,7 @@
 use crate::components::tabs::Alignment;
 use leptos::prelude::{
-    AriaAttributes, Children, ClassAttribute, ElementChild, Get, IntoView, Signal, component, view,
+    AriaAttributes, Children, ClassAttribute, CustomAttribute, ElementChild, Get, IntoView, Signal,
+    component, view,
 };
 
 /// The 3 sizes available for a breadcrumb.
@@ -64,6 +65,10 @@ pub fn Breadcrumb(
     /// The separator type to use between breadcrumb segments.
     #[prop(optional, into)]
     separator: Signal<Option<BreadcrumbSeparator>>,
+
+    /// Optional test identifier (renders as data-testid attribute)
+    #[prop(optional, into)]
+    test_id: Option<String>,
 ) -> impl IntoView {
     let class = {
         let classes = classes.clone();
@@ -93,7 +98,7 @@ pub fn Breadcrumb(
     };
 
     view! {
-        <nav class=move || class() aria-label="breadcrumbs">
+        <nav class=move || class() aria-label="breadcrumbs" data-testid=test_id>
             <ul>
                 {children()}
             </ul>
@@ -162,6 +167,54 @@ mod tests {
         assert!(
             html.contains("has-dot-separator"),
             "expected separator class; got: {}",
+            html
+        );
+    }
+}
+
+#[cfg(all(test, target_arch = "wasm32"))]
+mod wasm_tests {
+    use super::*;
+    use crate::components::tabs::Alignment;
+    use leptos::prelude::*;
+    use wasm_bindgen_test::*;
+
+    wasm_bindgen_test_configure!(run_in_browser);
+
+    #[wasm_bindgen_test]
+    fn breadcrumb_renders_test_id() {
+        let html = view! {
+            <Breadcrumb
+                classes="extra"
+                size=Signal::derive(|| Some(BreadcrumbSize::Small))
+                alignment=Signal::derive(|| Some(Alignment::Centered))
+                separator=Signal::derive(|| Some(BreadcrumbSeparator::Arrow))
+                test_id="breadcrumb-test"
+            >
+                <li><a href="#">"A"</a></li>
+            </Breadcrumb>
+        }
+        .to_html();
+
+        assert!(
+            html.contains(r#"data-testid="breadcrumb-test""#),
+            "expected data-testid attribute; got: {}",
+            html
+        );
+    }
+
+    #[wasm_bindgen_test]
+    fn breadcrumb_no_test_id_when_not_provided() {
+        let html = view! {
+            <Breadcrumb>
+                <li><a href="#">"A"</a></li>
+            </Breadcrumb>
+        }
+        .to_html();
+
+        assert!(
+            !html.contains("data-testid"),
+            "expected no data-testid attribute; got: {}",
             html
         );
     }

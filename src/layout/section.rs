@@ -10,7 +10,8 @@ Follows existing crate patterns:
 */
 
 use leptos::prelude::{
-    Children, ClassAttribute, ElementChild, GetUntracked, IntoView, Signal, component, view,
+    Children, ClassAttribute, CustomAttribute, ElementChild, GetUntracked, IntoView, Signal,
+    component, view,
 };
 
 /// The 2 sizes available for sections, which controls spacing.
@@ -36,6 +37,11 @@ impl SectionSize {
 pub fn Section(
     #[prop(optional)] size: Option<SectionSize>,
     #[prop(optional, into)] classes: Option<Signal<String>>,
+
+    /// Optional test identifier (renders as data-testid attribute)
+    #[prop(optional, into)]
+    test_id: Option<String>,
+
     children: Children,
 ) -> impl IntoView {
     // Build class attribute: "section [is-medium|is-large] [extra classes]"
@@ -58,7 +64,7 @@ pub fn Section(
     }
 
     view! {
-        <section class=class_attr>
+        <section class=class_attr data-testid=test_id>
             {children()}
         </section>
     }
@@ -96,6 +102,47 @@ mod tests {
         assert!(
             html.contains(r#"class="section is-large custom cls""#),
             "expected combined classes, got: {}",
+            html
+        );
+    }
+}
+
+#[cfg(all(test, target_arch = "wasm32"))]
+mod wasm_tests {
+    use super::*;
+    use leptos::prelude::*;
+    use wasm_bindgen_test::*;
+
+    wasm_bindgen_test_configure!(run_in_browser);
+
+    #[wasm_bindgen_test]
+    fn section_renders_test_id() {
+        let html = view! {
+            <Section size=SectionSize::Medium classes="custom" test_id="section-test">
+                "X"
+            </Section>
+        }
+        .to_html();
+
+        assert!(
+            html.contains(r#"data-testid="section-test""#),
+            "expected data-testid attribute on Section; got: {}",
+            html
+        );
+    }
+
+    #[wasm_bindgen_test]
+    fn section_no_test_id_when_not_provided() {
+        let html = view! {
+            <Section size=SectionSize::Medium classes="custom">
+                "X"
+            </Section>
+        }
+        .to_html();
+
+        assert!(
+            !html.contains("data-testid"),
+            "expected no data-testid attribute on Section when not provided; got: {}",
             html
         );
     }

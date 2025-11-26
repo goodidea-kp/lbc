@@ -1,6 +1,6 @@
 use leptos::prelude::{
-    Children, ClassAttribute, ElementChild, Get, IntoAny, IntoView, OnAttribute, Signal, component,
-    view,
+    Children, ClassAttribute, CustomAttribute, ElementChild, Get, IntoAny, IntoView, OnAttribute,
+    Signal, component, view,
 };
 use std::rc::Rc;
 
@@ -15,6 +15,10 @@ pub fn Panel(
     /// Optional heading text for the panel.
     #[prop(optional, into)]
     heading: Option<Signal<String>>,
+
+    /// Optional test identifier (renders as data-testid attribute)
+    #[prop(optional, into)]
+    test_id: Option<String>,
 
     /// Panel body content.
     children: Children,
@@ -41,7 +45,7 @@ pub fn Panel(
     };
 
     view! {
-        <nav class=move || class()>
+        <nav class=move || class() data-testid=test_id>
             {heading_node()}
             {children()}
         </nav>
@@ -54,8 +58,12 @@ pub fn Panel(
 pub fn PanelTabs(
     /// Tab anchors (<a>) to render inside this container.
     children: Children,
+
+    /// Optional test identifier (renders as data-testid attribute)
+    #[prop(optional, into)]
+    test_id: Option<String>,
 ) -> impl IntoView {
-    view! { <p class="panel-tabs">{children()}</p> }
+    view! { <p class="panel-tabs" data-testid=test_id>{children()}</p> }
 }
 
 /// An individual element of the panel.
@@ -77,6 +85,10 @@ pub fn PanelBlock(
     /// Extra classes to apply to the panel-block element.
     #[prop(optional, into)]
     classes: Signal<String>,
+
+    /// Optional test identifier (renders as data-testid attribute)
+    #[prop(optional, into)]
+    test_id: Option<String>,
 
     /// Child content for the block.
     children: Children,
@@ -108,11 +120,11 @@ pub fn PanelBlock(
                 }
             };
             match tag.as_deref().unwrap_or("div") {
-                "a" => view! { <a class=move || class() on:click=on_click_cb.clone()>{children()}</a> }.into_any(),
-                "button" => view! { <button class=move || class() on:click=on_click_cb.clone()>{children()}</button> }.into_any(),
-                "p" => view! { <p class=move || class() on:click=on_click_cb.clone()>{children()}</p> }.into_any(),
-                "span" => view! { <span class=move || class() on:click=on_click_cb.clone()>{children()}</span> }.into_any(),
-                _ => view! { <div class=move || class() on:click=on_click_cb.clone()>{children()}</div> }.into_any(),
+                "a" => view! { <a class=move || class() on:click=on_click_cb.clone() data-testid=test_id.clone()>{children()}</a> }.into_any(),
+                "button" => view! { <button class=move || class() on:click=on_click_cb.clone() data-testid=test_id.clone()>{children()}</button> }.into_any(),
+                "p" => view! { <p class=move || class() on:click=on_click_cb.clone() data-testid=test_id.clone()>{children()}</p> }.into_any(),
+                "span" => view! { <span class=move || class() on:click=on_click_cb.clone() data-testid=test_id.clone()>{children()}</span> }.into_any(),
+                _ => view! { <div class=move || class() on:click=on_click_cb.clone() data-testid=test_id>{children()}</div> }.into_any(),
             }
         }
     }
@@ -192,6 +204,100 @@ mod tests {
         assert!(
             html.contains("<a") && html.contains("panel-block"),
             "expected <a> tag with panel-block class; got: {}",
+            html
+        );
+    }
+}
+
+#[cfg(all(test, target_arch = "wasm32"))]
+mod wasm_tests {
+    use super::*;
+    use leptos::prelude::*;
+    use std::rc::Rc;
+    use wasm_bindgen_test::*;
+
+    wasm_bindgen_test_configure!(run_in_browser);
+
+    fn noop() -> Option<Rc<dyn Fn()>> {
+        Some(Rc::new(|| {}))
+    }
+
+    #[wasm_bindgen_test]
+    fn panel_renders_test_id() {
+        let html = view! {
+            <Panel classes="is-primary" heading="Heading" test_id="panel-test">
+                <div class="panel-block">"Child"</div>
+            </Panel>
+        }
+        .to_html();
+
+        assert!(
+            html.contains(r#"data-testid="panel-test""#),
+            "expected data-testid attribute on Panel; got: {}",
+            html
+        );
+    }
+
+    #[wasm_bindgen_test]
+    fn panel_no_test_id_when_not_provided() {
+        let html = view! {
+            <Panel heading="Heading">
+                <div class="panel-block">"Child"</div>
+            </Panel>
+        }
+        .to_html();
+
+        assert!(
+            !html.contains("data-testid"),
+            "expected no data-testid attribute on Panel when not provided; got: {}",
+            html
+        );
+    }
+
+    #[wasm_bindgen_test]
+    fn panel_tabs_renders_test_id() {
+        let html = view! {
+            <PanelTabs test_id="panel-tabs-test">
+                <a>"All"</a>
+            </PanelTabs>
+        }
+        .to_html();
+
+        assert!(
+            html.contains(r#"data-testid="panel-tabs-test""#),
+            "expected data-testid attribute on PanelTabs; got: {}",
+            html
+        );
+    }
+
+    #[wasm_bindgen_test]
+    fn panel_block_renders_test_id() {
+        let html = view! {
+            <PanelBlock active=true on_click=noop() test_id="panel-block-test">
+                "Item"
+            </PanelBlock>
+        }
+        .to_html();
+
+        assert!(
+            html.contains(r#"data-testid="panel-block-test""#),
+            "expected data-testid attribute on PanelBlock; got: {}",
+            html
+        );
+    }
+
+    #[wasm_bindgen_test]
+    fn panel_block_no_test_id_when_not_provided() {
+        let html = view! {
+            <PanelBlock active=true on_click=noop()>
+                "Item"
+            </PanelBlock>
+        }
+        .to_html();
+
+        assert!(
+            !html.contains("data-testid"),
+            "expected no data-testid attribute on PanelBlock when not provided; got: {}",
             html
         );
     }

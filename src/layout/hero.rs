@@ -10,7 +10,8 @@ Follows existing crate patterns:
 */
 
 use leptos::prelude::{
-    AnyView, ClassAttribute, ElementChild, Get, IntoAny, IntoView, Signal, component, view,
+    AnyView, ClassAttribute, CustomAttribute, ElementChild, Get, IntoAny, IntoView, Signal,
+    component, view,
 };
 
 /// The 4 sizes available for heroes.
@@ -72,6 +73,10 @@ pub fn Hero<B, BIV>(
     /// https://bulma.io/documentation/layout/hero/#fullheight-with-navbar
     #[prop(optional)]
     fixed_nav: bool,
+
+    /// Optional test identifier (renders as data-testid attribute) on the root <section>.
+    #[prop(optional, into)]
+    test_id: Option<String>,
 ) -> impl IntoView
 where
     B: Fn() -> BIV + 'static,
@@ -143,7 +148,7 @@ where
     let foot_view: AnyView = foot.unwrap_or_else(|| view! { <div></div> }.into_any());
 
     view! {
-        <section class=class>
+        <section class=class data-testid=test_id>
             <div class=head_class>{head_view}</div>
             <div class=body_class>{body()}</div>
             <div class=foot_class>{foot_view}</div>
@@ -294,6 +299,65 @@ mod tests {
         assert!(
             html.contains("is-fullheight-with-navbar"),
             "expected fixed_nav to add fullheight-with-navbar class, got: {}",
+            html
+        );
+    }
+}
+
+#[cfg(all(test, target_arch = "wasm32"))]
+mod wasm_tests {
+    use super::*;
+    use leptos::prelude::*;
+    use leptos::prelude::IntoAny;
+    use wasm_bindgen_test::*;
+
+    wasm_bindgen_test_configure!(run_in_browser);
+
+    fn body() -> impl Fn() -> AnyView {
+        || view! { <p>"Body"</p> }.into_any()
+    }
+
+    #[wasm_bindgen_test]
+    fn hero_renders_test_id() {
+        let html = view! {
+            <Hero
+                body=body()
+                size=HeroSize::Medium
+                bold=true
+                fixed_nav=true
+                classes="is-primary"
+                test_id="hero-test"
+                head={view! { <div>"H"</div> }.into_any()}
+                foot={view! { <div>"F"</div> }.into_any()}
+            />
+        }
+        .to_html();
+
+        assert!(
+            html.contains(r#"data-testid="hero-test""#),
+            "expected data-testid attribute on Hero; got: {}",
+            html
+        );
+    }
+
+    #[wasm_bindgen_test]
+    fn hero_no_test_id_when_not_provided() {
+        let html = view! {
+            <Hero
+                body=body()
+                size=HeroSize::Medium
+                bold=true
+                fixed_nav=true
+                classes="is-primary"
+                head={view! { <div>"H"</div> }.into_any()}
+                foot={view! { <div>"F"</div> }.into_any()}
+            />
+        }
+        .to_html();
+
+        assert!(
+            !html.contains("data-testid"),
+            "expected no data-testid attribute on Hero when not provided; got: {}",
             html
         );
     }

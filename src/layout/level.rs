@@ -13,8 +13,8 @@ Follows existing crate patterns:
 */
 
 use leptos::prelude::{
-    AnyView, Children, ClassAttribute, ElementChild, Get, GetUntracked, IntoAny, Signal, component,
-    view,
+    AnyView, Children, ClassAttribute, CustomAttribute, ElementChild, Get, GetUntracked, IntoAny,
+    Signal, component, view,
 };
 
 /// A multi-purpose horizontal level, which can contain almost any other element.
@@ -26,6 +26,11 @@ pub fn Level(
     /// The HTML tag to use for this component (nav, div, section, header, footer)
     #[prop(optional, into)]
     tag: Option<Signal<String>>,
+
+    /// Optional test identifier (renders as data-testid attribute)
+    #[prop(optional, into)]
+    test_id: Option<String>,
+
     children: Children,
 ) -> AnyView {
     // Build class attribute: "level [extra classes]"
@@ -45,11 +50,11 @@ pub fn Level(
         .unwrap_or_else(|| "nav".to_string());
 
     let node: AnyView = match tag_name.as_str() {
-        "div" => view! { <div class=class_attr.clone()>{children()}</div> }.into_any(),
-        "section" => view! { <section class=class_attr.clone()>{children()}</section> }.into_any(),
-        "header" => view! { <header class=class_attr.clone()>{children()}</header> }.into_any(),
-        "footer" => view! { <footer class=class_attr.clone()>{children()}</footer> }.into_any(),
-        _ => view! { <nav class=class_attr.clone()>{children()}</nav> }.into_any(),
+        "div" => view! { <div class=class_attr.clone() data-testid=test_id.clone()>{children()}</div> }.into_any(),
+        "section" => view! { <section class=class_attr.clone() data-testid=test_id.clone()>{children()}</section> }.into_any(),
+        "header" => view! { <header class=class_attr.clone() data-testid=test_id.clone()>{children()}</header> }.into_any(),
+        "footer" => view! { <footer class=class_attr.clone() data-testid=test_id.clone()>{children()}</footer> }.into_any(),
+        _ => view! { <nav class=class_attr.clone() data-testid=test_id>{children()}</nav> }.into_any(),
     };
     node
 }
@@ -63,6 +68,11 @@ pub fn LevelLeft(
     /// The HTML tag to use for this component (div, section, nav)
     #[prop(optional, into)]
     tag: Option<Signal<String>>,
+
+    /// Optional test identifier (renders as data-testid attribute)
+    #[prop(optional, into)]
+    test_id: Option<String>,
+
     children: Children,
 ) -> AnyView {
     // Build class attribute: "level-left [extra classes]"
@@ -82,9 +92,9 @@ pub fn LevelLeft(
         .unwrap_or_else(|| "div".to_string());
 
     let node: AnyView = match tag_name.as_str() {
-        "section" => view! { <section class=class_attr.clone()>{children()}</section> }.into_any(),
-        "nav" => view! { <nav class=class_attr.clone()>{children()}</nav> }.into_any(),
-        _ => view! { <div class=class_attr.clone()>{children()}</div> }.into_any(),
+        "section" => view! { <section class=class_attr.clone() data-testid=test_id.clone()>{children()}</section> }.into_any(),
+        "nav" => view! { <nav class=class_attr.clone() data-testid=test_id.clone()>{children()}</nav> }.into_any(),
+        _ => view! { <div class=class_attr.clone() data-testid=test_id>{children()}</div> }.into_any(),
     };
     node
 }
@@ -98,6 +108,11 @@ pub fn LevelRight(
     /// The HTML tag to use for this component (div, section, nav)
     #[prop(optional, into)]
     tag: Option<Signal<String>>,
+
+    /// Optional test identifier (renders as data-testid attribute)
+    #[prop(optional, into)]
+    test_id: Option<String>,
+
     children: Children,
 ) -> AnyView {
     // Build class attribute: "level-right [extra classes]"
@@ -117,9 +132,9 @@ pub fn LevelRight(
         .unwrap_or_else(|| "div".to_string());
 
     let node: AnyView = match tag_name.as_str() {
-        "section" => view! { <section class=class_attr.clone()>{children()}</section> }.into_any(),
-        "nav" => view! { <nav class=class_attr.clone()>{children()}</nav> }.into_any(),
-        _ => view! { <div class=class_attr.clone()>{children()}</div> }.into_any(),
+        "section" => view! { <section class=class_attr.clone() data-testid=test_id.clone()>{children()}</section> }.into_any(),
+        "nav" => view! { <nav class=class_attr.clone() data-testid=test_id.clone()>{children()}</nav> }.into_any(),
+        _ => view! { <div class=class_attr.clone() data-testid=test_id>{children()}</div> }.into_any(),
     };
     node
 }
@@ -133,6 +148,11 @@ pub fn LevelItem(
     /// The HTML tag to use for this component (div, p, a, span)
     #[prop(optional, into)]
     tag: Option<Signal<String>>,
+
+    /// Optional test identifier (renders as data-testid attribute)
+    #[prop(optional, into)]
+    test_id: Option<String>,
+
     children: Children,
 ) -> AnyView {
     // Build class attribute: "level-item [extra classes]"
@@ -152,10 +172,10 @@ pub fn LevelItem(
         .unwrap_or_else(|| "div".to_string());
 
     let node: AnyView = match tag_name.as_str() {
-        "p" => view! { <p class=class_attr.clone()>{children()}</p> }.into_any(),
-        "a" => view! { <a class=class_attr.clone()>{children()}</a> }.into_any(),
-        "span" => view! { <span class=class_attr.clone()>{children()}</span> }.into_any(),
-        _ => view! { <div class=class_attr.clone()>{children()}</div> }.into_any(),
+        "p" => view! { <p class=class_attr.clone() data-testid=test_id.clone()>{children()}</p> }.into_any(),
+        "a" => view! { <a class=class_attr.clone() data-testid=test_id.clone()>{children()}</a> }.into_any(),
+        "span" => view! { <span class=class_attr.clone() data-testid=test_id.clone()>{children()}</span> }.into_any(),
+        _ => view! { <div class=class_attr.clone() data-testid=test_id>{children()}</div> }.into_any(),
     };
     node
 }
@@ -262,6 +282,79 @@ mod tests {
         assert!(
             html.contains("level-item"),
             "expected level-item, got: {}",
+            html
+        );
+    }
+}
+
+#[cfg(all(test, target_arch = "wasm32"))]
+mod wasm_tests {
+    use super::*;
+    use leptos::prelude::*;
+    use wasm_bindgen_test::*;
+
+    wasm_bindgen_test_configure!(run_in_browser);
+
+    #[wasm_bindgen_test]
+    fn level_renders_test_id() {
+        let html = view! {
+            <Level classes="custom" test_id="level-test">
+                "X"
+            </Level>
+        }
+        .to_html();
+
+        assert!(
+            html.contains(r#"data-testid="level-test""#),
+            "expected data-testid attribute on Level; got: {}",
+            html
+        );
+    }
+
+    #[wasm_bindgen_test]
+    fn level_no_test_id_when_not_provided() {
+        let html = view! {
+            <Level classes="custom">
+                "X"
+            </Level>
+        }
+        .to_html();
+
+        assert!(
+            !html.contains("data-testid"),
+            "expected no data-testid attribute on Level when not provided; got: {}",
+            html
+        );
+    }
+
+    #[wasm_bindgen_test]
+    fn level_item_renders_test_id() {
+        let html = view! {
+            <LevelItem classes="custom" tag="p" test_id="level-item-test">
+                "Item"
+            </LevelItem>
+        }
+        .to_html();
+
+        assert!(
+            html.contains(r#"data-testid="level-item-test""#),
+            "expected data-testid attribute on LevelItem; got: {}",
+            html
+        );
+    }
+
+    #[wasm_bindgen_test]
+    fn level_item_no_test_id_when_not_provided() {
+        let html = view! {
+            <LevelItem classes="custom" tag="p">
+                "Item"
+            </LevelItem>
+        }
+        .to_html();
+
+        assert!(
+            !html.contains("data-testid"),
+            "expected no data-testid attribute on LevelItem when not provided; got: {}",
             html
         );
     }

@@ -1,5 +1,5 @@
 use leptos::prelude::{
-    Children, ClassAttribute, ElementChild, Get, IntoView, Signal, component, view,
+    Children, ClassAttribute, CustomAttribute, ElementChild, Get, IntoView, Signal, component, view,
 };
 
 fn base_class(root: &str, extra: &str) -> String {
@@ -18,6 +18,10 @@ pub fn Menu(
     #[prop(optional, into)]
     classes: Signal<String>,
 
+    /// Optional test identifier (renders as data-testid attribute)
+    #[prop(optional, into)]
+    test_id: Option<String>,
+
     /// Child content of the menu (MenuLabel, MenuList, etc.).
     children: Children,
 ) -> impl IntoView {
@@ -27,7 +31,7 @@ pub fn Menu(
     };
 
     view! {
-        <aside class=class>
+        <aside class=class data-testid=test_id>
             {children()}
         </aside>
     }
@@ -43,6 +47,10 @@ pub fn MenuList(
     /// Extra classes for the "menu-list" container.
     #[prop(optional, into)]
     classes: Signal<String>,
+
+    /// Optional test identifier (renders as data-testid attribute)
+    #[prop(optional, into)]
+    test_id: Option<String>,
 ) -> impl IntoView {
     let class = {
         let classes = classes.clone();
@@ -50,7 +58,7 @@ pub fn MenuList(
     };
 
     view! {
-        <ul class=class>
+        <ul class=class data-testid=test_id>
             {children()}
         </ul>
     }
@@ -67,6 +75,10 @@ pub fn MenuLabel(
     /// The text of the label.
     #[prop(optional, into)]
     text: Signal<String>,
+
+    /// Optional test identifier (renders as data-testid attribute)
+    #[prop(optional, into)]
+    test_id: Option<String>,
 ) -> impl IntoView {
     let class = {
         let classes = classes.clone();
@@ -74,7 +86,7 @@ pub fn MenuLabel(
     };
 
     view! {
-        <p class=class>
+        <p class=class data-testid=test_id>
             {text.get()}
         </p>
     }
@@ -122,6 +134,77 @@ mod tests {
         assert!(
             html.contains("General"),
             "expected label text; got: {}",
+            html
+        );
+    }
+}
+
+#[cfg(all(test, target_arch = "wasm32"))]
+mod wasm_tests {
+    use super::*;
+    use leptos::prelude::*;
+    use wasm_bindgen_test::*;
+
+    wasm_bindgen_test_configure!(run_in_browser);
+
+    #[wasm_bindgen_test]
+    fn menu_renders_test_id() {
+        let html = view! {
+            <Menu classes="extra" test_id="menu-test">
+                <div>"X"</div>
+            </Menu>
+        }
+        .to_html();
+
+        assert!(
+            html.contains(r#"data-testid="menu-test""#),
+            "expected data-testid attribute on Menu; got: {}",
+            html
+        );
+    }
+
+    #[wasm_bindgen_test]
+    fn menu_no_test_id_when_not_provided() {
+        let html = view! {
+            <Menu>
+                <div>"X"</div>
+            </Menu>
+        }
+        .to_html();
+
+        assert!(
+            !html.contains("data-testid"),
+            "expected no data-testid attribute on Menu when not provided; got: {}",
+            html
+        );
+    }
+
+    #[wasm_bindgen_test]
+    fn menu_list_renders_test_id() {
+        let html = view! {
+            <MenuList classes="extra" test_id="menu-list-test">
+                <li><a>"Item"</a></li>
+            </MenuList>
+        }
+        .to_html();
+
+        assert!(
+            html.contains(r#"data-testid="menu-list-test""#),
+            "expected data-testid attribute on MenuList; got: {}",
+            html
+        );
+    }
+
+    #[wasm_bindgen_test]
+    fn menu_label_renders_test_id() {
+        let html = view! {
+            <MenuLabel text="General" test_id="menu-label-test" />
+        }
+        .to_html();
+
+        assert!(
+            html.contains(r#"data-testid="menu-label-test""#),
+            "expected data-testid attribute on MenuLabel; got: {}",
             html
         );
     }

@@ -9,7 +9,8 @@ Follows existing crate patterns:
 */
 
 use leptos::prelude::{
-    Children, ClassAttribute, ElementChild, GetUntracked, IntoView, Signal, component, view,
+    Children, ClassAttribute, CustomAttribute, ElementChild, GetUntracked, IntoView, Signal,
+    component, view,
 };
 
 /// A simple responsive footer which can include anything.
@@ -18,6 +19,11 @@ use leptos::prelude::{
 #[component]
 pub fn Footer(
     #[prop(optional, into)] classes: Option<Signal<String>>,
+
+    /// Optional test identifier (renders as data-testid attribute)
+    #[prop(optional, into)]
+    test_id: Option<String>,
+
     children: Children,
 ) -> impl IntoView {
     // Build class attribute: "footer [extra classes]"
@@ -32,7 +38,7 @@ pub fn Footer(
     }
 
     view! {
-        <footer class=class_attr>
+        <footer class=class_attr data-testid=test_id>
             {children()}
         </footer>
     }
@@ -61,6 +67,47 @@ mod tests {
         assert!(
             html.contains(r#"class="footer has-background-dark has-text-white""#),
             "expected combined classes, got: {}",
+            html
+        );
+    }
+}
+
+#[cfg(all(test, target_arch = "wasm32"))]
+mod wasm_tests {
+    use super::*;
+    use leptos::prelude::*;
+    use wasm_bindgen_test::*;
+
+    wasm_bindgen_test_configure!(run_in_browser);
+
+    #[wasm_bindgen_test]
+    fn footer_renders_test_id() {
+        let html = view! {
+            <Footer classes="has-background-dark" test_id="footer-test">
+                "X"
+            </Footer>
+        }
+        .to_html();
+
+        assert!(
+            html.contains(r#"data-testid="footer-test""#),
+            "expected data-testid attribute on Footer; got: {}",
+            html
+        );
+    }
+
+    #[wasm_bindgen_test]
+    fn footer_no_test_id_when_not_provided() {
+        let html = view! {
+            <Footer classes="has-background-dark">
+                "X"
+            </Footer>
+        }
+        .to_html();
+
+        assert!(
+            !html.contains("data-testid"),
+            "expected no data-testid attribute on Footer when not provided; got: {}",
             html
         );
     }
