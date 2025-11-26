@@ -198,10 +198,29 @@ pub fn Calendar(
 }
 
 // JS bridge that attaches bulmaCalendar to the provided element and wires a change callback.
+//
+// This implementation listens to several events, including:
+// - "select" / "validate" for normal date changes
+// - "clear" / "onCancelClickDateTimePicker" for clearing the value
+// - "onTodayClickDateTimePicker" / "today" for clicking the Today button
+//
+// All of these events call back into Rust via `on_change` or `on_today`.
 #[cfg(target_arch = "wasm32")]
 #[leptos::wasm_bindgen::prelude::wasm_bindgen(inline_js = r#"
 let init = new Map();
 let todayDelegates = new Map();
+
+/**
+ * Attach bulmaCalendar to the given element and wire up Rust callbacks.
+ *
+ * @param {Element} element - the input element
+ * @param {Function} on_change - Rust callback for general value changes (select/validate/clear/cancel)
+ * @param {Function} on_today - Rust callback specifically for Today button clicks
+ * @param {string} initial_date - initial value
+ * @param {string} date_format - date format string
+ * @param {string} time_format - time format string
+ * @param {string} picker_type - "date" or "datetime"
+ */
 export function setup_date_picker(element, on_change, on_today, initial_date, date_format, time_format, picker_type) {
     if (!init.has(element.id)) {
         let calendarInstances = bulmaCalendar.attach(element, {
@@ -220,30 +239,47 @@ export function setup_date_picker(element, on_change, on_today, initial_date, da
             time_format,
             picker_type
         });
+
+        // Normal selection: user picks a date/time
         calendarInstance.on('select', function(datepicker) {
             const v = datepicker?.data?.value?.();
             console.log('[Calendar] event: select', v);
             on_change(v);
         });
+
+        // Validation event (e.g., user confirms selection)
+        calendarInstance.on('validate', function(datepicker) {
+            const v = datepicker?.data?.value?.();
+            console.log('[Calendar] event: validate', v);
+            on_change(v);
+        });
+
+        // Clear via clear button
         calendarInstance.on('clear', function(_datepicker) {
             console.log('[Calendar] event: clear');
             on_change('');
         });
-        calendarInstance.on('onCancelClickDateTimePicker', (_dp) => {
+
+        // Cancel button in datetime picker (bulma-calendar specific event)
+        calendarInstance.on('onCancelClickDateTimePicker', function(_dp) {
             console.log('[Calendar] event: onCancelClickDateTimePicker');
             on_change('');
         });
-        // Today click handlers: support multiple possible event names across versions
-        calendarInstance.on('onTodayClickDateTimePicker',  (dp) => {
+
+        // Today button click in datetime picker (bulma-calendar specific event)
+        calendarInstance.on('onTodayClickDateTimePicker', function(dp) {
             const v = dp?.data?.value?.();
             console.log('[Calendar] event: onTodayClickDateTimePicker', v);
             on_today(v);
         });
+
+        // Generic "today" event (older/newer versions)
         calendarInstance.on('today',  (dp) => {
             const v = dp?.data?.value?.();
             console.log('[Calendar] event: today', v);
             on_today(v);
         });
+
         // As a robust fallback across versions/skins, bind a delegated listener to the Today button
         // We scope it to this calendar instance using the closest calendar container with data-id
         const delegate = function(e) {
@@ -268,6 +304,7 @@ export function setup_date_picker(element, on_change, on_today, initial_date, da
             todayDelegates.set(element.id, delegate);
             console.log('[Calendar] today delegated listener bound', { id: element.id });
         }
+
         // Additionally, when popup opens, try to bind directly to the Today button if we can find it
         calendarInstance.on('open', (_dp) => {
             console.log('[Calendar] event: open');
@@ -323,6 +360,7 @@ export function setup_date_picker(element, on_change, on_today, initial_date, da
                 }
             }, 0);
         });
+
         // On close, remove container capture listener if present
         calendarInstance.on('close', (_dp) => {
             const root = document.querySelector(`.datetimepicker[data-id="${element.id}"]`) 
@@ -333,14 +371,13 @@ export function setup_date_picker(element, on_change, on_today, initial_date, da
                 console.log('[Calendar] today container listener removed', { id: element.id });
             }
         });
-        calendarInstance.on('validate', function(datepicker) {
-            const v = datepicker?.data?.value?.();
-            console.log('[Calendar] event: validate', v);
-            on_change(v);
-        });
     }
     init.get(element.id).value(initial_date);
 }
+
+/**
+ * Detach bulmaCalendar and any delegated listeners for the given id.
+ */
 export function detach_date_picker(id) {
     try {
         const key = typeof id === 'string' ? id : id?.toString?.() || String(id);
@@ -470,6 +507,7 @@ mod tests {
 #[cfg(all(test, target_arch = "wasm32"))]
 mod wasm_tests {
     use super::*;
+    use crate::util::TestAttr;
     use leptos::prelude::*;
     use std::sync::Arc;
     use wasm_bindgen_test::*;
