@@ -1,5 +1,5 @@
 use leptos::children::Children;
-use leptos::prelude::{ClassAttribute, ElementChild, Get, Signal};
+use leptos::prelude::{ClassAttribute, CustomAttribute, ElementChild, Get, Signal};
 use leptos::{component, view, IntoView};
 
 /// Bold notification blocks, to alert your users of something.

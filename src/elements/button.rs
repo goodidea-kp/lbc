@@ -1,6 +1,6 @@
 use leptos::children::Children;
 use leptos::ev::MouseEvent;
-use leptos::prelude::{ClassAttribute, ElementChild, Get, OnAttribute, Signal};
+use leptos::prelude::{ClassAttribute, CustomAttribute, ElementChild, Get, OnAttribute, Signal};
 use leptos::{IntoView, component, view};
 
 use crate::util::Size;
@@ -48,6 +48,9 @@ pub fn Button(
     #[prop(optional, into)] disabled: Signal<bool>,
     #[prop(optional, into)] classes: Option<Signal<String>>,
     #[prop(optional)] on_click: Option<std::rc::Rc<dyn Fn(MouseEvent)>>,
+    /// Optional test identifier (renders as data-testid attribute)
+    #[prop(optional, into)]
+    test_id: Option<String>,
     children: Children,
 ) -> impl IntoView {
     let on_click_callback = on_click.clone();
@@ -88,6 +91,7 @@ pub fn Button(
         <button
             class=class
             disabled=move || disabled.get()
+            data-testid=test_id
             on:click=move |event| {
                 if let Some(cb) = on_click_callback.as_ref() {
                     (cb)(event);
@@ -133,6 +137,43 @@ mod tests {
         assert!(
             html.contains(r#"class="button""#) && html.contains("disabled"),
             "expected disabled attribute on button, got: {}",
+            html
+        );
+    }
+}
+
+#[cfg(all(test, target_arch = "wasm32"))]
+mod wasm_tests {
+    use super::*;
+    use leptos::prelude::*;
+    use wasm_bindgen_test::*;
+
+    wasm_bindgen_test_configure!(run_in_browser);
+
+    #[wasm_bindgen_test]
+    fn button_renders_test_id() {
+        let html = view! {
+            <Button test_id="test-button">"Content"</Button>
+        }
+        .to_html();
+
+        assert!(
+            html.contains(r#"data-testid="test-button""#),
+            "expected data-testid attribute; got: {}",
+            html
+        );
+    }
+
+    #[wasm_bindgen_test]
+    fn button_no_test_id_when_not_provided() {
+        let html = view! {
+            <Button>"Content"</Button>
+        }
+        .to_html();
+
+        assert!(
+            !html.contains("data-testid"),
+            "expected no data-testid attribute; got: {}",
             html
         );
     }

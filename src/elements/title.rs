@@ -5,7 +5,8 @@ Bulma docs: https://bulma.io/documentation/elements/title/
 */
 
 use leptos::prelude::{
-    AnyView, Children, ClassAttribute, ElementChild, Get, IntoAny, Signal, component, view,
+    AnyView, Children, ClassAttribute, CustomAttribute, ElementChild, Get, IntoAny, Signal,
+    component, view,
 };
 
 /// The six sizes available for titles & subtitles.

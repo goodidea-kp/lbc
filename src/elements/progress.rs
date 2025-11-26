@@ -1,4 +1,4 @@
-use leptos::prelude::{ClassAttribute, ElementChild, Get, Signal};
+use leptos::prelude::{ClassAttribute, CustomAttribute, ElementChild, Get, Signal};
 use leptos::tachys::view::any_view::IntoAny;
 use leptos::{component, view, IntoView};
 

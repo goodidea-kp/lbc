@@ -6,8 +6,8 @@ Bulma docs: https://bulma.io/documentation/elements/delete/
 
 use leptos::ev::MouseEvent;
 use leptos::prelude::{
-    AnyView, Children, ClassAttribute, ElementChild, Get, IntoAny, OnAttribute, Signal, component,
-    view,
+    AnyView, Children, ClassAttribute, CustomAttribute, ElementChild, Get, IntoAny, OnAttribute,
+    Signal, component, view,
 };
 use std::sync::Arc;
 

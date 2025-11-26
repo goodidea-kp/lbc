@@ -5,8 +5,8 @@ Bulma docs: https://bulma.io/documentation/elements/table/
 */
 
 use leptos::prelude::{
-    AnyView, Children, ClassAttribute, ElementChild, Get, GetUntracked, IntoAny, Signal, component,
-    view,
+    AnyView, Children, ClassAttribute, CustomAttribute, ElementChild, Get, GetUntracked, IntoAny,
+    Signal, component, view,
 };
 
 /// An HTML table component.

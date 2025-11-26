@@ -5,7 +5,8 @@ Bulma docs: https://bulma.io/documentation/elements/icon/
 */
 
 use leptos::prelude::{
-    Children, ClassAttribute, ElementChild, GetUntracked, IntoView, Signal, component, view,
+    Children, ClassAttribute, CustomAttribute, ElementChild, GetUntracked, IntoView, Signal,
+    component, view,
 };
 
 use crate::util::Size;

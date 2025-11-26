@@ -5,8 +5,8 @@ Bulma docs: https://bulma.io/documentation/elements/content/
 */
 
 use leptos::prelude::{
-    AnyView, Children, ClassAttribute, ElementChild, Get, GetUntracked, IntoAny, Signal, component,
-    view,
+    AnyView, Children, ClassAttribute, CustomAttribute, ElementChild, Get, GetUntracked, IntoAny,
+    Signal, component, view,
 };
 
 /// A single component to wrap WYSIWYG generated content, where only HTML tags are available.
