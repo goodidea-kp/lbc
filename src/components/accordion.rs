@@ -15,14 +15,12 @@ Notes
 */
 
 use leptos::prelude::{
-    AriaAttributes, Children, ClassAttribute, ElementChild, Get, GlobalAttributes, IntoView,
-    OnAttribute, Signal, component, view,
+    AriaAttributes, Children, ClassAttribute, CustomAttribute, ElementChild, Get, GlobalAttributes,
+    IntoView, OnAttribute, Signal, component, view,
 };
 
 #[cfg(target_arch = "wasm32")]
 use leptos::wasm_bindgen::JsValue;
-#[cfg(target_arch = "wasm32")]
-use leptos::wasm_bindgen::prelude::wasm_bindgen;
 #[cfg(target_arch = "wasm32")]
 use leptos::web_sys::Element;
 
