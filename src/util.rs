@@ -82,7 +82,7 @@ impl From<&str> for TestAttr {
 /// When `test_attr` is:
 /// - `None`  => no attribute is rendered
 /// - `Some(TestAttr { key, value })` => renders `key="value"`.
-pub fn test_attr_attr(test_attr: Option<TestAttr>) -> impl CustomAttribute {
+pub fn test_attr_attr(test_attr: Option<TestAttr>) -> impl CustomAttribute<String, String> {
     move |el| {
         if let Some(attr) = &test_attr {
             el.attr(&attr.key, &attr.value)
