@@ -206,7 +206,7 @@ export function detach_date_picker(id) {
 "#)]
 #[cfg(target_arch = "wasm32")]
 #[allow(improper_ctypes, improper_ctypes_definitions)]
-unsafe extern "C" {
+extern "C" {
     fn setup_date_picker(
         element: &Element,
         callback: &JsValue,
