@@ -270,11 +270,20 @@ export function setup_date_picker(element, callback, initial_date, date_format, 
 
                 if (todayButton) {
                     todayButton.addEventListener('click', function () {
-                        // Let bulma-calendar update the input value first
+                        // Let bulma-calendar update its internal state and the input value first
                         setTimeout(function () {
                             const value = element.value || '';
                             console.debug('bulma-calendar Today click →', value);
-                            callback(value);
+
+                            // Manually dispatch a native 'change' event so our input listener runs.
+                            try {
+                                const evt = new Event('change', { bubbles: true });
+                                element.dispatchEvent(evt);
+                            } catch (e) {
+                                console.warn('bulma-calendar: failed to dispatch synthetic change event', e);
+                                // Fallback: call callback directly if dispatch fails
+                                callback(value);
+                            }
                         }, 0);
                     });
                 } else {
