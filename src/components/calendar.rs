@@ -19,8 +19,8 @@ Required static assets
 
 use leptos::html;
 use leptos::prelude::{
-    ClassAttribute, CustomAttribute, Get, GetUntracked, GlobalAttributes, IntoView, NodeRef,
-    NodeRefAttribute, Signal, component, view,
+    component, view, ClassAttribute, CustomAttribute, Get, GetUntracked, GlobalAttributes, IntoView,
+    NodeRef, NodeRefAttribute, Signal,
 };
 #[cfg(target_arch = "wasm32")]
 use leptos::wasm_bindgen::closure::Closure;
@@ -190,6 +190,7 @@ pub fn Calendar(
 #[cfg(target_arch = "wasm32")]
 #[leptos::wasm_bindgen::prelude::wasm_bindgen(inline_js = r#"
 let init = new Map();
+
 export function setup_date_picker(element, callback, initial_date, date_format, time_format, picker_type) {
     if (!init.has(element.id)) {
         let calendarInstances = bulmaCalendar.attach(element, {
@@ -199,20 +200,75 @@ export function setup_date_picker(element, callback, initial_date, date_format, 
             dateFormat: date_format,
             timeFormat: time_format,
         });
-        init.set(element.id, calendarInstances[0]);
-        let calendarInstance = calendarInstances[0];
-        calendarInstance.on('select', function(datepicker) {
-            callback(datepicker.data.value());
-        });
-        calendarInstance.on('clear', function(_datepicker) {
-            callback('');
-        });
-        calendarInstance.on('validate', function(datepicker) {
-            callback(datepicker.data.value());
-        });
+
+        let calendarInstance = Array.isArray(calendarInstances) ? calendarInstances[0] : calendarInstances;
+        init.set(element.id, calendarInstance);
+
+        // Helper to get current value across versions
+        function getCurrentValue(instance, datepicker) {
+            if (datepicker && datepicker.data && typeof datepicker.data.value === 'function') {
+                return datepicker.data.value();
+            }
+            if (instance && typeof instance.value === 'function') {
+                return instance.value();
+            }
+            if (instance && instance.data && typeof instance.data.value === 'function') {
+                return instance.data.value();
+            }
+            return '';
+        }
+
+        // Normal events
+        if (typeof calendarInstance.on === 'function') {
+            calendarInstance.on('select', function(datepicker) {
+                callback(getCurrentValue(calendarInstance, datepicker));
+            });
+            calendarInstance.on('clear', function(_datepicker) {
+                callback('');
+            });
+            calendarInstance.on('validate', function(datepicker) {
+                callback(getCurrentValue(calendarInstance, datepicker));
+            });
+        }
+
+        // Explicitly hook the "Today" button click if present.
+        // This does NOT try to listen to a non-existent 'onTodayClickDateTimePicker' event;
+        // instead it hooks the same DOM button that method is bound to.
+        try {
+            let root = calendarInstance.datePicker && calendarInstance.datePicker.container
+                ? calendarInstance.datePicker.container
+                : (calendarInstance._ui && calendarInstance._ui.datePicker
+                    ? calendarInstance._ui.datePicker
+                    : null);
+
+            if (root && root.querySelector) {
+                let todayButton =
+                    root.querySelector('[data-action="today"]') ||
+                    root.querySelector('.datetimepicker-today') ||
+                    root.querySelector('.is-today');
+
+                if (todayButton) {
+                    todayButton.addEventListener('click', function() {
+                        // Let bulma-calendar update its internal state first.
+                        setTimeout(function() {
+                            callback(getCurrentValue(calendarInstance, null));
+                        }, 0);
+                    });
+                }
+            }
+        } catch (e) {
+            console.warn('bulma-calendar: failed to hook Today button', e);
+        }
     }
-    init.get(element.id).value(initial_date);
+
+    let instance = init.get(element.id);
+    if (instance && typeof instance.value === 'function') {
+        instance.value(initial_date);
+    } else if (instance && instance.data && typeof instance.data.value === 'function') {
+        instance.data.value(initial_date);
+    }
 }
+
 export function detach_date_picker(id) {
     init.delete(id);
 }
