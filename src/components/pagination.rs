@@ -127,15 +127,17 @@ pub fn Pagination(
         }
     };
 
-    // Convert optional TestAttr into an optional (key, value) pair for `attr`.
-    let test_attr_pair = test_attr.map(|attr| (attr.key, attr.value));
-
     view! {
         <nav
             class=move || class()
             role="navigation"
             aria-label="pagination"
-            attr=move || test_attr_pair.clone()
+            // Map TestAttr to a concrete attribute; default key is data-testid.
+            attr:..=move || {
+                test_attr
+                    .as_ref()
+                    .map(|attr| (attr.key.clone(), attr.value.clone()))
+            }
         >
             <a class="pagination-previous" on:click=prev_click>{previous_label.get()}</a>
             <a class="pagination-next" on:click=next_click>{next_label.get()}</a>
@@ -195,14 +197,16 @@ pub fn PaginationItem(
         }
     };
 
-    let test_attr_pair = test_attr.map(|attr| (attr.key, attr.value));
-
     view! {
         <a
             class=move || class()
             aria-label=label.get()
             on:click=click
-            attr=move || test_attr_pair.clone()
+            attr:..=move || {
+                test_attr
+                    .as_ref()
+                    .map(|attr| (attr.key.clone(), attr.value.clone()))
+            }
         >
             {children()}
         </a>
