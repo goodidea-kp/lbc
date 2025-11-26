@@ -114,7 +114,6 @@ pub fn Calendar(
                     let update = update.clone();
                     Closure::wrap(Box::new(move |date: JsValue| {
                         let s = date.as_string().unwrap_or_default();
-                        // Use console_error_panic_hook's console via wasm-bindgen (no direct web_sys dependency).
                         leptos::logging::log!("[Calendar] Rust cb_change received: {s}");
                         (update)(s);
                     }) as Box<dyn FnMut(JsValue)>)
@@ -242,7 +241,8 @@ export function setup_date_picker(element, on_change, initial_date, date_format,
             console.error('[Calendar] bulmaCalendar is undefined at setup_date_picker time');
         }
 
-        let calendarInstances = bulmaCalendar.attach(element, {
+        // Use the documented API: bulmaCalendar.attach returns a single instance, not an array.
+        let calendarInstance = bulmaCalendar.attach(element, {
             type: picker_type || (String(time_format || '').trim() ? 'datetime' : 'date'),
             color: 'info',
             lang: 'en',
@@ -250,15 +250,14 @@ export function setup_date_picker(element, on_change, initial_date, date_format,
             timeFormat: time_format,
         });
 
-        console.log('[Calendar] bulmaCalendar.attach returned', calendarInstances);
+        console.log('[Calendar] bulmaCalendar.attach returned instance', calendarInstance);
 
-        if (!calendarInstances || !calendarInstances.length) {
-            console.error('[Calendar] bulmaCalendar.attach did not return instances for element', element.id);
+        if (!calendarInstance) {
+            console.error('[Calendar] bulmaCalendar.attach did not return an instance for element', element.id);
             return;
         }
 
-        init.set(element.id, calendarInstances[0]);
-        let calendarInstance = calendarInstances[0];
+        init.set(element.id, calendarInstance);
         console.log('[Calendar] setup_date_picker: attached', {
             id: element.id,
             initial_date,
@@ -271,7 +270,7 @@ export function setup_date_picker(element, on_change, initial_date, date_format,
         // Helper: read current value from instance
         const readValue = (source) => {
             try {
-                const v = calendarInstance?.data?.value?.();
+                const v = calendarInstance.value();
                 console.log('[Calendar] readValue from', source, '->', v);
                 return v == null ? '' : String(v);
             } catch (e) {
@@ -423,7 +422,7 @@ export function setup_date_picker(element, on_change, initial_date, date_format,
     try {
         const inst = init.get(element.id);
         if (inst) {
-            const currentValue = inst?.data?.value?.();
+            const currentValue = inst.value();
             console.log('[Calendar] post-init state', {
                 id: element.id,
                 currentValue,
