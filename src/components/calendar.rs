@@ -109,8 +109,16 @@ pub fn Calendar(
                 // Convert HtmlInputElement => Element for the JS bridge.
                 let element: Element = input.unchecked_into();
 
-                // Bridge from JS -> Rust, forward value through provided callback.
-                let cb = {
+                // Bridge from JS -> Rust, forward value through provided callback (change events).
+                let cb_change = {
+                    let update = update.clone();
+                    Closure::wrap(Box::new(move |date: JsValue| {
+                        let s = date.as_string().unwrap_or_default();
+                        (update)(s);
+                    }) as Box<dyn FnMut(JsValue)>)
+                };
+                // Separate bridge for "today" click event (can reuse same behavior).
+                let cb_today = {
                     let update = update.clone();
                     Closure::wrap(Box::new(move |date: JsValue| {
                         let s = date.as_string().unwrap_or_default();
@@ -146,13 +154,16 @@ pub fn Calendar(
                 // Seed initial value, attach plugin, and keep the closure alive.
                 setup_date_picker(
                     &element,
-                    cb.as_ref(),
+                    cb_change.as_ref(),
+                    cb_today.as_ref(),
                     &JsValue::from(initial_for_js.clone()),
                     &JsValue::from(df),
                     &JsValue::from(tf),
                     &JsValue::from(picker_type),
                 );
-                cb.forget();
+                // Prevent GC of the closures by leaking them intentionally for widget lifetime.
+                cb_change.forget();
+                cb_today.forget();
             }
         });
     }
@@ -190,7 +201,8 @@ pub fn Calendar(
 #[cfg(target_arch = "wasm32")]
 #[leptos::wasm_bindgen::prelude::wasm_bindgen(inline_js = r#"
 let init = new Map();
-export function setup_date_picker(element, callback, initial_date, date_format, time_format, picker_type) {
+let todayDelegates = new Map();
+export function setup_date_picker(element, on_change, on_today, initial_date, date_format, time_format, picker_type) {
     if (!init.has(element.id)) {
         let calendarInstances = bulmaCalendar.attach(element, {
             type: picker_type || (String(time_format || '').trim() ? 'datetime' : 'date'),
@@ -201,19 +213,146 @@ export function setup_date_picker(element, callback, initial_date, date_format, 
         });
         init.set(element.id, calendarInstances[0]);
         let calendarInstance = calendarInstances[0];
+        console.log('[Calendar] setup_date_picker: attached', {
+            id: element.id,
+            initial_date,
+            date_format,
+            time_format,
+            picker_type
+        });
         calendarInstance.on('select', function(datepicker) {
-            callback(datepicker.data.value());
+            const v = datepicker?.data?.value?.();
+            console.log('[Calendar] event: select', v);
+            on_change(v);
         });
         calendarInstance.on('clear', function(_datepicker) {
-            callback('');
+            console.log('[Calendar] event: clear');
+            on_change('');
+        });
+        calendarInstance.on('onCancelClickDateTimePicker', (_dp) => {
+            console.log('[Calendar] event: onCancelClickDateTimePicker');
+            on_change('');
+        });
+        // Today click handlers: support multiple possible event names across versions
+        calendarInstance.on('onTodayClickDateTimePicker',  (dp) => {
+            const v = dp?.data?.value?.();
+            console.log('[Calendar] event: onTodayClickDateTimePicker', v);
+            on_today(v);
+        });
+        calendarInstance.on('today',  (dp) => {
+            const v = dp?.data?.value?.();
+            console.log('[Calendar] event: today', v);
+            on_today(v);
+        });
+        // As a robust fallback across versions/skins, bind a delegated listener to the Today button
+        // We scope it to this calendar instance using the closest calendar container with data-id
+        const delegate = function(e) {
+            const t = e.target;
+            if (!t || !(t instanceof Element)) return;
+            const btn = t.closest('[data-action="today"], .datetimepicker-today, .datepicker-footer-today, .bulma-calendar .is-today');
+            if (!btn) return;
+            // Try to identify the calendar container to match against this element.id
+            const container = btn.closest('.datetimepicker, .bulma-calendar, .datepicker, .timepicker');
+            const dataId = container?.getAttribute('data-id') || container?.dataset?.id;
+            const idToMatch = dataId || (container?.getAttribute('for')) || null;
+            // If we could determine an id and it doesn't match this element, ignore
+            if (idToMatch && idToMatch !== element.id) return;
+            // Otherwise, assume it's for this element (common when only one open at a time)
+            const dp = init.get(element.id);
+            const v = dp?.data?.value?.();
+            console.log('[Calendar] event: today (delegated)', v, { id: element.id });
+            try { on_today(v); } catch (err) { console.warn('[Calendar] today (delegated) callback error', err); }
+        };
+        if (!todayDelegates.has(element.id)) {
+            document.addEventListener('click', delegate, true);
+            todayDelegates.set(element.id, delegate);
+            console.log('[Calendar] today delegated listener bound', { id: element.id });
+        }
+        // Additionally, when popup opens, try to bind directly to the Today button if we can find it
+        calendarInstance.on('open', (_dp) => {
+            console.log('[Calendar] event: open');
+            // Delay to allow DOM to render
+            setTimeout(() => {
+                const root = document.querySelector(`.datetimepicker[data-id="${element.id}"]`) 
+                          || document.querySelector(`.bulma-calendar[data-id="${element.id}"]`);
+                const todaySelector = '[data-action="today"], .datetimepicker-today, .datepicker-footer-today, .bulma-calendar .is-today, .datetimepicker-footer .button.is-today, .datepicker-footer .button.is-today, button.is-today';
+                const todayBtn = root?.querySelector(todaySelector);
+                if (todayBtn) {
+                    const directHandler = () => {
+                        // Read value after bulma updates selection
+                        setTimeout(() => {
+                            const v = init.get(element.id)?.data?.value?.();
+                            console.log('[Calendar] event: today (direct)', v, { id: element.id });
+                            try { on_today(v); } catch (err) { console.warn('[Calendar] today (direct) callback error', err); }
+                        }, 0);
+                    };
+                    todayBtn.addEventListener('click', directHandler);
+                    // Store handler on element so GC can clean when DOM removed; no strong refs kept globally
+                    todayBtn._lbcTodayHandler = directHandler; // harmless custom prop
+                    console.log('[Calendar] bound direct Today button handler', { id: element.id });
+                } else {
+                    console.warn('[Calendar] Today button not found on open', { id: element.id });
+                }
+
+                // As an extra safeguard: capture clicks inside the popup root and detect a Today-like button
+                if (root && !root._lbcTodayRootHandler) {
+                    const containerCapture = (e) => {
+                        const t = e.target;
+                        if (!t || !(t instanceof Element)) return;
+                        let btn = t.closest(todaySelector);
+                        // If selector didn't match, try text-based detection for visible buttons
+                        if (!btn) {
+                            const candidate = t.closest('button, .button, [role="button"]');
+                            const label = (candidate?.textContent || '').trim().toLowerCase();
+                            const todayWords = ['today','сегодня','heute','oggi','aujourd\'hui','hoy','hoje'];
+                            if (candidate && todayWords.includes(label)) {
+                                btn = candidate;
+                            }
+                        }
+                        if (!btn) return;
+                        // Defer read until after bulma processes the click
+                        setTimeout(() => {
+                            const v = init.get(element.id)?.data?.value?.();
+                            console.log('[Calendar] event: today (container)', v, { id: element.id });
+                            try { on_today(v); } catch (err) { console.warn('[Calendar] today (container) callback error', err); }
+                        }, 0);
+                    };
+                    root.addEventListener('click', containerCapture, true);
+                    root._lbcTodayRootHandler = containerCapture;
+                    console.log('[Calendar] today container listener bound', { id: element.id });
+                }
+            }, 0);
+        });
+        // On close, remove container capture listener if present
+        calendarInstance.on('close', (_dp) => {
+            const root = document.querySelector(`.datetimepicker[data-id="${element.id}"]`) 
+                      || document.querySelector(`.bulma-calendar[data-id="${element.id}"]`);
+            if (root && root._lbcTodayRootHandler) {
+                try { root.removeEventListener('click', root._lbcTodayRootHandler, true); } catch (_) {}
+                try { delete root._lbcTodayRootHandler; } catch (_) { root._lbcTodayRootHandler = undefined; }
+                console.log('[Calendar] today container listener removed', { id: element.id });
+            }
         });
         calendarInstance.on('validate', function(datepicker) {
-            callback(datepicker.data.value());
+            const v = datepicker?.data?.value?.();
+            console.log('[Calendar] event: validate', v);
+            on_change(v);
         });
     }
     init.get(element.id).value(initial_date);
 }
 export function detach_date_picker(id) {
+    try {
+        const key = typeof id === 'string' ? id : id?.toString?.() || String(id);
+        if (todayDelegates.has(key)) {
+            const delegate = todayDelegates.get(key);
+            if (delegate) document.removeEventListener('click', delegate, true);
+            todayDelegates.delete(key);
+            console.log('[Calendar] today delegated listener removed', { id: key });
+        }
+    } catch (e) {
+        // ignore
+    }
     init.delete(id);
 }
 "#)]
@@ -222,7 +361,8 @@ export function detach_date_picker(id) {
 extern "C" {
     fn setup_date_picker(
         element: &Element,
-        callback: &JsValue,
+        on_change: &JsValue,
+        on_today: &JsValue,
         initial_date: &JsValue,
         date_format: &JsValue,
         time_format: &JsValue,
