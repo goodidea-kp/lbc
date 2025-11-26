@@ -31,6 +31,8 @@ use leptos::wasm_bindgen::prelude::wasm_bindgen;
 #[cfg(target_arch = "wasm32")]
 use leptos::web_sys::Element;
 
+use crate::util::TestAttr;
+
 /// A tags autocomplete input based on Bulma TagsInput.
 ///
 /// Two modes:
@@ -87,9 +89,12 @@ pub fn AutoComplete(
     #[prop(optional, into)]
     _auth_header: Signal<String>,
 
-    /// Optional test identifier (renders as data-testid attribute)
+    /// Optional test attribute (renders as data-* attribute) on the rendered input/select wrapper.
+    ///
+    /// When provided as a &str or String, this becomes `data-testid="value"`.
+    /// You can also pass a full `TestAttr` to override the attribute key (e.g., `data-cy`).
     #[prop(optional, into)]
-    test_id: Option<String>,
+    test_attr: Option<TestAttr>,
 ) -> impl IntoView {
     let _max_items_value = max_items.unwrap_or(10);
 
@@ -111,6 +116,13 @@ pub fn AutoComplete(
         && data_item_text.get().trim().is_empty()
         && data_item_value.get().trim().is_empty();
 
+    // Derive specific optional attributes that our macro can render.
+    let (data_testid, data_cy) = match &test_attr {
+        Some(attr) if attr.key == "data-testid" => (Some(attr.value.clone()), None),
+        Some(attr) if attr.key == "data-cy" => (None, Some(attr.value.clone())),
+        _ => (None, None),
+    };
+
     let body = if static_mode {
         let options_view = {
             let items = items.clone().unwrap_or_default();
@@ -128,10 +140,14 @@ pub fn AutoComplete(
             .into_any()
         };
         view! {
-            <div class=move || {
-                let extra = classes.get();
-                if extra.trim().is_empty() { "select".to_string() } else { format!("select {}", extra) }
-            } data-testid=test_id.clone()>
+            <div
+                class=move || {
+                    let extra = classes.get();
+                    if extra.trim().is_empty() { "select".to_string() } else { format!("select {}", extra) }
+                }
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
                 <select
                     id=id.clone()
                     data-type="tags"
@@ -161,7 +177,8 @@ pub fn AutoComplete(
                 data-item-value=data_item_value.get()
                 data-placeholder=placeholder.get()
                 value=value_json
-                data-testid=test_id.clone()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
             />
         }
         .into_any()
@@ -174,7 +191,8 @@ pub fn AutoComplete(
                 class=move || input_class()
                 data-placeholder=placeholder.get()
                 value=current_selector.get()
-                data-testid=test_id.clone()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
             />
         }
         .into_any()
@@ -421,6 +439,7 @@ mod tests {
 #[cfg(all(test, target_arch = "wasm32"))]
 mod wasm_tests {
     use super::*;
+    use crate::util::TestAttr;
     use leptos::prelude::*;
     use std::sync::Arc;
     use wasm_bindgen_test::*;
@@ -432,7 +451,7 @@ mod wasm_tests {
     wasm_bindgen_test_configure!(run_in_browser);
 
     #[wasm_bindgen_test]
-    fn autocomplete_renders_test_id_static_mode() {
+    fn autocomplete_renders_test_attr_static_mode() {
         let html = view! {
             <AutoComplete
                 id="ac1".to_string()
@@ -440,7 +459,7 @@ mod wasm_tests {
                 placeholder="Choose"
                 _on_update=noop()
                 _on_remove=noop()
-                test_id="autocomplete-test"
+                test_attr=TestAttr::test_id("autocomplete-test")
             />
         }
         .to_html();
@@ -453,7 +472,7 @@ mod wasm_tests {
     }
 
     #[wasm_bindgen_test]
-    fn autocomplete_no_test_id_when_not_provided() {
+    fn autocomplete_no_test_attr_when_not_provided() {
         let html = view! {
             <AutoComplete
                 id="ac1".to_string()
@@ -466,8 +485,8 @@ mod wasm_tests {
         .to_html();
 
         assert!(
-            !html.contains("data-testid"),
-            "expected no data-testid attribute; got: {}",
+            !html.contains("data-testid") && !html.contains("data-cy"),
+            "expected no test attribute; got: {}",
             html
         );
     }

@@ -1,6 +1,8 @@
 use leptos::prelude::IntoAny;
 use leptos::prelude::*;
 
+use crate::util::TestAttr;
+
 /// A container with which you can wrap form controls (Bulma "control").
 ///
 /// https://bulma.io/documentation/form/general/
@@ -24,26 +26,33 @@ pub fn Control(
     #[prop(optional, into)]
     expanded: Signal<bool>,
 
-    /// Optional test identifier (renders as data-testid attribute)
+    /// Optional test attribute (renders as data-* attribute) on the rendered element.
+    ///
+    /// When provided as a &str or String, this becomes `data-testid="value"`.
+    /// You can also pass a full `TestAttr` to override the attribute key.
     #[prop(optional, into)]
-    test_id: Option<String>,
+    test_attr: Option<TestAttr>,
 
     /// Child nodes rendered inside the control.
     children: Children,
 ) -> impl IntoView {
-    let class = move || {
-        let mut parts = vec!["control".to_string()];
+    let class = {
+        let classes = classes.clone();
+        let expanded = expanded.clone();
+        move || {
+            let mut parts = vec!["control".to_string()];
 
-        let extra = classes.get();
-        if !extra.trim().is_empty() {
-            parts.push(extra);
+            let extra = classes.get();
+            if !extra.trim().is_empty() {
+                parts.push(extra);
+            }
+
+            if expanded.get() {
+                parts.push("is-expanded".to_string());
+            }
+
+            parts.join(" ")
         }
-
-        if expanded.get() {
-            parts.push("is-expanded".to_string());
-        }
-
-        parts.join(" ")
     };
 
     let tag_name = move || {
@@ -52,22 +61,62 @@ pub fn Control(
             .unwrap_or_else(|| "div".to_string())
     };
 
+    let (data_testid, data_cy) = match &test_attr {
+        Some(attr) if attr.key == "data-testid" => (Some(attr.value.clone()), None),
+        Some(attr) if attr.key == "data-cy" => (None, Some(attr.value.clone())),
+        _ => (None, None),
+    };
+
     {
         let current = tag_name();
         match current.as_str() {
             "article" => {
-                view! { <article class=class data-testid=test_id.clone()>{children()}</article> }
-                    .into_any()
+                view! {
+                    <article
+                        class=class
+                        attr:data-testid=move || data_testid.clone()
+                        attr:data-cy=move || data_cy.clone()
+                    >
+                        {children()}
+                    </article>
+                }
+                .into_any()
             }
             "label" => {
-                view! { <label class=class data-testid=test_id.clone()>{children()}</label> }
-                    .into_any()
+                view! {
+                    <label
+                        class=class
+                        attr:data-testid=move || data_testid.clone()
+                        attr:data-cy=move || data_cy.clone()
+                    >
+                        {children()}
+                    </label>
+                }
+                .into_any()
             }
             "p" => {
-                view! { <p class=class data-testid=test_id.clone()>{children()}</p> }.into_any()
+                view! {
+                    <p
+                        class=class
+                        attr:data-testid=move || data_testid.clone()
+                        attr:data-cy=move || data_cy.clone()
+                    >
+                        {children()}
+                    </p>
+                }
+                .into_any()
             }
             _ => {
-                view! { <div class=class data-testid=test_id>{children()}</div> }.into_any()
+                view! {
+                    <div
+                        class=class
+                        attr:data-testid=move || data_testid.clone()
+                        attr:data-cy=move || data_cy.clone()
+                    >
+                        {children()}
+                    </div>
+                }
+                .into_any()
             }
         }
     }
@@ -124,15 +173,16 @@ mod tests {
 #[cfg(all(test, target_arch = "wasm32"))]
 mod wasm_tests {
     use super::*;
+    use crate::util::TestAttr;
     use leptos::prelude::*;
     use wasm_bindgen_test::*;
 
     wasm_bindgen_test_configure!(run_in_browser);
 
     #[wasm_bindgen_test]
-    fn control_renders_test_id() {
+    fn control_renders_test_attr_as_data_testid() {
         let html = view! {
-            <Control test_id="control-test">"Content"</Control>
+            <Control test_attr=TestAttr::test_id("control-test")>"Content"</Control>
         }
         .to_html();
 
@@ -144,15 +194,15 @@ mod wasm_tests {
     }
 
     #[wasm_bindgen_test]
-    fn control_no_test_id_when_not_provided() {
+    fn control_no_test_attr_when_not_provided() {
         let html = view! {
             <Control>"Content"</Control>
         }
         .to_html();
 
         assert!(
-            !html.contains("data-testid"),
-            "expected no data-testid attribute; got: {}",
+            !html.contains("data-testid") && !html.contains("data-cy"),
+            "expected no data attribute; got: {}",
             html
         );
     }

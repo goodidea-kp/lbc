@@ -2,6 +2,8 @@ use std::sync::Arc;
 
 use leptos::prelude::*;
 
+use crate::util::TestAttr;
+
 /// The 2-state checkbox in its native Bulma format.
 ///
 /// https://bulma.io/documentation/form/checkbox/
@@ -33,9 +35,12 @@ pub fn Checkbox(
     #[prop(optional, into)]
     disabled: Signal<bool>,
 
-    /// Optional test identifier (renders as data-testid attribute)
+    /// Optional test attribute (renders as data-* attribute) on the outer <label>.
+    ///
+    /// When provided as a &str or String, this becomes `data-testid="value"`.
+    /// You can also pass a full `TestAttr` to override the attribute key.
     #[prop(optional, into)]
-    test_id: Option<String>,
+    test_attr: Option<TestAttr>,
 
     /// Label/content shown next to the checkbox.
     children: Children,
@@ -60,8 +65,18 @@ pub fn Checkbox(
         }
     };
 
+    let (data_testid, data_cy) = match &test_attr {
+        Some(attr) if attr.key == "data-testid" => (Some(attr.value.clone()), None),
+        Some(attr) if attr.key == "data-cy" => (None, Some(attr.value.clone())),
+        _ => (None, None),
+    };
+
     view! {
-        <label class=class data-testid=test_id>
+        <label
+            class=class
+            attr:data-testid=move || data_testid.clone()
+            attr:data-cy=move || data_cy.clone()
+        >
             <input
                 type="checkbox"
                 name=name.clone()
@@ -127,15 +142,16 @@ mod tests {
 #[cfg(all(test, target_arch = "wasm32"))]
 mod wasm_tests {
     use super::*;
+    use crate::util::TestAttr;
     use leptos::prelude::*;
     use wasm_bindgen_test::*;
 
     wasm_bindgen_test_configure!(run_in_browser);
 
     #[wasm_bindgen_test]
-    fn checkbox_renders_test_id() {
+    fn checkbox_renders_test_attr_as_data_testid() {
         let html = view! {
-            <Checkbox name="agree" checked=true test_id="checkbox-test">"Agree"</Checkbox>
+            <Checkbox name="agree" checked=true test_attr=TestAttr::test_id("checkbox-test")>"Agree"</Checkbox>
         }
         .to_html();
 
@@ -147,15 +163,15 @@ mod wasm_tests {
     }
 
     #[wasm_bindgen_test]
-    fn checkbox_no_test_id_when_not_provided() {
+    fn checkbox_no_test_attr_when_not_provided() {
         let html = view! {
             <Checkbox name="agree" checked=true>"Agree"</Checkbox>
         }
         .to_html();
 
         assert!(
-            !html.contains("data-testid"),
-            "expected no data-testid attribute; got: {}",
+            !html.contains("data-testid") && !html.contains("data-cy"),
+            "expected no data attribute; got: {}",
             html
         );
     }

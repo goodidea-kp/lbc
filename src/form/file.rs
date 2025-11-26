@@ -8,7 +8,7 @@ type LbcSysFile = ();
 #[cfg(not(target_arch = "wasm32"))]
 type LbcSysFile = ();
 
-use crate::util::Size;
+use crate::util::{Size, TestAttr};
 
 /// A custom file upload input in Bulma style.
 ///
@@ -64,9 +64,12 @@ pub fn File(
     #[prop(optional)]
     size: Option<Size>,
 
-    /// Optional test identifier (renders as data-testid attribute)
+    /// Optional test attribute (renders as data-* attribute) on the root <div>.
+    ///
+    /// When provided as a &str or String, this becomes `data-testid="value"`.
+    /// You can also pass a full `TestAttr` to override the attribute key.
     #[prop(optional, into)]
-    test_id: Option<String>,
+    test_attr: Option<TestAttr>,
 ) -> impl IntoView {
     let has_name_for_class = has_name.clone();
     let class = move || {
@@ -140,8 +143,18 @@ pub fn File(
     #[cfg(not(target_arch = "wasm32"))]
     let on_change = |_ev: leptos::ev::Event| { /* no-op on non-wasm targets */ };
 
+    let (data_testid, data_cy) = match &test_attr {
+        Some(attr) if attr.key == "data-testid" => (Some(attr.value.clone()), None),
+        Some(attr) if attr.key == "data-cy" => (None, Some(attr.value.clone())),
+        _ => (None, None),
+    };
+
     view! {
-        <div class=class data-testid=test_id>
+        <div
+            class=class
+            attr:data-testid=move || data_testid.clone()
+            attr:data-cy=move || data_cy.clone()
+        >
             <label class="file-label">
                 <input
                     type="file"
@@ -237,7 +250,7 @@ mod tests {
 #[cfg(all(test, target_arch = "wasm32"))]
 mod wasm_tests {
     use super::*;
-    use crate::util::Size;
+    use crate::util::{Size, TestAttr};
     use leptos::prelude::*;
     use std::sync::Arc;
     use wasm_bindgen_test::*;
@@ -249,14 +262,14 @@ mod wasm_tests {
     wasm_bindgen_test_configure!(run_in_browser);
 
     #[wasm_bindgen_test]
-    fn file_renders_test_id() {
+    fn file_renders_test_attr_as_data_testid() {
         let html = view! {
             <File
                 name="upload"
                 _files=Signal::derive(|| Vec::<super::LbcSysFile>::new())
                 _update=noop_update()
                 size=Size::Small
-                test_id="file-test"
+                test_attr=TestAttr::test_id("file-test")
             />
         }
         .to_html();
@@ -269,7 +282,7 @@ mod wasm_tests {
     }
 
     #[wasm_bindgen_test]
-    fn file_no_test_id_when_not_provided() {
+    fn file_no_test_attr_when_not_provided() {
         let html = view! {
             <File
                 name="upload"
@@ -280,8 +293,8 @@ mod wasm_tests {
         .to_html();
 
         assert!(
-            !html.contains("data-testid"),
-            "expected no data-testid attribute; got: {}",
+            !html.contains("data-testid") && !html.contains("data-cy"),
+            "expected no data attribute; got: {}",
             html
         );
     }
