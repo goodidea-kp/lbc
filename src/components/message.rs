@@ -4,6 +4,8 @@ use leptos::prelude::{
 };
 use std::rc::Rc;
 
+use crate::util::TestAttr;
+
 fn base_class(extra: &str) -> String {
     if extra.trim().is_empty() {
         "message".to_string()
@@ -28,9 +30,12 @@ pub fn Message(
     #[prop(optional)]
     on_close: Option<Rc<dyn Fn()>>,
 
-    /// Optional test identifier (renders as data-testid attribute)
+    /// Optional test attribute (renders as data-* attribute) on the root <article>.
+    ///
+    /// When provided as a &str or String, this becomes `data-testid="value"`.
+    /// You can also pass a full `TestAttr` to override the attribute key.
     #[prop(optional, into)]
-    test_id: Option<String>,
+    test_attr: Option<TestAttr>,
 
     /// Child content of the message (usually MessageHeader and MessageBody).
     children: Children,
@@ -52,10 +57,17 @@ pub fn Message(
         }
     };
 
+    let (data_testid, data_cy) = match &test_attr {
+        Some(attr) if attr.key == "data-testid" => (Some(attr.value.clone()), None),
+        Some(attr) if attr.key == "data-cy" => (None, Some(attr.value.clone())),
+        _ => (None, None),
+    };
+
     view! {
         <article
             class=class
-            data-testid=test_id
+            attr:data-testid=move || data_testid.clone()
+            attr:data-cy=move || data_cy.clone()
             style=move || {
                 let mut parts: Vec<&str> = Vec::new();
                 if closable.get() {
@@ -90,9 +102,12 @@ pub fn MessageHeader(
     #[prop(optional, into)]
     classes: Signal<String>,
 
-    /// Optional test identifier (renders as data-testid attribute)
+    /// Optional test attribute (renders as data-* attribute) on the header <div>.
+    ///
+    /// When provided as a &str or String, this becomes `data-testid="value"`.
+    /// You can also pass a full `TestAttr` to override the attribute key.
     #[prop(optional, into)]
-    test_id: Option<String>,
+    test_attr: Option<TestAttr>,
 
     /// Header children (e.g., title text, a delete button).
     children: Children,
@@ -109,8 +124,18 @@ pub fn MessageHeader(
         }
     };
 
+    let (data_testid, data_cy) = match &test_attr {
+        Some(attr) if attr.key == "data-testid" => (Some(attr.value.clone()), None),
+        Some(attr) if attr.key == "data-cy" => (None, Some(attr.value.clone())),
+        _ => (None, None),
+    };
+
     view! {
-        <div class=class data-testid=test_id>
+        <div
+            class=class
+            attr:data-testid=move || data_testid.clone()
+            attr:data-cy=move || data_cy.clone()
+        >
             {children()}
         </div>
     }
@@ -124,9 +149,12 @@ pub fn MessageBody(
     #[prop(optional, into)]
     classes: Signal<String>,
 
-    /// Optional test identifier (renders as data-testid attribute)
+    /// Optional test attribute (renders as data-* attribute) on the body <div>.
+    ///
+    /// When provided as a &str or String, this becomes `data-testid="value"`.
+    /// You can also pass a full `TestAttr` to override the attribute key.
     #[prop(optional, into)]
-    test_id: Option<String>,
+    test_attr: Option<TestAttr>,
 
     /// Body children.
     children: Children,
@@ -143,8 +171,18 @@ pub fn MessageBody(
         }
     };
 
+    let (data_testid, data_cy) = match &test_attr {
+        Some(attr) if attr.key == "data-testid" => (Some(attr.value.clone()), None),
+        Some(attr) if attr.key == "data-cy" => (None, Some(attr.value.clone())),
+        _ => (None, None),
+    };
+
     view! {
-        <div class=class data-testid=test_id>
+        <div
+            class=class
+            attr:data-testid=move || data_testid.clone()
+            attr:data-cy=move || data_cy.clone()
+        >
             {children()}
         </div>
     }
@@ -218,9 +256,9 @@ mod wasm_tests {
     }
 
     #[wasm_bindgen_test]
-    fn message_renders_test_id() {
+    fn message_renders_test_attr_as_data_testid() {
         let html = view! {
-            <Message classes="is-primary" test_id="message-test">
+            <Message classes="is-primary" test_attr="message-test">
                 <MessageBody><p>"Body"</p></MessageBody>
             </Message>
         }
@@ -234,7 +272,7 @@ mod wasm_tests {
     }
 
     #[wasm_bindgen_test]
-    fn message_no_test_id_when_not_provided() {
+    fn message_no_test_attr_when_not_provided() {
         let html = view! {
             <Message>
                 <MessageBody><p>"Body"</p></MessageBody>
@@ -243,16 +281,16 @@ mod wasm_tests {
         .to_html();
 
         assert!(
-            !html.contains("data-testid"),
-            "expected no data-testid attribute on Message when not provided; got: {}",
+            !html.contains("data-testid") && !html.contains("data-cy"),
+            "expected no test attribute on Message when not provided; got: {}",
             html
         );
     }
 
     #[wasm_bindgen_test]
-    fn message_header_renders_test_id() {
+    fn message_header_renders_test_attr_as_data_testid() {
         let html = view! {
-            <MessageHeader classes="extra" test_id="message-header-test">
+            <MessageHeader classes="extra" test_attr="message-header-test">
                 <p>"Header"</p>
             </MessageHeader>
         }
@@ -266,9 +304,9 @@ mod wasm_tests {
     }
 
     #[wasm_bindgen_test]
-    fn message_body_renders_test_id() {
+    fn message_body_renders_test_attr_as_data_testid() {
         let html = view! {
-            <MessageBody classes="extra" test_id="message-body-test">
+            <MessageBody classes="extra" test_attr="message-body-test">
                 <p>"Body"</p>
             </MessageBody>
         }

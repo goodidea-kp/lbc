@@ -3,6 +3,8 @@ use leptos::prelude::{
     IntoView, OnAttribute, Set, Signal, component, view,
 };
 
+use crate::util::TestAttr;
+
 /// Context signal used to close modals by ID from anywhere in the component tree.
 /// Convention: write "<id>-close" to request closing a modal with id = <id>.
 pub type ModalCloserContext = leptos::prelude::RwSignal<String>;
@@ -49,9 +51,12 @@ pub fn Modal(
     #[prop(optional, into)]
     classes: Signal<String>,
 
-    /// Optional test identifier (renders as data-testid attribute) on the modal root.
+    /// Optional test attribute (renders as data-* attribute) on the modal root.
+    ///
+    /// When provided as a &str or String, this becomes `data-testid="value"`.
+    /// You can also pass a full `TestAttr` to override the attribute key.
     #[prop(optional, into)]
-    test_id: Option<String>,
+    test_attr: Option<TestAttr>,
 ) -> impl IntoView {
     assert!(
         is_valid_modal_id(&id),
@@ -95,10 +100,21 @@ pub fn Modal(
     let open_click = move |_| set_is_active.set(true);
     let close_click = move |_| set_is_active.set(false);
 
+    let (data_testid, data_cy) = match &test_attr {
+        Some(attr) if attr.key == "data-testid" => (Some(attr.value.clone()), None),
+        Some(attr) if attr.key == "data-cy" => (None, Some(attr.value.clone())),
+        _ => (None, None),
+    };
+
     view! {
         <>
             <div on:click=open_click>{trigger()}</div>
-            <div id=id.clone() class=move || class() data-testid=test_id>
+            <div
+                id=id.clone()
+                class=move || class()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
                 <div class="modal-background" on:click=close_click></div>
                 <div class="modal-content">
                     {children()}
@@ -137,9 +153,12 @@ pub fn ModalCard(
     #[prop(optional, into)]
     classes: Signal<String>,
 
-    /// Optional test identifier (renders as data-testid attribute) on the modal root.
+    /// Optional test attribute (renders as data-* attribute) on the modal root.
+    ///
+    /// When provided as a &str or String, this becomes `data-testid="value"`.
+    /// You can also pass a full `TestAttr` to override the attribute key.
     #[prop(optional, into)]
-    test_id: Option<String>,
+    test_attr: Option<TestAttr>,
 ) -> impl IntoView {
     assert!(
         is_valid_modal_id(&id),
@@ -181,10 +200,21 @@ pub fn ModalCard(
     let open_click = move |_| set_is_active.set(true);
     let close_click = move |_| set_is_active.set(false);
 
+    let (data_testid, data_cy) = match &test_attr {
+        Some(attr) if attr.key == "data-testid" => (Some(attr.value.clone()), None),
+        Some(attr) if attr.key == "data-cy" => (None, Some(attr.value.clone())),
+        _ => (None, None),
+    };
+
     view! {
         <>
             <div on:click=open_click>{trigger()}</div>
-            <div id=id.clone() class=move || class() data-testid=test_id>
+            <div
+                id=id.clone()
+                class=move || class()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
                 <div class="modal-background" on:click=close_click></div>
                 <div class="modal-card">
                     <header class="modal-card-head">
@@ -301,7 +331,7 @@ mod wasm_tests {
                 id="id1".to_string()
                 trigger=trigger()
                 classes="is-active"
-                test_id="modal-test"
+                test_attr=TestAttr::test_id("modal-test")
             >
                 <div class="box">"Hello"</div>
             </Modal>
@@ -316,7 +346,7 @@ mod wasm_tests {
     }
 
     #[wasm_bindgen_test]
-    fn modal_no_test_id_when_not_provided() {
+    fn modal_no_test_attr_when_not_provided() {
         let html = view! {
             <Modal id="id1".to_string() trigger=trigger()>
                 <div class="box">"Hello"</div>
@@ -325,8 +355,8 @@ mod wasm_tests {
         .to_html();
 
         assert!(
-            !html.contains("data-testid"),
-            "expected no data-testid attribute on Modal when not provided; got: {}",
+            !html.contains("data-testid") && !html.contains("data-cy"),
+            "expected no test attribute on Modal when not provided; got: {}",
             html
         );
     }
@@ -340,7 +370,7 @@ mod wasm_tests {
                 trigger=trigger()
                 body=Box::new(|| view!{ <p>"Body"</p> }.into_any())
                 footer=Box::new(|| view!{ <button>"OK"</button> }.into_any())
-                test_id="modal-card-test"
+                test_attr=TestAttr::test_id("modal-card-test")
             />
         }
         .to_html();
@@ -353,7 +383,7 @@ mod wasm_tests {
     }
 
     #[wasm_bindgen_test]
-    fn modal_card_no_test_id_when_not_provided() {
+    fn modal_card_no_test_attr_when_not_provided() {
         let html = view! {
             <ModalCard
                 id="id2".to_string()
@@ -366,8 +396,8 @@ mod wasm_tests {
         .to_html();
 
         assert!(
-            !html.contains("data-testid"),
-            "expected no data-testid attribute on ModalCard when not provided; got: {}",
+            !html.contains("data-testid") && !html.contains("data-cy"),
+            "expected no test attribute on ModalCard when not provided; got: {}",
             html
         );
     }

@@ -4,6 +4,8 @@ use leptos::prelude::{
 };
 use std::rc::Rc;
 
+use crate::util::TestAttr;
+
 //// Context signal used to track global navbar menu open/closed state (burger/menu visibility).
 pub type NavbarMenuContext = leptos::prelude::RwSignal<bool>;
 
@@ -71,9 +73,12 @@ pub fn Navbar(
     #[prop(optional)]
     end: Option<Children>,
 
-    /// Optional test identifier (renders as data-testid attribute) on the root <nav>.
+    /// Optional test attribute (renders as data-* attribute) on the root <nav>.
+    ///
+    /// When provided as a &str or String, this becomes `data-testid="value"`.
+    /// You can also pass a full `TestAttr` to override the attribute key (e.g., `data-cy`).
     #[prop(optional, into)]
-    test_id: Option<String>,
+    test_attr: Option<TestAttr>,
 ) -> impl IntoView {
     let class = {
         let classes = classes.clone();
@@ -109,8 +114,21 @@ pub fn Navbar(
 
     let padded_initial = padded.get_untracked();
 
+    // Derive specific optional attributes that our macro can render.
+    let (data_testid, data_cy) = match &test_attr {
+        Some(attr) if attr.key == "data-testid" => (Some(attr.value.clone()), None),
+        Some(attr) if attr.key == "data-cy" => (None, Some(attr.value.clone())),
+        _ => (None, None),
+    };
+
     view! {
-        <nav class=move || class() role="navigation" aria-label="main navigation" data-testid=test_id>
+        <nav
+            class=move || class()
+            role="navigation"
+            aria-label="main navigation"
+            attr:data-testid=move || data_testid.clone()
+            attr:data-cy=move || data_cy.clone()
+        >
             {
                 if padded_initial {
                     view! {
@@ -226,9 +244,12 @@ pub fn NavbarItem(
     #[prop(optional, into)] rel: Signal<String>,
     #[prop(optional, into)] target: Signal<String>,
 
-    /// Optional test identifier (renders as data-testid attribute)
+    /// Optional test attribute (renders as data-* attribute) on the item element.
+    ///
+    /// When provided as a &str or String, this becomes `data-testid="value"`.
+    /// You can also pass a full `TestAttr` to override the attribute key.
     #[prop(optional, into)]
-    test_id: Option<String>,
+    test_attr: Option<TestAttr>,
 ) -> impl IntoView {
     let class = {
         let classes = classes.clone();
@@ -269,6 +290,12 @@ pub fn NavbarItem(
         }
     };
 
+    let (data_testid, data_cy) = match &test_attr {
+        Some(attr) if attr.key == "data-testid" => (Some(attr.value.clone()), None),
+        Some(attr) if attr.key == "data-cy" => (None, Some(attr.value.clone())),
+        _ => (None, None),
+    };
+
     match tag {
         NavbarItemTag::A => view! {
             <a class=move || class()
@@ -276,14 +303,20 @@ pub fn NavbarItem(
                rel=rel.get()
                target=target.get()
                on:click=click_cb.clone()
-               data-testid=test_id
+               attr:data-testid=move || data_testid.clone()
+               attr:data-cy=move || data_cy.clone()
             >
                 {children()}
             </a>
         }
         .into_any(),
         NavbarItemTag::Div => view! {
-            <div class=move || class() on:click=click_cb.clone() data-testid=test_id>
+            <div
+                class=move || class()
+                on:click=click_cb.clone()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
                 {children()}
             </div>
         }
@@ -298,9 +331,12 @@ pub fn NavbarDivider(
     #[prop(optional, into)]
     classes: Signal<String>,
 
-    /// Optional test identifier (renders as data-testid attribute)
+    /// Optional test attribute (renders as data-* attribute) on the <hr>.
+    ///
+    /// When provided as a &str or String, this becomes `data-testid="value"`.
+    /// You can also pass a full `TestAttr` to override the attribute key.
     #[prop(optional, into)]
-    test_id: Option<String>,
+    test_attr: Option<TestAttr>,
 ) -> impl IntoView {
     let class = {
         let classes = classes.clone();
@@ -313,7 +349,20 @@ pub fn NavbarDivider(
             }
         }
     };
-    view! { <hr class=move || class() data-testid=test_id /> }
+
+    let (data_testid, data_cy) = match &test_attr {
+        Some(attr) if attr.key == "data-testid" => (Some(attr.value.clone()), None),
+        Some(attr) if attr.key == "data-cy" => (None, Some(attr.value.clone())),
+        _ => (None, None),
+    };
+
+    view! {
+        <hr
+            class=move || class()
+            attr:data-testid=move || data_testid.clone()
+            attr:data-cy=move || data_cy.clone()
+        />
+    }
 }
 
 /// A navbar dropdown menu: "navbar-item has-dropdown" parent + "navbar-dropdown".
@@ -349,9 +398,12 @@ pub fn NavbarDropdown(
     #[prop(optional, into)]
     boxed: Signal<bool>,
 
-    /// Optional test identifier (renders as data-testid attribute)
+    /// Optional test attribute (renders as data-* attribute) on the dropdown container.
+    ///
+    /// When provided as a &str or String, this becomes `data-testid="value"`.
+    /// You can also pass a full `TestAttr` to override the attribute key.
     #[prop(optional, into)]
-    test_id: Option<String>,
+    test_attr: Option<TestAttr>,
 ) -> impl IntoView {
     let (is_active, set_is_active) = leptos::prelude::signal(false);
 
@@ -415,8 +467,18 @@ pub fn NavbarDropdown(
         }
     };
 
+    let (data_testid, data_cy) = match &test_attr {
+        Some(attr) if attr.key == "data-testid" => (Some(attr.value.clone()), None),
+        Some(attr) if attr.key == "data-cy" => (None, Some(attr.value.clone())),
+        _ => (None, None),
+    };
+
     view! {
-        <div class=move || container_class() data-testid=test_id>
+        <div
+            class=move || container_class()
+            attr:data-testid=move || data_testid.clone()
+            attr:data-cy=move || data_cy.clone()
+        >
             {move || if is_active.get() && !hoverable.get() {
                 // overlay to close when clicking outside
                 view! {
