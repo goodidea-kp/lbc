@@ -2,6 +2,8 @@ use leptos::prelude::{
     Children, ClassAttribute, CustomAttribute, ElementChild, Get, IntoView, Signal, component, view,
 };
 
+use crate::util::TestAttr;
+
 fn base_class(root: &str, extra: &str) -> String {
     if extra.trim().is_empty() {
         root.to_string()
@@ -18,9 +20,12 @@ pub fn Card(
     #[prop(optional, into)]
     classes: Signal<String>,
 
-    /// Optional test identifier (renders as data-testid attribute)
+    /// Optional test attribute (renders as data-* attribute) on the root <div>.
+    ///
+    /// When provided as a &str or String, this becomes `data-testid="value"`.
+    /// You can also pass a full `TestAttr` to override the attribute key.
     #[prop(optional, into)]
-    test_id: Option<String>,
+    test_attr: Option<TestAttr>,
 
     /// Card body content (header, image, content, footer, etc.).
     children: Children,
@@ -30,8 +35,18 @@ pub fn Card(
         move || base_class("card", &classes.get())
     };
 
+    let (data_testid, data_cy) = match &test_attr {
+        Some(attr) if attr.key == "data-testid" => (Some(attr.value.clone()), None),
+        Some(attr) if attr.key == "data-cy" => (None, Some(attr.value.clone())),
+        _ => (None, None),
+    };
+
     view! {
-        <div class=class data-testid=test_id>
+        <div
+            class=class
+            attr:data-testid=move || data_testid.clone()
+            attr:data-cy=move || data_cy.clone()
+        >
             {children()}
         </div>
     }
@@ -45,9 +60,12 @@ pub fn CardHeader(
     #[prop(optional, into)]
     classes: Signal<String>,
 
-    /// Optional test identifier (renders as data-testid attribute)
+    /// Optional test attribute (renders as data-* attribute) on the <header>.
+    ///
+    /// When provided as a &str or String, this becomes `data-testid="value"`.
+    /// You can also pass a full `TestAttr` to override the attribute key.
     #[prop(optional, into)]
-    test_id: Option<String>,
+    test_attr: Option<TestAttr>,
 
     /// Children rendered in the header (e.g., title, icons).
     children: Children,
@@ -57,8 +75,18 @@ pub fn CardHeader(
         move || base_class("card-header", &classes.get())
     };
 
+    let (data_testid, data_cy) = match &test_attr {
+        Some(attr) if attr.key == "data-testid" => (Some(attr.value.clone()), None),
+        Some(attr) if attr.key == "data-cy" => (None, Some(attr.value.clone())),
+        _ => (None, None),
+    };
+
     view! {
-        <header class=class data-testid=test_id>
+        <header
+            class=class
+            attr:data-testid=move || data_testid.clone()
+            attr:data-cy=move || data_cy.clone()
+        >
             {children()}
         </header>
     }
@@ -72,9 +100,12 @@ pub fn CardImage(
     #[prop(optional, into)]
     classes: Signal<String>,
 
-    /// Optional test identifier (renders as data-testid attribute)
+    /// Optional test attribute (renders as data-* attribute) on the <div>.
+    ///
+    /// When provided as a &str or String, this becomes `data-testid="value"`.
+    /// You can also pass a full `TestAttr` to override the attribute key.
     #[prop(optional, into)]
-    test_id: Option<String>,
+    test_attr: Option<TestAttr>,
 
     /// Typically contains a Bulma "image" container.
     children: Children,
@@ -84,8 +115,18 @@ pub fn CardImage(
         move || base_class("card-image", &classes.get())
     };
 
+    let (data_testid, data_cy) = match &test_attr {
+        Some(attr) if attr.key == "data-testid" => (Some(attr.value.clone()), None),
+        Some(attr) if attr.key == "data-cy" => (None, Some(attr.value.clone())),
+        _ => (None, None),
+    };
+
     view! {
-        <div class=class data-testid=test_id>
+        <div
+            class=class
+            attr:data-testid=move || data_testid.clone()
+            attr:data-cy=move || data_cy.clone()
+        >
             {children()}
         </div>
     }
@@ -99,9 +140,12 @@ pub fn CardContent(
     #[prop(optional, into)]
     classes: Signal<String>,
 
-    /// Optional test identifier (renders as data-testid attribute)
+    /// Optional test attribute (renders as data-* attribute) on the <div>.
+    ///
+    /// When provided as a &str or String, this becomes `data-testid="value"`.
+    /// You can also pass a full `TestAttr` to override the attribute key.
     #[prop(optional, into)]
-    test_id: Option<String>,
+    test_attr: Option<TestAttr>,
 
     /// Body content of the card.
     children: Children,
@@ -111,8 +155,18 @@ pub fn CardContent(
         move || base_class("card-content", &classes.get())
     };
 
+    let (data_testid, data_cy) = match &test_attr {
+        Some(attr) if attr.key == "data-testid" => (Some(attr.value.clone()), None),
+        Some(attr) if attr.key == "data-cy" => (None, Some(attr.value.clone())),
+        _ => (None, None),
+    };
+
     view! {
-        <div class=class data-testid=test_id>
+        <div
+            class=class
+            attr:data-testid=move || data_testid.clone()
+            attr:data-cy=move || data_cy.clone()
+        >
             {children()}
         </div>
     }
@@ -126,9 +180,12 @@ pub fn CardFooter(
     #[prop(optional, into)]
     classes: Signal<String>,
 
-    /// Optional test identifier (renders as data-testid attribute)
+    /// Optional test attribute (renders as data-* attribute) on the <footer>.
+    ///
+    /// When provided as a &str or String, this becomes `data-testid="value"`.
+    /// You can also pass a full `TestAttr` to override the attribute key.
     #[prop(optional, into)]
-    test_id: Option<String>,
+    test_attr: Option<TestAttr>,
 
     /// Footer items (commonly multiple <a class="card-footer-item">).
     children: Children,
@@ -138,8 +195,18 @@ pub fn CardFooter(
         move || base_class("card-footer", &classes.get())
     };
 
+    let (data_testid, data_cy) = match &test_attr {
+        Some(attr) if attr.key == "data-testid" => (Some(attr.value.clone()), None),
+        Some(attr) if attr.key == "data-cy" => (None, Some(attr.value.clone())),
+        _ => (None, None),
+    };
+
     view! {
-        <footer class=class data-testid=test_id>
+        <footer
+            class=class
+            attr:data-testid=move || data_testid.clone()
+            attr:data-cy=move || data_cy.clone()
+        >
             {children()}
         </footer>
     }
@@ -218,15 +285,16 @@ mod tests {
 #[cfg(all(test, target_arch = "wasm32"))]
 mod wasm_tests {
     use super::*;
+    use crate::util::TestAttr;
     use leptos::prelude::*;
     use wasm_bindgen_test::*;
 
     wasm_bindgen_test_configure!(run_in_browser);
 
     #[wasm_bindgen_test]
-    fn card_renders_test_id() {
+    fn card_renders_test_attr_as_data_testid() {
         let html = view! {
-            <Card classes="extra" test_id="card-test">
+            <Card classes="extra" test_attr="card-test">
                 <div>"X"</div>
             </Card>
         }
@@ -240,7 +308,7 @@ mod wasm_tests {
     }
 
     #[wasm_bindgen_test]
-    fn card_no_test_id_when_not_provided() {
+    fn card_no_test_attr_when_not_provided() {
         let html = view! {
             <Card>
                 <div>"X"</div>
@@ -249,16 +317,16 @@ mod wasm_tests {
         .to_html();
 
         assert!(
-            !html.contains("data-testid"),
-            "expected no data-testid on Card when not provided; got: {}",
+            !html.contains("data-testid") && !html.contains("data-cy"),
+            "expected no test attribute on Card when not provided; got: {}",
             html
         );
     }
 
     #[wasm_bindgen_test]
-    fn card_header_renders_test_id() {
+    fn card_header_renders_test_attr_as_data_testid() {
         let html = view! {
-            <CardHeader classes="extra" test_id="card-header-test">
+            <CardHeader classes="extra" test_attr="card-header-test">
                 <p>"Header"</p>
             </CardHeader>
         }
@@ -272,9 +340,9 @@ mod wasm_tests {
     }
 
     #[wasm_bindgen_test]
-    fn card_image_renders_test_id() {
+    fn card_image_renders_test_attr_as_data_testid() {
         let html = view! {
-            <CardImage test_id="card-image-test">
+            <CardImage test_attr="card-image-test">
                 <figure class="image is-4by3"><img src="#" alt=""/></figure>
             </CardImage>
         }
@@ -288,9 +356,9 @@ mod wasm_tests {
     }
 
     #[wasm_bindgen_test]
-    fn card_content_renders_test_id() {
+    fn card_content_renders_test_attr_as_data_testid() {
         let html = view! {
-            <CardContent test_id="card-content-test">
+            <CardContent test_attr="card-content-test">
                 <p>"Body"</p>
             </CardContent>
         }
@@ -304,9 +372,9 @@ mod wasm_tests {
     }
 
     #[wasm_bindgen_test]
-    fn card_footer_renders_test_id() {
+    fn card_footer_renders_test_attr_as_data_testid() {
         let html = view! {
-            <CardFooter test_id="card-footer-test">
+            <CardFooter test_attr="card-footer-test">
                 <a class="card-footer-item">"One"</a>
             </CardFooter>
         }
@@ -315,6 +383,25 @@ mod wasm_tests {
         assert!(
             html.contains(r#"data-testid="card-footer-test""#),
             "expected data-testid on CardFooter; got: {}",
+            html
+        );
+    }
+
+    #[wasm_bindgen_test]
+    fn card_accepts_custom_test_attr_key() {
+        let html = view! {
+            <Card
+                classes="extra"
+                test_attr=TestAttr::new("data-cy", "card-cy")
+            >
+                <div>"X"</div>
+            </Card>
+        }
+        .to_html();
+
+        assert!(
+            html.contains(r#"data-cy="card-cy""#),
+            "expected custom data-cy attribute on Card; got: {}",
             html
         );
     }
