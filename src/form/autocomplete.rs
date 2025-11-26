@@ -50,10 +50,10 @@ pub fn AutoComplete(
     items: Option<Vec<String>>,
 
     /// Called when a tag is added.
-    on_update: Arc<dyn Fn(String) + Send + Sync>,
+    _on_update: Arc<dyn Fn(String) + Send + Sync>,
 
     /// Called when a tag is removed.
-    on_remove: Arc<dyn Fn(String) + Send + Sync>,
+    _on_remove: Arc<dyn Fn(String) + Send + Sync>,
 
     /// Currently selected single tag (for initial value).
     #[prop(optional, into)]
@@ -86,8 +86,12 @@ pub fn AutoComplete(
     /// Optional Authorization header value for dynamic fetches.
     #[prop(optional, into)]
     auth_header: Signal<String>,
+
+    /// Optional test identifier (renders as data-testid attribute)
+    #[prop(optional, into)]
+    test_id: Option<String>,
 ) -> impl IntoView {
-    let max_items = max_items.unwrap_or(10);
+    let _max_items = max_items.unwrap_or(10);
 
     // Build base input class
     let input_class = {
@@ -127,7 +131,7 @@ pub fn AutoComplete(
             <div class=move || {
                 let extra = classes.get();
                 if extra.trim().is_empty() { "select".to_string() } else { format!("select {}", extra) }
-            }>
+            } data-testid=test_id.clone()>
                 <select
                     id=id.clone()
                     data-type="tags"
@@ -157,6 +161,7 @@ pub fn AutoComplete(
                 data-item-value=data_item_value.get()
                 data-placeholder=placeholder.get()
                 value=value_json
+                data-testid=test_id.clone()
             />
         }
         .into_any()
@@ -169,6 +174,7 @@ pub fn AutoComplete(
                 class=move || input_class()
                 data-placeholder=placeholder.get()
                 value=current_selector.get()
+                data-testid=test_id.clone()
             />
         }
         .into_any()
@@ -178,7 +184,7 @@ pub fn AutoComplete(
     #[cfg(target_arch = "wasm32")]
     {
         let id_for_js = id.clone();
-        let max_items = max_items.clone();
+        let max_items = _max_items.clone();
         let current_selector = current_selector.clone();
         let case_sensitive = case_sensitive.clone();
         let url_for_fetch = url_for_fetch.clone();
@@ -190,8 +196,8 @@ pub fn AutoComplete(
             if let Some(element) = document.get_element_by_id(&id_for_js) {
                 // Build callback to route ops to on_update/on_remove
                 let cb = {
-                    let on_update = on_update.clone();
-                    let on_remove = on_remove.clone();
+                    let on_update = _on_update.clone();
+                    let on_remove = _on_remove.clone();
                     Closure::wrap(Box::new(move |json: JsValue| {
                         if let Some(s) = json.as_string() {
                             if let Some((op, value)) =
@@ -407,6 +413,61 @@ mod tests {
         assert!(
             html.contains(r#"class="input""#) && html.contains(r#"id="ac3""#),
             "expected plain input; got: {}",
+            html
+        );
+    }
+}
+
+#[cfg(all(test, target_arch = "wasm32"))]
+mod wasm_tests {
+    use super::*;
+    use leptos::prelude::*;
+    use std::sync::Arc;
+    use wasm_bindgen_test::*;
+
+    fn noop() -> Arc<dyn Fn(String) + Send + Sync> {
+        Arc::new(|_| {})
+    }
+
+    wasm_bindgen_test_configure!(run_in_browser);
+
+    #[wasm_bindgen_test]
+    fn autocomplete_renders_test_id_static_mode() {
+        let html = view! {
+            <AutoComplete
+                id="ac1".to_string()
+                items=vec!["A".to_string(), "B".to_string()]
+                placeholder="Choose"
+                on_update=noop()
+                on_remove=noop()
+                test_id="autocomplete-test"
+            />
+        }
+        .to_html();
+
+        assert!(
+            html.contains(r#"data-testid="autocomplete-test""#),
+            "expected data-testid attribute; got: {}",
+            html
+        );
+    }
+
+    #[wasm_bindgen_test]
+    fn autocomplete_no_test_id_when_not_provided() {
+        let html = view! {
+            <AutoComplete
+                id="ac1".to_string()
+                items=vec!["A".to_string(), "B".to_string()]
+                placeholder="Choose"
+                on_update=noop()
+                on_remove=noop()
+            />
+        }
+        .to_html();
+
+        assert!(
+            !html.contains("data-testid"),
+            "expected no data-testid attribute; got: {}",
             html
         );
     }

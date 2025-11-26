@@ -96,6 +96,10 @@ pub fn Input(
     /// Step value for number input. If not provided, defaults to 1.0.
     #[prop(optional)]
     step: Option<f32>,
+
+    /// Optional test identifier (renders as data-testid attribute)
+    #[prop(optional, into)]
+    test_id: Option<String>,
 ) -> impl IntoView {
     let input_type = r#type.unwrap_or(InputType::Text);
     let input_ref: NodeRef<html::Input> = NodeRef::new();
@@ -190,6 +194,7 @@ pub fn Input(
                         readonly=readonly.get()
                         step=numeric_step.clone()
                         pattern="[0-9]+([.][0-9]{0,2})?"
+                        data-testid=test_id
                     />
                 }.into_any()
             } else {
@@ -203,6 +208,7 @@ pub fn Input(
                         placeholder=placeholder.get()
                         disabled=disabled.get()
                         readonly=readonly.get()
+                        data-testid=test_id
                     />
                 }.into_any()
             }
@@ -302,6 +308,49 @@ mod tests {
         assert!(
             html.contains(r#"step="1""#),
             "expected step=1; got: {}",
+            html
+        );
+    }
+}
+
+#[cfg(all(test, target_arch = "wasm32"))]
+mod wasm_tests {
+    use super::*;
+    use crate::util::Size;
+    use leptos::prelude::*;
+    use std::rc::Rc;
+    use wasm_bindgen_test::*;
+
+    fn noop() -> Rc<dyn Fn(String)> {
+        Rc::new(|_value: String| {})
+    }
+
+    wasm_bindgen_test_configure!(run_in_browser);
+
+    #[wasm_bindgen_test]
+    fn input_renders_test_id() {
+        let html = view! {
+            <Input name="username" value="" update=noop() test_id="input-test" />
+        }
+        .to_html();
+
+        assert!(
+            html.contains(r#"data-testid="input-test""#),
+            "expected data-testid attribute; got: {}",
+            html
+        );
+    }
+
+    #[wasm_bindgen_test]
+    fn input_no_test_id_when_not_provided() {
+        let html = view! {
+            <Input name="username" value="" update=noop() />
+        }
+        .to_html();
+
+        assert!(
+            !html.contains("data-testid"),
+            "expected no data-testid attribute; got: {}",
             html
         );
     }

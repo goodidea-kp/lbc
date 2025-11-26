@@ -1,7 +1,7 @@
 use leptos::html;
 use leptos::prelude::{
-    Children, ClassAttribute, ElementChild, Get, IntoView, NodeRef, NodeRefAttribute, OnAttribute,
-    PropAttribute, Signal, component, event_target_value, view,
+    Children, ClassAttribute, CustomAttribute, ElementChild, Get, IntoView, NodeRef,
+    NodeRefAttribute, OnAttribute, PropAttribute, Signal, component, event_target_value, view,
 };
 use std::sync::Arc;
 
@@ -53,6 +53,10 @@ pub fn Select(
     /// Disable this component.
     #[prop(optional, into)]
     disabled: Signal<bool>,
+
+    /// Optional test identifier (renders as data-testid attribute)
+    #[prop(optional, into)]
+    test_id: Option<String>,
 ) -> impl IntoView {
     let class = {
         let classes = classes.clone();
@@ -84,7 +88,7 @@ pub fn Select(
     };
 
     view! {
-        <div class=move || class()>
+        <div class=move || class() data-testid=test_id>
             <select
                 name=name.get()
                 prop:value=value.get()
@@ -137,6 +141,10 @@ pub fn MultiSelect(
     /// Disable this component.
     #[prop(optional, into)]
     disabled: Signal<bool>,
+
+    /// Optional test identifier (renders as data-testid attribute)
+    #[prop(optional, into)]
+    test_id: Option<String>,
 ) -> impl IntoView {
     let class = {
         let classes = classes.clone();
@@ -187,7 +195,7 @@ pub fn MultiSelect(
     let joined_value = move || value.get().join(",");
 
     view! {
-        <div class=move || class()>
+        <div class=move || class() data-testid=test_id>
             <select
                 multiple=true
                 size=size_attr
@@ -206,6 +214,7 @@ pub fn MultiSelect(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::util::Size;
     use leptos::prelude::RenderHtml;
 
     use std::sync::Arc;
@@ -300,6 +309,100 @@ mod tests {
         assert!(
             html.contains(r#"size="6""#),
             "expected size attribute; got: {}",
+            html
+        );
+    }
+}
+
+#[cfg(all(test, target_arch = "wasm32"))]
+mod wasm_tests {
+    use super::*;
+    use crate::util::Size;
+    use leptos::prelude::*;
+    use std::sync::Arc;
+    use wasm_bindgen_test::*;
+
+    fn noop() -> Arc<dyn Fn(String) + Send + Sync> {
+        Arc::new(|_v| {})
+    }
+
+    fn noop_vec() -> Arc<dyn Fn(Vec<String>) + Send + Sync> {
+        Arc::new(|_v| {})
+    }
+
+    wasm_bindgen_test_configure!(run_in_browser);
+
+    #[wasm_bindgen_test]
+    fn select_renders_test_id() {
+        let html = view! {
+            <Select name="kind" value="x" update=noop() test_id="select-test">
+                <option value="x">"X"</option>
+            </Select>
+        }
+        .to_html();
+
+        assert!(
+            html.contains(r#"data-testid="select-test""#),
+            "expected data-testid attribute; got: {}",
+            html
+        );
+    }
+
+    #[wasm_bindgen_test]
+    fn select_no_test_id_when_not_provided() {
+        let html = view! {
+            <Select name="kind" value="x" update=noop()>
+                <option value="x">"X"</option>
+            </Select>
+        }
+        .to_html();
+
+        assert!(
+            !html.contains("data-testid"),
+            "expected no data-testid attribute; got: {}",
+            html
+        );
+    }
+
+    #[wasm_bindgen_test]
+    fn multi_select_renders_test_id() {
+        let html = view! {
+            <MultiSelect
+                name="m"
+                value=vec!["a".to_string()]
+                list_size=6
+                update=noop_vec()
+                test_id="multiselect-test"
+            >
+                <option value="a">"A"</option>
+            </MultiSelect>
+        }
+        .to_html();
+
+        assert!(
+            html.contains(r#"data-testid="multiselect-test""#),
+            "expected data-testid attribute; got: {}",
+            html
+        );
+    }
+
+    #[wasm_bindgen_test]
+    fn multi_select_no_test_id_when_not_provided() {
+        let html = view! {
+            <MultiSelect
+                name="m"
+                value=vec!["a".to_string()]
+                list_size=6
+                update=noop_vec()
+            >
+                <option value="a">"A"</option>
+            </MultiSelect>
+        }
+        .to_html();
+
+        assert!(
+            !html.contains("data-testid"),
+            "expected no data-testid attribute; got: {}",
             html
         );
     }

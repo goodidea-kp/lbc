@@ -33,6 +33,10 @@ pub fn Checkbox(
     #[prop(optional, into)]
     disabled: Signal<bool>,
 
+    /// Optional test identifier (renders as data-testid attribute)
+    #[prop(optional, into)]
+    test_id: Option<String>,
+
     /// Label/content shown next to the checkbox.
     children: Children,
 ) -> impl IntoView {
@@ -57,7 +61,7 @@ pub fn Checkbox(
     };
 
     view! {
-        <label class=class>
+        <label class=class data-testid=test_id>
             <input
                 type="checkbox"
                 name=name.clone()
@@ -88,7 +92,7 @@ mod tests {
 
     #[test]
     fn checkbox_sets_name_attribute() {
-        let html = view! { <Checkbox name="terms" checked=false>{"X"}</Checkbox> }.to_html();
+        let html = view! { <Checkbox name="terms" checked=false>{"X"</Checkbox> }.to_html();
         assert!(
             html.contains(r#"name="terms""#),
             "expected name attribute in: {}",
@@ -115,6 +119,43 @@ mod tests {
         assert!(
             html.contains(r#"disabled"#),
             "expected disabled attribute on input in: {}",
+            html
+        );
+    }
+}
+
+#[cfg(all(test, target_arch = "wasm32"))]
+mod wasm_tests {
+    use super::*;
+    use leptos::prelude::*;
+    use wasm_bindgen_test::*;
+
+    wasm_bindgen_test_configure!(run_in_browser);
+
+    #[wasm_bindgen_test]
+    fn checkbox_renders_test_id() {
+        let html = view! {
+            <Checkbox name="agree" checked=true test_id="checkbox-test">"Agree"</Checkbox>
+        }
+        .to_html();
+
+        assert!(
+            html.contains(r#"data-testid="checkbox-test""#),
+            "expected data-testid attribute; got: {}",
+            html
+        );
+    }
+
+    #[wasm_bindgen_test]
+    fn checkbox_no_test_id_when_not_provided() {
+        let html = view! {
+            <Checkbox name="agree" checked=true>"Agree"</Checkbox>
+        }
+        .to_html();
+
+        assert!(
+            !html.contains("data-testid"),
+            "expected no data-testid attribute; got: {}",
             html
         );
     }

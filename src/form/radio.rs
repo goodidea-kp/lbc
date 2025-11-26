@@ -42,6 +42,10 @@ pub fn Radio(
     /// Disable this component.
     #[prop(optional, into)]
     disabled: Signal<bool>,
+
+    /// Optional test identifier (renders as data-testid attribute)
+    #[prop(optional, into)]
+    test_id: Option<String>,
 ) -> impl IntoView {
     // Compute Bulma "radio" class plus any extras provided by consumer.
     let class = {
@@ -75,7 +79,7 @@ pub fn Radio(
     };
 
     view! {
-        <label class=move || class()>
+        <label class=move || class() data-testid=test_id>
             <input
                 type="radio"
                 name=name.get()
@@ -139,6 +143,48 @@ mod tests {
         assert!(
             html.contains(r#"disabled"#),
             "expected 'disabled' attribute; got: {}",
+            html
+        );
+    }
+}
+
+#[cfg(all(test, target_arch = "wasm32"))]
+mod wasm_tests {
+    use super::*;
+    use leptos::prelude::*;
+    use std::sync::Arc;
+    use wasm_bindgen_test::*;
+
+    fn noop() -> Arc<dyn Fn(String) + Send + Sync> {
+        Arc::new(|_v| {})
+    }
+
+    wasm_bindgen_test_configure!(run_in_browser);
+
+    #[wasm_bindgen_test]
+    fn radio_renders_test_id() {
+        let html = view! {
+            <Radio name="group" value="A" update=noop() test_id="radio-test">"Option A"</Radio>
+        }
+        .to_html();
+
+        assert!(
+            html.contains(r#"data-testid="radio-test""#),
+            "expected data-testid attribute; got: {}",
+            html
+        );
+    }
+
+    #[wasm_bindgen_test]
+    fn radio_no_test_id_when_not_provided() {
+        let html = view! {
+            <Radio name="group" value="A" update=noop()>"Option A"</Radio>
+        }
+        .to_html();
+
+        assert!(
+            !html.contains("data-testid"),
+            "expected no data-testid attribute; got: {}",
             html
         );
     }

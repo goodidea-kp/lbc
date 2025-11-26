@@ -29,7 +29,7 @@ pub fn File(
     _files: Signal<Vec<LbcSysFile>>,
 
     /// Callback to propagate the selected files to the parent.
-    update: std::sync::Arc<dyn Fn(Vec<LbcSysFile>) + Send + Sync>,
+    _update: std::sync::Arc<dyn Fn(Vec<LbcSysFile>) + Send + Sync>,
 
     /// The display text for the file selector.
     #[prop(default = "Choose a file...".to_string().into(), into)]
@@ -62,6 +62,10 @@ pub fn File(
     /// The size of this component.
     #[prop(optional)]
     size: Option<Size>,
+
+    /// Optional test identifier (renders as data-testid attribute)
+    #[prop(optional, into)]
+    test_id: Option<String>,
 ) -> impl IntoView {
     let has_name_for_class = has_name.clone();
     let class = move || {
@@ -127,7 +131,6 @@ pub fn File(
 
     #[cfg(target_arch = "wasm32")]
     let on_change = {
-        let _update = update.clone();
         move |_ev: leptos::ev::Event| {
             // File APIs are not available via leptos::web_sys re-export in this build.
             // No-op placeholder to keep the component compiling under wasm32 without extra deps.
@@ -137,7 +140,7 @@ pub fn File(
     let on_change = |_ev: leptos::ev::Event| { /* no-op on non-wasm targets */ };
 
     view! {
-        <div class=class>
+        <div class=class data-testid=test_id>
             <label class="file-label">
                 <input
                     type="file"
@@ -155,5 +158,130 @@ pub fn File(
                 {filenames_view()}
             </label>
         </div>
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::util::Size;
+    use leptos::prelude::RenderHtml;
+    use std::sync::Arc;
+
+    fn noop_update() -> Arc<dyn Fn(Vec<super::LbcSysFile>) + Send + Sync> {
+        Arc::new(|_files| {})
+    }
+
+    #[test]
+    fn file_renders_base_class_and_input() {
+        let html = view! {
+            <File
+                name="upload"
+                _files=Signal::derive(|| Vec::<super::LbcSysFile>::new())
+                update=noop_update()
+            />
+        }
+        .to_html();
+
+        assert!(
+            html.contains(r#"class="file""#),
+            "expected base 'file' class; got: {}",
+            html
+        );
+        assert!(
+            html.contains(r#"type="file""#),
+            "expected file input; got: {}",
+            html
+        );
+    }
+
+    #[test]
+    fn file_applies_size_and_flags() {
+        let html = view! {
+            <File
+                name="upload"
+                _files=Signal::derive(|| Vec::<super::LbcSysFile>::new())
+                update=noop_update()
+                size=Size::Small
+                right=true
+                fullwidth=true
+                boxed=true
+            />
+        }
+        .to_html();
+
+        assert!(
+            html.contains("is-small"),
+            "expected is-small; got: {}",
+            html
+        );
+        assert!(
+            html.contains("is-right"),
+            "expected is-right; got: {}",
+            html
+        );
+        assert!(
+            html.contains("is-fullwidth"),
+            "expected is-fullwidth; got: {}",
+            html
+        );
+        assert!(
+            html.contains("is-boxed"),
+            "expected is-boxed; got: {}",
+            html
+        );
+    }
+}
+
+#[cfg(all(test, target_arch = "wasm32"))]
+mod wasm_tests {
+    use super::*;
+    use crate::util::Size;
+    use leptos::prelude::*;
+    use std::sync::Arc;
+    use wasm_bindgen_test::*;
+
+    fn noop_update() -> Arc<dyn Fn(Vec<super::LbcSysFile>) + Send + Sync> {
+        Arc::new(|_files| {})
+    }
+
+    wasm_bindgen_test_configure!(run_in_browser);
+
+    #[wasm_bindgen_test]
+    fn file_renders_test_id() {
+        let html = view! {
+            <File
+                name="upload"
+                _files=Signal::derive(|| Vec::<super::LbcSysFile>::new())
+                update=noop_update()
+                size=Size::Small
+                test_id="file-test"
+            />
+        }
+        .to_html();
+
+        assert!(
+            html.contains(r#"data-testid="file-test""#),
+            "expected data-testid attribute; got: {}",
+            html
+        );
+    }
+
+    #[wasm_bindgen_test]
+    fn file_no_test_id_when_not_provided() {
+        let html = view! {
+            <File
+                name="upload"
+                _files=Signal::derive(|| Vec::<super::LbcSysFile>::new())
+                update=noop_update()
+            />
+        }
+        .to_html();
+
+        assert!(
+            !html.contains("data-testid"),
+            "expected no data-testid attribute; got: {}",
+            html
+        );
     }
 }

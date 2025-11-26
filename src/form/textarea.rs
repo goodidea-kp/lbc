@@ -73,6 +73,10 @@ pub fn TextArea(
     /// Show GenAI ribbon icon (cosmetic helper).
     #[prop(optional, into)]
     is_genai: Signal<bool>,
+
+    /// Optional test identifier (renders as data-testid attribute)
+    #[prop(optional, into)]
+    test_id: Option<String>,
 ) -> impl IntoView {
     let class = {
         let classes = classes.clone();
@@ -110,7 +114,7 @@ pub fn TextArea(
         if is_genai.get() {
             let update_ai = update.clone();
             view! {
-                <div id="context" style="position:relative">
+                <div id="context" style="position:relative" data-testid=test_id.clone()>
                     <Icon size=Size::Small classes="is-pulled-right ribbon">
                         <i class="fa-brands fa-openai"></i>
                     </Icon>
@@ -145,6 +149,7 @@ pub fn TextArea(
                     disabled=disabled.get()
                     readonly=readonly.get()
                     rows=rows.unwrap_or(0).to_string()
+                    data-testid=test_id
                 />
             }
             .into_any()
@@ -155,6 +160,7 @@ pub fn TextArea(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::util::Size;
     use leptos::prelude::RenderHtml;
 
     use std::sync::Arc;
@@ -253,6 +259,49 @@ mod tests {
         assert!(
             html.contains("ribbon"),
             "expected ribbon icon when is_genai; got: {}",
+            html
+        );
+    }
+}
+
+#[cfg(all(test, target_arch = "wasm32"))]
+mod wasm_tests {
+    use super::*;
+    use crate::util::Size;
+    use leptos::prelude::*;
+    use std::sync::Arc;
+    use wasm_bindgen_test::*;
+
+    fn noop() -> Arc<dyn Fn(String) + Send + Sync> {
+        Arc::new(|_v| {})
+    }
+
+    wasm_bindgen_test_configure!(run_in_browser);
+
+    #[wasm_bindgen_test]
+    fn textarea_renders_test_id() {
+        let html = view! {
+            <TextArea name="notes" value="" update=noop() test_id="textarea-test" />
+        }
+        .to_html();
+
+        assert!(
+            html.contains(r#"data-testid="textarea-test""#),
+            "expected data-testid attribute; got: {}",
+            html
+        );
+    }
+
+    #[wasm_bindgen_test]
+    fn textarea_no_test_id_when_not_provided() {
+        let html = view! {
+            <TextArea name="notes" value="" update=noop() />
+        }
+        .to_html();
+
+        assert!(
+            !html.contains("data-testid"),
+            "expected no data-testid attribute; got: {}",
             html
         );
     }

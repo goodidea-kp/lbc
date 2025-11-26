@@ -24,6 +24,10 @@ pub fn Control(
     #[prop(optional, into)]
     expanded: Signal<bool>,
 
+    /// Optional test identifier (renders as data-testid attribute)
+    #[prop(optional, into)]
+    test_id: Option<String>,
+
     /// Child nodes rendered inside the control.
     children: Children,
 ) -> impl IntoView {
@@ -51,10 +55,20 @@ pub fn Control(
     {
         let current = tag_name();
         match current.as_str() {
-            "article" => view! { <article class=class>{children()}</article> }.into_any(),
-            "label" => view! { <label class=class>{children()}</label> }.into_any(),
-            "p" => view! { <p class=class>{children()}</p> }.into_any(),
-            _ => view! { <div class=class>{children()}</div> }.into_any(),
+            "article" => {
+                view! { <article class=class data-testid=test_id.clone()>{children()}</article> }
+                    .into_any()
+            }
+            "label" => {
+                view! { <label class=class data-testid=test_id.clone()>{children()}</label> }
+                    .into_any()
+            }
+            "p" => {
+                view! { <p class=class data-testid=test_id.clone()>{children()}</p> }.into_any()
+            }
+            _ => {
+                view! { <div class=class data-testid=test_id>{children()}</div> }.into_any()
+            }
         }
     }
 }
@@ -102,6 +116,43 @@ mod tests {
         assert!(
             html.contains("is-expanded"),
             "expected 'is-expanded' class when expanded=true, got: {}",
+            html
+        );
+    }
+}
+
+#[cfg(all(test, target_arch = "wasm32"))]
+mod wasm_tests {
+    use super::*;
+    use leptos::prelude::*;
+    use wasm_bindgen_test::*;
+
+    wasm_bindgen_test_configure!(run_in_browser);
+
+    #[wasm_bindgen_test]
+    fn control_renders_test_id() {
+        let html = view! {
+            <Control test_id="control-test">"Content"</Control>
+        }
+        .to_html();
+
+        assert!(
+            html.contains(r#"data-testid="control-test""#),
+            "expected data-testid attribute; got: {}",
+            html
+        );
+    }
+
+    #[wasm_bindgen_test]
+    fn control_no_test_id_when_not_provided() {
+        let html = view! {
+            <Control>"Content"</Control>
+        }
+        .to_html();
+
+        assert!(
+            !html.contains("data-testid"),
+            "expected no data-testid attribute; got: {}",
             html
         );
     }
