@@ -137,7 +137,7 @@ pub fn Pagination(
             role="navigation"
             aria-label="pagination"
             // Map TestAttr to a concrete attribute; default key is data-testid.
-            attr:..=move || test_attr_pair.clone()
+            attr=move || test_attr_pair.clone()
         >
             <a class="pagination-previous" on:click=prev_click>{previous_label.get()}</a>
             <a class="pagination-next" on:click=next_click>{next_label.get()}</a>
@@ -205,7 +205,7 @@ pub fn PaginationItem(
             class=move || class()
             aria-label=label.get()
             on:click=click
-            attr:..=move || test_attr_pair.clone()
+            attr=move || test_attr_pair.clone()
         >
             {children()}
         </a>
