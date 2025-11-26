@@ -302,8 +302,8 @@ mod wasm_tests {
                 size=Size::Small
                 alignment=Alignment::Centered
                 rounded=true
-                on_previous=Some(noop())
-                on_next=Some(noop())
+                on_previous=noop()
+                on_next=noop()
                 test_id="pagination-test"
             >
                 <li>
