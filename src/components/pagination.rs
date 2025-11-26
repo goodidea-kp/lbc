@@ -127,17 +127,21 @@ pub fn Pagination(
         }
     };
 
-    // Precompute the optional (key, value) pair for the test attribute.
-    let test_attr_pair: Option<(String, String)> =
-        test_attr.as_ref().map(|attr| (attr.key.clone(), attr.value.clone()));
+    // Derive specific optional attributes that our macro can render.
+    let (data_testid, data_cy) = match &test_attr {
+        Some(ta) if ta.key == "data-testid" => (Some(ta.value.clone()), None),
+        Some(ta) if ta.key == "data-cy" => (None, Some(ta.value.clone())),
+        _ => (None, None),
+    };
 
     view! {
         <nav
             class=move || class()
             role="navigation"
             aria-label="pagination"
-            // Map TestAttr to a concrete attribute; default key is data-testid.
-            attr=move || test_attr_pair.clone()
+            // Only support a known small set of custom attributes here.
+            attr:data-testid=move || data_testid.clone()
+            attr:data-cy=move || data_cy.clone()
         >
             <a class="pagination-previous" on:click=prev_click>{previous_label.get()}</a>
             <a class="pagination-next" on:click=next_click>{next_label.get()}</a>
@@ -197,15 +201,20 @@ pub fn PaginationItem(
         }
     };
 
-    let test_attr_pair: Option<(String, String)> =
-        test_attr.as_ref().map(|attr| (attr.key.clone(), attr.value.clone()));
+    // Derive specific optional attributes that our macro can render.
+    let (data_testid, data_cy) = match &test_attr {
+        Some(ta) if ta.key == "data-testid" => (Some(ta.value.clone()), None),
+        Some(ta) if ta.key == "data-cy" => (None, Some(ta.value.clone())),
+        _ => (None, None),
+    };
 
     view! {
         <a
             class=move || class()
             aria-label=label.get()
             on:click=click
-            attr=move || test_attr_pair.clone()
+            attr:data-testid=move || data_testid.clone()
+            attr:data-cy=move || data_cy.clone()
         >
             {children()}
         </a>
