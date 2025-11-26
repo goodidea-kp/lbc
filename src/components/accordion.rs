@@ -41,6 +41,10 @@ pub fn AccordionItem(
     #[prop(optional)]
     on_toggle: Option<std::rc::Rc<dyn Fn()>>,
 
+    /// Optional test identifier (renders as data-testid attribute)
+    #[prop(optional, into)]
+    test_id: Option<String>,
+
     /// Body content of the accordion.
     children: Children,
 ) -> impl IntoView {
@@ -65,7 +69,7 @@ pub fn AccordionItem(
     };
 
     view! {
-        <article class=move || class()>
+        <article class=move || class() data-testid=test_id>
             <div class="accordion-header">
                 <p>{title.get()}</p>
                 <button class="toggle" aria-label="toggle" on:click=on_header_click></button>
@@ -88,6 +92,10 @@ pub fn Accordions(
     /// Extra classes for the root "accordions" container.
     #[prop(optional, into)]
     classes: Signal<String>,
+
+    /// Optional test identifier (renders as data-testid attribute)
+    #[prop(optional, into)]
+    test_id: Option<String>,
 
     /// Items to render inside this accordion group.
     children: Children,
@@ -121,7 +129,7 @@ pub fn Accordions(
     }
 
     view! {
-        <section id=id.clone() class=move || class()>
+        <section id=id.clone() class=move || class() data-testid=test_id>
             {children()}
         </section>
     }
@@ -219,6 +227,83 @@ mod tests {
         assert!(
             html.contains("is-active"),
             "expected is-active when open=true; got: {}",
+            html
+        );
+    }
+}
+
+#[cfg(all(test, target_arch = "wasm32"))]
+mod wasm_tests {
+    use super::*;
+    use leptos::prelude::*;
+    use wasm_bindgen_test::*;
+
+    wasm_bindgen_test_configure!(run_in_browser);
+
+    #[wasm_bindgen_test]
+    fn accordions_renders_test_id() {
+        let html = view! {
+            <Accordions id="acc1".to_string() test_id="accordions-test">
+                <AccordionItem title="One">
+                    <p>"Body"</p>
+                </AccordionItem>
+            </Accordions>
+        }
+        .to_html();
+
+        assert!(
+            html.contains(r#"data-testid="accordions-test""#),
+            "expected data-testid attribute on Accordions; got: {}",
+            html
+        );
+    }
+
+    #[wasm_bindgen_test]
+    fn accordions_no_test_id_when_not_provided() {
+        let html = view! {
+            <Accordions id="acc1".to_string()>
+                <AccordionItem title="One">
+                    <p>"Body"</p>
+                </AccordionItem>
+            </Accordions>
+        }
+        .to_html();
+
+        assert!(
+            !html.contains("data-testid"),
+            "expected no data-testid attribute on Accordions when not provided; got: {}",
+            html
+        );
+    }
+
+    #[wasm_bindgen_test]
+    fn accordion_item_renders_test_id() {
+        let html = view! {
+            <AccordionItem title="T" test_id="accordion-item-test">
+                <p>"B"</p>
+            </AccordionItem>
+        }
+        .to_html();
+
+        assert!(
+            html.contains(r#"data-testid="accordion-item-test""#),
+            "expected data-testid attribute on AccordionItem; got: {}",
+            html
+        );
+    }
+
+    #[wasm_bindgen_test]
+    fn accordion_item_no_test_id_when_not_provided() {
+        let html = view! {
+            <AccordionItem title="T">
+                <p>"B"</p>
+            </AccordionItem>
+        }
+        .to_html();
+
+        assert!(
+            !html.contains("data-testid"),
+            "expected no data-testid attribute on AccordionItem when not provided; got: {}",
             html
         );
     }
