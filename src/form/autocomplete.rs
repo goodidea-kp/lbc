@@ -69,7 +69,7 @@ pub fn AutoComplete(
 
     /// Case sensitive matching.
     #[prop(optional, into)]
-    case_sensitive: Signal<bool>,
+    _case_sensitive: Signal<bool>,
 
     /// For dynamic mode: object field to show as text.
     #[prop(optional, into)]
@@ -81,17 +81,17 @@ pub fn AutoComplete(
 
     /// For dynamic mode: base URL to fetch suggestions (the plugin appends the typed value).
     #[prop(optional, into)]
-    url_for_fetch: Signal<String>,
+    _url_for_fetch: Signal<String>,
 
     /// Optional Authorization header value for dynamic fetches.
     #[prop(optional, into)]
-    auth_header: Signal<String>,
+    _auth_header: Signal<String>,
 
     /// Optional test identifier (renders as data-testid attribute)
     #[prop(optional, into)]
     test_id: Option<String>,
 ) -> impl IntoView {
-    let _max_items = max_items.unwrap_or(10);
+    let max_items_value = max_items.unwrap_or(10);
 
     // Build base input class
     let input_class = {
@@ -184,11 +184,11 @@ pub fn AutoComplete(
     #[cfg(target_arch = "wasm32")]
     {
         let id_for_js = id.clone();
-        let max_items = _max_items.clone();
+        let max_items = max_items_value;
         let current_selector = current_selector.clone();
-        let case_sensitive = case_sensitive.clone();
-        let url_for_fetch = url_for_fetch.clone();
-        let auth_header = auth_header.clone();
+        let case_sensitive = _case_sensitive.clone();
+        let url_for_fetch = _url_for_fetch.clone();
+        let auth_header = _auth_header.clone();
         let data_item_value = data_item_value.clone();
 
         leptos::prelude::Effect::new(move |_| {
@@ -358,8 +358,8 @@ mod tests {
                 id="ac1".to_string()
                 items=vec!["A".to_string(), "B".to_string()]
                 placeholder="Choose"
-                on_update=noop()
-                on_remove=noop()
+                _on_update=noop()
+                _on_remove=noop()
             />
         }
         .to_html();
@@ -379,9 +379,9 @@ mod tests {
                 id="ac2".to_string()
                 data_item_text="name"
                 data_item_value="name"
-                url_for_fetch="/api?q="
-                on_update=noop()
-                on_remove=noop()
+                _url_for_fetch="/api?q="
+                _on_update=noop()
+                _on_remove=noop()
             />
         }
         .to_html();
@@ -404,8 +404,8 @@ mod tests {
             <AutoComplete
                 id="ac3".to_string()
                 placeholder="Type..."
-                on_update=noop()
-                on_remove=noop()
+                _on_update=noop()
+                _on_remove=noop()
             />
         }
         .to_html();
@@ -438,8 +438,8 @@ mod wasm_tests {
                 id="ac1".to_string()
                 items=vec!["A".to_string(), "B".to_string()]
                 placeholder="Choose"
-                on_update=noop()
-                on_remove=noop()
+                _on_update=noop()
+                _on_remove=noop()
                 test_id="autocomplete-test"
             />
         }
@@ -459,8 +459,8 @@ mod wasm_tests {
                 id="ac1".to_string()
                 items=vec!["A".to_string(), "B".to_string()]
                 placeholder="Choose"
-                on_update=noop()
-                on_remove=noop()
+                _on_update=noop()
+                _on_remove=noop()
             />
         }
         .to_html();

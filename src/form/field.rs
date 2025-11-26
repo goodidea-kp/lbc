@@ -1,5 +1,6 @@
 use leptos::prelude::{
-    Children, ClassAttribute, ElementChild, Get, IntoAny, IntoView, Signal, component, view,
+    Children, ClassAttribute, CustomAttribute, ElementChild, Get, IntoAny, IntoView, Signal,
+    component, view,
 };
 
 /// Alignment options available for field addons (Bulma).

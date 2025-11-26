@@ -1,6 +1,6 @@
 use leptos::prelude::{
-    ClassAttribute, ElementChild, Get, GlobalAttributes, IntoAny, IntoView, OnAttribute,
-    PropAttribute, Signal, StyleAttribute, component, event_target_value, view,
+    ClassAttribute, CustomAttribute, ElementChild, Get, GlobalAttributes, IntoAny, IntoView,
+    OnAttribute, PropAttribute, Signal, StyleAttribute, component, event_target_value, view,
 };
 use std::sync::Arc;
 

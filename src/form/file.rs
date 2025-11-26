@@ -1,5 +1,6 @@
 use leptos::prelude::{
-    ClassAttribute, ElementChild, Get, IntoAny, IntoView, OnAttribute, Signal, component, view,
+    ClassAttribute, CustomAttribute, ElementChild, Get, IntoAny, IntoView, OnAttribute, Signal,
+    component, view,
 };
 
 #[cfg(target_arch = "wasm32")]
@@ -178,7 +179,7 @@ mod tests {
             <File
                 name="upload"
                 _files=Signal::derive(|| Vec::<super::LbcSysFile>::new())
-                update=noop_update()
+                _update=noop_update()
             />
         }
         .to_html();
@@ -201,7 +202,7 @@ mod tests {
             <File
                 name="upload"
                 _files=Signal::derive(|| Vec::<super::LbcSysFile>::new())
-                update=noop_update()
+                _update=noop_update()
                 size=Size::Small
                 right=true
                 fullwidth=true
@@ -253,7 +254,7 @@ mod wasm_tests {
             <File
                 name="upload"
                 _files=Signal::derive(|| Vec::<super::LbcSysFile>::new())
-                update=noop_update()
+                _update=noop_update()
                 size=Size::Small
                 test_id="file-test"
             />
@@ -273,7 +274,7 @@ mod wasm_tests {
             <File
                 name="upload"
                 _files=Signal::derive(|| Vec::<super::LbcSysFile>::new())
-                update=noop_update()
+                _update=noop_update()
             />
         }
         .to_html();
