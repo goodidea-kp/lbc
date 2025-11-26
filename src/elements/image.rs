@@ -5,7 +5,9 @@ Bulma docs for images: https://bulma.io/documentation/elements/image/
 This component renders only the <img>. Wrap it with a Bulma "image" figure if needed.
 */
 
-use leptos::prelude::{ClassAttribute, CustomAttribute, ElementChild, Get, IntoView, Signal, StyleAttribute, component, view};
+use leptos::prelude::{
+    ClassAttribute, CustomAttribute, Get, IntoView, Signal, StyleAttribute, component, view,
+};
 
 /// Simple image element with optional classes and style.
 #[component]
@@ -34,11 +36,11 @@ pub fn Image(
         let classes = classes.clone();
         move || {
             if let Some(c) = &classes {
-                let v = c.get();
-                if v.trim().is_empty() {
+                let value = c.get();
+                if value.trim().is_empty() {
                     String::new()
                 } else {
-                    v
+                    value
                 }
             } else {
                 String::new()
@@ -110,8 +112,10 @@ mod tests {
             "expected class attribute; got: {}",
             html
         );
+        // Accept both with and without trailing semicolon, depending on renderer
         assert!(
-            html.contains(r#"style="border-radius:4px""#),
+            html.contains(r#"style="border-radius:4px""#)
+                || html.contains(r#"style="border-radius:4px;""#),
             "expected style attribute; got: {}",
             html
         );
