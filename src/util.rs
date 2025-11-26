@@ -83,11 +83,11 @@ impl From<&str> for TestAttr {
 /// - `None`  => no attribute is rendered
 /// - `Some(TestAttr { key, value })` => renders `key="value"`.
 pub fn test_attr_attr(test_attr: Option<TestAttr>) -> impl CustomAttribute<String, String> {
-    move |el| {
+    move |element: leptos::tachys::html::element::Element| {
         if let Some(attr) = &test_attr {
-            el.attr(&attr.key, &attr.value)
+            element.attr(&attr.key, &attr.value)
         } else {
-            el
+            element
         }
     }
 }
