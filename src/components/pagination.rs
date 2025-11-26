@@ -133,7 +133,7 @@ pub fn Pagination(
             role="navigation"
             aria-label="pagination"
             // Map TestAttr to a concrete attribute; default key is data-testid.
-            attr:..=move || {
+            attr=move || {
                 test_attr
                     .as_ref()
                     .map(|attr| (attr.key.clone(), attr.value.clone()))
@@ -202,7 +202,7 @@ pub fn PaginationItem(
             class=move || class()
             aria-label=label.get()
             on:click=click
-            attr:..=move || {
+            attr=move || {
                 test_attr
                     .as_ref()
                     .map(|attr| (attr.key.clone(), attr.value.clone()))
