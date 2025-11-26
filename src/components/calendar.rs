@@ -218,46 +218,36 @@ export function setup_date_picker(element, callback, initial_date, date_format, 
             return '';
         }
 
-        // Normal events
+        // Wire up official bulma-calendar events
         if (typeof calendarInstance.on === 'function') {
+            // Fired when a date is selected (including via Today in most flows)
             calendarInstance.on('select', function(datepicker) {
-                callback(getCurrentValue(calendarInstance, datepicker));
+                const value = getCurrentValue(calendarInstance, datepicker);
+                console.debug('bulma-calendar select →', value);
+                callback(value);
             });
+
+            // Fired when the input is validated/confirmed
+            calendarInstance.on('validate', function(datepicker) {
+                const value = getCurrentValue(calendarInstance, datepicker);
+                console.debug('bulma-calendar validate →', value);
+                callback(value);
+            });
+
+            // Fired when the clear button is used
             calendarInstance.on('clear', function(_datepicker) {
+                console.debug('bulma-calendar clear → ""');
                 callback('');
             });
-            calendarInstance.on('validate', function(datepicker) {
-                callback(getCurrentValue(calendarInstance, datepicker));
+
+            // Fired specifically when the Today button is clicked
+            calendarInstance.on('today', function(datepicker) {
+                const value = getCurrentValue(calendarInstance, datepicker);
+                console.debug('bulma-calendar today →', value);
+                callback(value);
             });
-        }
-
-        // Explicitly hook the "Today" button click if present.
-        // This does NOT try to listen to a non-existent 'onTodayClickDateTimePicker' event;
-        // instead it hooks the same DOM button that method is bound to.
-        try {
-            let root = calendarInstance.datePicker && calendarInstance.datePicker.container
-                ? calendarInstance.datePicker.container
-                : (calendarInstance._ui && calendarInstance._ui.datePicker
-                    ? calendarInstance._ui.datePicker
-                    : null);
-
-            if (root && root.querySelector) {
-                let todayButton =
-                    root.querySelector('[data-action="today"]') ||
-                    root.querySelector('.datetimepicker-today') ||
-                    root.querySelector('.is-today');
-
-                if (todayButton) {
-                    todayButton.addEventListener('click', function() {
-                        // Let bulma-calendar update its internal state first.
-                        setTimeout(function() {
-                            callback(getCurrentValue(calendarInstance, null));
-                        }, 0);
-                    });
-                }
-            }
-        } catch (e) {
-            console.warn('bulma-calendar: failed to hook Today button', e);
+        } else {
+            console.warn('bulma-calendar instance has no .on() method; events will not fire');
         }
     }
 
