@@ -1,9 +1,8 @@
 use leptos::prelude::{
-    AriaAttributes, Children, ClassAttribute, CustomAttribute, ElementChild, Get, GlobalAttributes,
-    IntoView, OnAttribute, Signal, component, view,
+    Children, ClassAttribute, ElementChild, Get, IntoView, OnAttribute, Signal, component, view,
 };
 
-use crate::util::{Size, TestAttr, test_attr_attr};
+use crate::util::Size;
 
 fn size_class(size: Size) -> &'static str {
     match size {
@@ -76,9 +75,9 @@ pub fn Pagination(
     #[prop(optional)]
     on_next: Option<std::sync::Arc<dyn Fn() + Send + Sync>>,
 
-    /// Optional test attribute (defaults to data-testid when created from &str/String).
+    /// Optional test identifier (renders as data-testid attribute) on the root <nav>.
     #[prop(optional, into)]
-    test_attr: Option<TestAttr>,
+    test_id: Option<String>,
 ) -> impl IntoView {
     let class = {
         let classes = classes.clone();
@@ -129,7 +128,7 @@ pub fn Pagination(
             class=move || class()
             role="navigation"
             aria-label="pagination"
-            attr:..=test_attr_attr(test_attr)
+            data-testid=test_id
         >
             <a class="pagination-previous" on:click=prev_click>{previous_label.get()}</a>
             <a class="pagination-next" on:click=next_click>{next_label.get()}</a>
@@ -162,9 +161,9 @@ pub fn PaginationItem(
     #[prop(optional)]
     on_click: Option<std::sync::Arc<dyn Fn() + Send + Sync>>,
 
-    /// Optional test attribute (defaults to data-testid when created from &str/String).
+    /// Optional test identifier (renders as data-testid attribute) on the <a>.
     #[prop(optional, into)]
-    test_attr: Option<TestAttr>,
+    test_id: Option<String>,
 ) -> impl IntoView {
     let class = {
         let current = current.clone();
@@ -191,7 +190,7 @@ pub fn PaginationItem(
             class=move || class()
             aria-label=label.get()
             on:click=click
-            attr:..=test_attr_attr(test_attr)
+            data-testid=test_id
         >
             {children()}
         </a>
@@ -291,7 +290,7 @@ mod tests {
 mod wasm_tests {
     use super::*;
     use crate::components::tabs::Alignment;
-    use crate::util::{Size, TestAttr};
+    use crate::util::Size;
     use leptos::prelude::*;
     use std::sync::Arc;
     use wasm_bindgen_test::*;
@@ -303,7 +302,7 @@ mod wasm_tests {
     wasm_bindgen_test_configure!(run_in_browser);
 
     #[wasm_bindgen_test]
-    fn pagination_renders_test_attr_as_data_testid() {
+    fn pagination_renders_test_id() {
         let html = view! {
             <Pagination
                 previous_label="Prev"
@@ -314,7 +313,7 @@ mod wasm_tests {
                 rounded=true
                 on_previous=noop()
                 on_next=noop()
-                test_attr="pagination-test"
+                test_id="pagination-test"
             >
                 <li>
                     <PaginationItem item_type=PaginationItemType::Link label="1" current=true>
@@ -333,7 +332,7 @@ mod wasm_tests {
     }
 
     #[wasm_bindgen_test]
-    fn pagination_no_test_attr_when_not_provided() {
+    fn pagination_no_test_id_when_not_provided() {
         let html = view! {
             <Pagination previous_label="Prev" next_label="Next">
                 <li>
@@ -353,14 +352,14 @@ mod wasm_tests {
     }
 
     #[wasm_bindgen_test]
-    fn pagination_item_renders_test_attr_as_data_testid() {
+    fn pagination_item_renders_test_id() {
         let html = view! {
             <PaginationItem
                 item_type=PaginationItemType::Link
                 label="1"
                 current=true
                 on_click=noop()
-                test_attr="pagination-item-test"
+                test_id="pagination-item-test"
             >
                 {"1"}
             </PaginationItem>
@@ -375,7 +374,7 @@ mod wasm_tests {
     }
 
     #[wasm_bindgen_test]
-    fn pagination_item_no_test_attr_when_not_provided() {
+    fn pagination_item_no_test_id_when_not_provided() {
         let html = view! {
             <PaginationItem
                 item_type=PaginationItemType::Link
