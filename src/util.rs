@@ -86,5 +86,8 @@ pub fn test_attr_attr(test_attr: Option<TestAttr>) -> impl CustomAttribute<Strin
     // In Tachys/Leptos 0.8, `attr:..=` accepts a zero-arg reactive function
     // that yields an Attribute. We return either a key/value tuple or `()`.
     let ta = test_attr;
-    move || ta.as_ref().map(|attr| (attr.key.clone(), attr.value.clone()))
+    move || {
+        ta.as_ref()
+            .map(|attr| (attr.key.clone(), attr.value.clone()))
+    }
 }

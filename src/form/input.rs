@@ -1,7 +1,7 @@
 use leptos::html;
 use leptos::prelude::{
-    ClassAttribute, CustomAttribute, Get, IntoAny, IntoView, NodeRef, NodeRefAttribute, OnAttribute,
-    Signal, component, event_target_value, view,
+    ClassAttribute, CustomAttribute, Get, IntoAny, IntoView, NodeRef, NodeRefAttribute,
+    OnAttribute, Signal, component, event_target_value, view,
 };
 use std::fmt;
 use std::rc::Rc;

@@ -74,8 +74,7 @@ mod tests {
 
     #[test]
     fn list_can_render_ol_with_classes() {
-        let html =
-            view! { <List tag="ol" classes="is-lower-alpha"><li>"a"</li></List> }.to_html();
+        let html = view! { <List tag="ol" classes="is-lower-alpha"><li>"a"</li></List> }.to_html();
         assert!(html.contains("<ol"), "expected ol tag, got: {}", html);
         assert!(
             html.contains(r#"class="is-lower-alpha""#),

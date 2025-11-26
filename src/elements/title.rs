@@ -86,15 +86,31 @@ pub fn Title(
     let tag_name = tag.get().to_lowercase();
 
     match tag_name.as_str() {
-        "h1" => view! { <h1 class=class_str() data-testid=test_id.clone()>{children()}</h1> }.into_any(),
-        "h2" => view! { <h2 class=class_str() data-testid=test_id.clone()>{children()}</h2> }.into_any(),
-        "h3" => view! { <h3 class=class_str() data-testid=test_id.clone()>{children()}</h3> }.into_any(),
-        "h4" => view! { <h4 class=class_str() data-testid=test_id.clone()>{children()}</h4> }.into_any(),
-        "h5" => view! { <h5 class=class_str() data-testid=test_id.clone()>{children()}</h5> }.into_any(),
-        "h6" => view! { <h6 class=class_str() data-testid=test_id.clone()>{children()}</h6> }.into_any(),
-        "p" => view! { <p class=class_str() data-testid=test_id.clone()>{children()}</p> }.into_any(),
-        "div" => view! { <div class=class_str() data-testid=test_id.clone()>{children()}</div> }.into_any(),
-        "span" => view! { <span class=class_str() data-testid=test_id.clone()>{children()}</span> }.into_any(),
+        "h1" => {
+            view! { <h1 class=class_str() data-testid=test_id.clone()>{children()}</h1> }.into_any()
+        }
+        "h2" => {
+            view! { <h2 class=class_str() data-testid=test_id.clone()>{children()}</h2> }.into_any()
+        }
+        "h3" => {
+            view! { <h3 class=class_str() data-testid=test_id.clone()>{children()}</h3> }.into_any()
+        }
+        "h4" => {
+            view! { <h4 class=class_str() data-testid=test_id.clone()>{children()}</h4> }.into_any()
+        }
+        "h5" => {
+            view! { <h5 class=class_str() data-testid=test_id.clone()>{children()}</h5> }.into_any()
+        }
+        "h6" => {
+            view! { <h6 class=class_str() data-testid=test_id.clone()>{children()}</h6> }.into_any()
+        }
+        "p" => {
+            view! { <p class=class_str() data-testid=test_id.clone()>{children()}</p> }.into_any()
+        }
+        "div" => view! { <div class=class_str() data-testid=test_id.clone()>{children()}</div> }
+            .into_any(),
+        "span" => view! { <span class=class_str() data-testid=test_id.clone()>{children()}</span> }
+            .into_any(),
         _ => view! { <h3 class=class_str() data-testid=test_id>{children()}</h3> }.into_any(),
     }
 }
@@ -141,15 +157,31 @@ pub fn Subtitle(
     let tag_name = tag.get().to_lowercase();
 
     match tag_name.as_str() {
-        "h1" => view! { <h1 class=class_str() data-testid=test_id.clone()>{children()}</h1> }.into_any(),
-        "h2" => view! { <h2 class=class_str() data-testid=test_id.clone()>{children()}</h2> }.into_any(),
-        "h3" => view! { <h3 class=class_str() data-testid=test_id.clone()>{children()}</h3> }.into_any(),
-        "h4" => view! { <h4 class=class_str() data-testid=test_id.clone()>{children()}</h4> }.into_any(),
-        "h5" => view! { <h5 class=class_str() data-testid=test_id.clone()>{children()}</h5> }.into_any(),
-        "h6" => view! { <h6 class=class_str() data-testid=test_id.clone()>{children()}</h6> }.into_any(),
-        "p" => view! { <p class=class_str() data-testid=test_id.clone()>{children()}</p> }.into_any(),
-        "div" => view! { <div class=class_str() data-testid=test_id.clone()>{children()}</div> }.into_any(),
-        "span" => view! { <span class=class_str() data-testid=test_id.clone()>{children()}</span> }.into_any(),
+        "h1" => {
+            view! { <h1 class=class_str() data-testid=test_id.clone()>{children()}</h1> }.into_any()
+        }
+        "h2" => {
+            view! { <h2 class=class_str() data-testid=test_id.clone()>{children()}</h2> }.into_any()
+        }
+        "h3" => {
+            view! { <h3 class=class_str() data-testid=test_id.clone()>{children()}</h3> }.into_any()
+        }
+        "h4" => {
+            view! { <h4 class=class_str() data-testid=test_id.clone()>{children()}</h4> }.into_any()
+        }
+        "h5" => {
+            view! { <h5 class=class_str() data-testid=test_id.clone()>{children()}</h5> }.into_any()
+        }
+        "h6" => {
+            view! { <h6 class=class_str() data-testid=test_id.clone()>{children()}</h6> }.into_any()
+        }
+        "p" => {
+            view! { <p class=class_str() data-testid=test_id.clone()>{children()}</p> }.into_any()
+        }
+        "div" => view! { <div class=class_str() data-testid=test_id.clone()>{children()}</div> }
+            .into_any(),
+        "span" => view! { <span class=class_str() data-testid=test_id.clone()>{children()}</span> }
+            .into_any(),
         _ => view! { <h3 class=class_str() data-testid=test_id>{children()}</h3> }.into_any(),
     }
 }

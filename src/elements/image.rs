@@ -78,11 +78,7 @@ mod tests {
     #[test]
     fn image_renders_basic_img() {
         let html = view! { <Image src="x.png" alt="alt text" /> }.to_html();
-        assert!(
-            html.contains(r#"<img"#),
-            "expected img tag; got: {}",
-            html
-        );
+        assert!(html.contains(r#"<img"#), "expected img tag; got: {}", html);
         assert!(
             html.contains(r#"src="x.png""#),
             "expected src attribute; got: {}",

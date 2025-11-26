@@ -70,54 +70,46 @@ pub fn Control(
     {
         let current = tag_name();
         match current.as_str() {
-            "article" => {
-                view! {
-                    <article
-                        class=class
-                        attr:data-testid=move || data_testid.clone()
-                        attr:data-cy=move || data_cy.clone()
-                    >
-                        {children()}
-                    </article>
-                }
-                .into_any()
+            "article" => view! {
+                <article
+                    class=class
+                    attr:data-testid=move || data_testid.clone()
+                    attr:data-cy=move || data_cy.clone()
+                >
+                    {children()}
+                </article>
             }
-            "label" => {
-                view! {
-                    <label
-                        class=class
-                        attr:data-testid=move || data_testid.clone()
-                        attr:data-cy=move || data_cy.clone()
-                    >
-                        {children()}
-                    </label>
-                }
-                .into_any()
+            .into_any(),
+            "label" => view! {
+                <label
+                    class=class
+                    attr:data-testid=move || data_testid.clone()
+                    attr:data-cy=move || data_cy.clone()
+                >
+                    {children()}
+                </label>
             }
-            "p" => {
-                view! {
-                    <p
-                        class=class
-                        attr:data-testid=move || data_testid.clone()
-                        attr:data-cy=move || data_cy.clone()
-                    >
-                        {children()}
-                    </p>
-                }
-                .into_any()
+            .into_any(),
+            "p" => view! {
+                <p
+                    class=class
+                    attr:data-testid=move || data_testid.clone()
+                    attr:data-cy=move || data_cy.clone()
+                >
+                    {children()}
+                </p>
             }
-            _ => {
-                view! {
-                    <div
-                        class=class
-                        attr:data-testid=move || data_testid.clone()
-                        attr:data-cy=move || data_cy.clone()
-                    >
-                        {children()}
-                    </div>
-                }
-                .into_any()
+            .into_any(),
+            _ => view! {
+                <div
+                    class=class
+                    attr:data-testid=move || data_testid.clone()
+                    attr:data-cy=move || data_cy.clone()
+                >
+                    {children()}
+                </div>
             }
+            .into_any(),
         }
     }
 }
