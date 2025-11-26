@@ -19,8 +19,8 @@ Required static assets
 
 use leptos::html;
 use leptos::prelude::{
-    component, view, ClassAttribute, CustomAttribute, Get, GetUntracked, GlobalAttributes, IntoView,
-    NodeRef, NodeRefAttribute, Signal,
+    ClassAttribute, CustomAttribute, Get, GetUntracked, GlobalAttributes, IntoView, NodeRef,
+    NodeRefAttribute, Signal, component, view,
 };
 #[cfg(target_arch = "wasm32")]
 use leptos::wasm_bindgen::closure::Closure;
@@ -51,7 +51,7 @@ pub fn Calendar(
     #[prop(optional)]
     date: Option<String>,
 
-    /// Callback invoked when the date/time changes; receives empty string on clear/cancel.
+    /// Callback invoked when the date/time changes; receives empty string on clear.
     update: std::sync::Arc<dyn Fn(String) + Send + Sync>,
 
     /// Extra classes appended after Bulma "input".
@@ -190,133 +190,37 @@ pub fn Calendar(
 #[cfg(target_arch = "wasm32")]
 #[leptos::wasm_bindgen::prelude::wasm_bindgen(inline_js = r#"
 let init = new Map();
-
-/**
- * Attach bulma-calendar to the given input element and wire native DOM events
- * back to the provided callback.
- *
- * We do NOT rely on calendarInstance.on(...) because the CDN build of
- * bulma-calendar@7.1.1 does not expose a stable .on API. Instead we:
- *   - listen to the input's native 'change' event
- *   - best-effort hook the Today button's click
- */
 export function setup_date_picker(element, callback, initial_date, date_format, time_format, picker_type) {
-    // Only initialize once per element id
     if (!init.has(element.id)) {
-        // Attach bulma-calendar to the input element
         let calendarInstances = bulmaCalendar.attach(element, {
             type: picker_type || (String(time_format || '').trim() ? 'datetime' : 'date'),
             color: 'info',
             lang: 'en',
             dateFormat: date_format,
             timeFormat: time_format,
+            showTodayButton: false
         });
-
-        // Normalize instance (array vs single)
-        let calendarInstance = Array.isArray(calendarInstances) ? calendarInstances[0] : calendarInstances;
-        init.set(element.id, calendarInstance);
-
-        // 1) Native input change event: fires when bulma-calendar updates the value
-        element.addEventListener('change', function () {
-            const value = element.value || '';
-            console.debug('bulma-calendar input change →', value);
-            callback(value);
+        init.set(element.id, calendarInstances[0]);
+        let calendarInstance = calendarInstances[0];
+        calendarInstance.on('select', function(datepicker) {
+            callback(datepicker.data.value());
         });
-
-        // 2) Best-effort Today button hook
-        try {
-            // The calendar popup is usually rendered as a sibling or descendant.
-            // We search the document for a calendar container associated with this input.
-            // This is heuristic but works for the catalog.
-            const doc = element.ownerDocument || document;
-            // Look for a calendar container that references this input by id
-            // or is near it in the DOM.
-            let container = null;
-
-            // Strategy A: data-target attribute
-            container = doc.querySelector('.datetimepicker');
-
-            // Strategy B: first datetimepicker next to the input
-            if (!container) {
-                const candidates = doc.querySelectorAll('.datetimepicker');
-                if (candidates.length === 1) {
-                    container = candidates[0];
-                } else if (candidates.length > 1) {
-                    // pick the one closest in the DOM tree
-                    let best = null;
-                    let bestDistance = Infinity;
-                    candidates.forEach(function (node) {
-                        let distance = 0;
-                        let current = node;
-                        while (current && current !== element && distance < 10) {
-                            current = current.parentElement;
-                            distance++;
-                        }
-                        if (current === element && distance < bestDistance) {
-                            best = node;
-                            bestDistance = distance;
-                        }
-                    });
-                    if (best) container = best;
-                }
-            }
-
-            if (container && container.querySelector) {
-                // Today button usually has data-action="today" or a specific class
-                const todayButton =
-                    container.querySelector('[data-action="today"]') ||
-                    container.querySelector('.datetimepicker-today') ||
-                    container.querySelector('.is-today');
-
-                if (todayButton) {
-                    todayButton.addEventListener('click', function () {
-                        // Let bulma-calendar update its internal state and the input value first
-                        setTimeout(function () {
-                            const value = element.value || '';
-                            console.debug('bulma-calendar Today click →', value);
-
-                            // Manually dispatch a native 'change' event so our input listener runs.
-                            try {
-                                const evt = new Event('change', { bubbles: true });
-                                element.dispatchEvent(evt);
-                            } catch (e) {
-                                console.warn('bulma-calendar: failed to dispatch synthetic change event', e);
-                                // Fallback: call callback directly if dispatch fails
-                                callback(value);
-                            }
-                        }, 0);
-                    });
-                } else {
-                    console.debug('bulma-calendar: Today button not found for element id=', element.id);
-                }
-            } else {
-                console.debug('bulma-calendar: calendar container not found for element id=', element.id);
-            }
-        } catch (e) {
-            console.warn('bulma-calendar: failed to hook Today button', e);
-        }
+        calendarInstance.on('clear', function(_datepicker) {
+            callback('');
+        });
+        calendarInstance.on('validate', function(datepicker) {
+            callback(datepicker.data.value());
+        });
     }
-
-    // Set initial value on the input; bulma-calendar will pick it up
-    if (typeof initial_date === 'string') {
-        element.value = initial_date;
-    } else if (initial_date && typeof initial_date.toString === 'function') {
-        element.value = initial_date.toString();
-    }
+    init.get(element.id).value(initial_date);
 }
-
-/**
- * Detach bookkeeping for the given id.
- * (We do not destroy the JS widget explicitly; bulma-calendar v7 does not
- * expose a stable destroy API in the CDN build.)
- */
 export function detach_date_picker(id) {
     init.delete(id);
 }
 "#)]
 #[cfg(target_arch = "wasm32")]
 #[allow(improper_ctypes, improper_ctypes_definitions)]
-unsafe extern "C" {
+extern "C" {
     fn setup_date_picker(
         element: &Element,
         callback: &JsValue,
@@ -421,5 +325,47 @@ mod tests {
             />
         }
         .to_html();
+    }
+}
+
+#[cfg(all(test, target_arch = "wasm32"))]
+mod wasm_tests {
+    use super::*;
+    use leptos::prelude::*;
+    use std::sync::Arc;
+    use wasm_bindgen_test::*;
+
+    fn noop() -> Arc<dyn Fn(String) + Send + Sync> {
+        Arc::new(|_| {})
+    }
+
+    wasm_bindgen_test_configure!(run_in_browser);
+
+    #[wasm_bindgen_test]
+    fn calendar_renders_test_id() {
+        let html = view! {
+            <Calendar id="appt".to_string() update=noop() test_attr=TestAttr::test_id("calendar-test") />
+        }
+        .to_html();
+
+        assert!(
+            html.contains(r#"data-testid="calendar-test""#),
+            "expected data-testid attribute; got: {}",
+            html
+        );
+    }
+
+    #[wasm_bindgen_test]
+    fn calendar_no_test_id_when_not_provided() {
+        let html = view! {
+            <Calendar id="appt".to_string() update=noop() />
+        }
+        .to_html();
+
+        assert!(
+            !html.contains("data-testid") && !html.contains("data-cy"),
+            "expected no test attribute; got: {}",
+            html
+        );
     }
 }
