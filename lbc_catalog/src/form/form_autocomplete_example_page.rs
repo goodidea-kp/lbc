@@ -48,8 +48,8 @@ pub fn FormAutoCompletePage() -> impl IntoView {
                     id="tags-static".to_string()
                     items=items.clone()
                     placeholder="Choose Tags"
-                    on_update=on_add.clone()
-                    on_remove=on_remove.clone()
+                    _on_update=on_add.clone()
+                    _on_remove=on_remove.clone()
                 />
 
                 <p class="help mt-3">

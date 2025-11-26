@@ -29,7 +29,7 @@ pub fn FormFilePage() -> impl IntoView {
                         <File
                             name="upload"
                             _files=selected_files
-                            update=on_update_1
+                            _update=on_update_1
                             selector_label="Choose a file..."
                             has_name="No file selected"
                         />
@@ -44,7 +44,7 @@ pub fn FormFilePage() -> impl IntoView {
                         <File
                             name="upload2"
                             _files=selected_files
-                            update=on_update_2
+                            _update=on_update_2
                             boxed=true
                             fullwidth=true
                             right=true
