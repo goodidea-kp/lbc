@@ -29,6 +29,8 @@ use leptos::wasm_bindgen::{JsCast, JsValue};
 #[cfg(target_arch = "wasm32")]
 use leptos::web_sys::Element;
 
+use crate::util::TestAttr;
+
 /// A date/time input enhanced by bulma-calendar.
 ///
 /// Controlled outward via `update` callback. The underlying input is driven by the JS plugin.
@@ -56,9 +58,12 @@ pub fn Calendar(
     #[prop(optional, into)]
     classes: Signal<String>,
 
-    /// Optional test identifier (renders as data-testid attribute)
+    /// Optional test attribute (renders as data-* attribute) on the input.
+    ///
+    /// When provided as a &str or String, this becomes `data-testid="value"`.
+    /// You can also pass a full `TestAttr` to override the attribute key.
     #[prop(optional, into)]
-    test_id: Option<String>,
+    test_attr: Option<TestAttr>,
 ) -> impl IntoView {
     let input_ref: NodeRef<html::Input> = NodeRef::new();
 
@@ -158,6 +163,13 @@ pub fn Calendar(
         detach_date_picker(&JsValue::from(_id_for_cleanup.as_str()));
     });
 
+    // Derive specific optional attributes that our macro can render.
+    let (data_testid, data_cy) = match &test_attr {
+        Some(attr) if attr.key == "data-testid" => (Some(attr.value.clone()), None),
+        Some(attr) if attr.key == "data-cy" => (None, Some(attr.value.clone())),
+        _ => (None, None),
+    };
+
     view! {
         <input
             id=id.clone()
@@ -168,7 +180,8 @@ pub fn Calendar(
             }
             value=initial_value
             node_ref=input_ref
-            data-testid=test_id
+            attr:data-testid=move || data_testid.clone()
+            attr:data-cy=move || data_cy.clone()
         />
     }
 }
@@ -330,7 +343,7 @@ mod wasm_tests {
     #[wasm_bindgen_test]
     fn calendar_renders_test_id() {
         let html = view! {
-            <Calendar id="appt".to_string() update=noop() test_id="calendar-test" />
+            <Calendar id="appt".to_string() update=noop() test_attr=TestAttr::test_id("calendar-test") />
         }
         .to_html();
 
@@ -349,8 +362,8 @@ mod wasm_tests {
         .to_html();
 
         assert!(
-            !html.contains("data-testid"),
-            "expected no data-testid attribute; got: {}",
+            !html.contains("data-testid") && !html.contains("data-cy"),
+            "expected no test attribute; got: {}",
             html
         );
     }
