@@ -208,14 +208,13 @@ pub fn Calendar(
 #[cfg(target_arch = "wasm32")]
 #[leptos::wasm_bindgen::prelude::wasm_bindgen(inline_js = r#"
 let init = new Map();
-let todayDelegates = new Map();
 
 /**
  * Attach bulmaCalendar to the given element and wire up Rust callbacks.
  *
  * @param {Element} element - the input element
- * @param {Function} on_change - Rust callback for general value changes (select/validate/clear/cancel)
- * @param {Function} on_today - Rust callback specifically for Today button clicks
+ * @param {Function} on_change - Rust callback for general value changes (select/validate/clear/cancel/today)
+ * @param {Function} on_today - Rust callback specifically for Today button clicks (kept for future extension)
  * @param {string} initial_date - initial value
  * @param {string} date_format - date format string
  * @param {string} time_format - time format string
@@ -240,16 +239,27 @@ export function setup_date_picker(element, on_change, on_today, initial_date, da
             picker_type
         });
 
+        // Helper: read current value from instance
+        const readValue = () => {
+            try {
+                const v = calendarInstance?.data?.value?.();
+                return v == null ? '' : String(v);
+            } catch (e) {
+                console.warn('[Calendar] readValue failed', e);
+                return '';
+            }
+        };
+
         // Normal selection: user picks a date/time
-        calendarInstance.on('select', function(datepicker) {
-            const v = datepicker?.data?.value?.();
+        calendarInstance.on('select', function(_datepicker) {
+            const v = readValue();
             console.log('[Calendar] event: select', v);
             on_change(v);
         });
 
         // Validation event (e.g., user confirms selection)
-        calendarInstance.on('validate', function(datepicker) {
-            const v = datepicker?.data?.value?.();
+        calendarInstance.on('validate', function(_datepicker) {
+            const v = readValue();
             console.log('[Calendar] event: validate', v);
             on_change(v);
         });
@@ -267,17 +277,17 @@ export function setup_date_picker(element, on_change, on_today, initial_date, da
         });
 
         // Today button click in datetime picker (bulma-calendar specific event)
-        calendarInstance.on('onTodayClickDateTimePicker', function(dp) {
-            const v = dp?.data?.value?.();
+        calendarInstance.on('onTodayClickDateTimePicker', function(_dp) {
+            const v = readValue();
             console.log('[Calendar] event: onTodayClickDateTimePicker', v);
-            on_today(v);
+            on_change(v);
         });
 
         // Generic "today" event (older/newer versions)
-        calendarInstance.on('today',  (dp) => {
-            const v = dp?.data?.value?.();
+        calendarInstance.on('today',  function(_dp) {
+            const v = readValue();
             console.log('[Calendar] event: today', v);
-            on_today(v);
+            on_change(v);
         });
 
         // As a robust fallback across versions/skins, bind a delegated listener to the Today button
@@ -294,14 +304,16 @@ export function setup_date_picker(element, on_change, on_today, initial_date, da
             // If we could determine an id and it doesn't match this element, ignore
             if (idToMatch && idToMatch !== element.id) return;
             // Otherwise, assume it's for this element (common when only one open at a time)
-            const dp = init.get(element.id);
-            const v = dp?.data?.value?.();
+            const v = readValue();
             console.log('[Calendar] event: today (delegated)', v, { id: element.id });
-            try { on_today(v); } catch (err) { console.warn('[Calendar] today (delegated) callback error', err); }
+            try { on_change(v); } catch (err) { console.warn('[Calendar] today (delegated) callback error', err); }
         };
-        if (!todayDelegates.has(element.id)) {
+        if (!window.__lbcCalendarTodayDelegates) {
+            window.__lbcCalendarTodayDelegates = new Map();
+        }
+        if (!window.__lbcCalendarTodayDelegates.has(element.id)) {
             document.addEventListener('click', delegate, true);
-            todayDelegates.set(element.id, delegate);
+            window.__lbcCalendarTodayDelegates.set(element.id, delegate);
             console.log('[Calendar] today delegated listener bound', { id: element.id });
         }
 
@@ -318,9 +330,9 @@ export function setup_date_picker(element, on_change, on_today, initial_date, da
                     const directHandler = () => {
                         // Read value after bulma updates selection
                         setTimeout(() => {
-                            const v = init.get(element.id)?.data?.value?.();
+                            const v = readValue();
                             console.log('[Calendar] event: today (direct)', v, { id: element.id });
-                            try { on_today(v); } catch (err) { console.warn('[Calendar] today (direct) callback error', err); }
+                            try { on_change(v); } catch (err) { console.warn('[Calendar] today (direct) callback error', err); }
                         }, 0);
                     };
                     todayBtn.addEventListener('click', directHandler);
@@ -349,9 +361,9 @@ export function setup_date_picker(element, on_change, on_today, initial_date, da
                         if (!btn) return;
                         // Defer read until after bulma processes the click
                         setTimeout(() => {
-                            const v = init.get(element.id)?.data?.value?.();
+                            const v = readValue();
                             console.log('[Calendar] event: today (container)', v, { id: element.id });
-                            try { on_today(v); } catch (err) { console.warn('[Calendar] today (container) callback error', err); }
+                            try { on_change(v); } catch (err) { console.warn('[Calendar] today (container) callback error', err); }
                         }, 0);
                     };
                     root.addEventListener('click', containerCapture, true);
@@ -381,10 +393,10 @@ export function setup_date_picker(element, on_change, on_today, initial_date, da
 export function detach_date_picker(id) {
     try {
         const key = typeof id === 'string' ? id : id?.toString?.() || String(id);
-        if (todayDelegates.has(key)) {
-            const delegate = todayDelegates.get(key);
+        if (window.__lbcCalendarTodayDelegates && window.__lbcCalendarTodayDelegates.has(key)) {
+            const delegate = window.__lbcCalendarTodayDelegates.get(key);
             if (delegate) document.removeEventListener('click', delegate, true);
-            todayDelegates.delete(key);
+            window.__lbcCalendarTodayDelegates.delete(key);
             console.log('[Calendar] today delegated listener removed', { id: key });
         }
     } catch (e) {
