@@ -302,8 +302,8 @@ mod wasm_tests {
                 size=Size::Small
                 alignment=Alignment::Centered
                 rounded=true
-                on_previous=Some(noop())
-                on_next=Some(noop())
+                on_previous=noop()
+                on_next=noop()
                 test_id="pagination-test"
             >
                 <li>
@@ -349,7 +349,7 @@ mod wasm_tests {
                 item_type=PaginationItemType::Link
                 label="1"
                 current=true
-                on_click=Some(noop())
+                on_click=noop()
                 test_id="pagination-item-test"
             >
                 {"1"}
@@ -371,7 +371,7 @@ mod wasm_tests {
                 item_type=PaginationItemType::Link
                 label="1"
                 current=true
-                on_click=Some(noop())
+                on_click=noop()
             >
                 {"1"}
             </PaginationItem>

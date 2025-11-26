@@ -273,7 +273,7 @@ mod wasm_tests {
     #[wasm_bindgen_test]
     fn panel_block_renders_test_id() {
         let html = view! {
-            <PanelBlock active=true on_click=Some(noop()) test_id="panel-block-test">
+            <PanelBlock active=true on_click=noop() test_id="panel-block-test">
                 "Item"
             </PanelBlock>
         }
@@ -289,7 +289,7 @@ mod wasm_tests {
     #[wasm_bindgen_test]
     fn panel_block_no_test_id_when_not_provided() {
         let html = view! {
-            <PanelBlock active=true on_click=Some(noop())>
+            <PanelBlock active=true on_click=noop()>
                 "Item"
             </PanelBlock>
         }

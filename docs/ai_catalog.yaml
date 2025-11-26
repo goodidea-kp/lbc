@@ -142,7 +142,7 @@ components:
     requires_js: ["bulma-calendar"]
     props_summary:
       - "Props: id (unique), date_format, time_format, date, on_date_changed"
-    additional_rules: "bulma-calendar JS must be available globally (included in index.html)."
+    additional_rules: "bulma-calendar JS must be available globally (included in index.html). Supported date formats: yyyy-MM-dd, yyyy-MM-dd HH:mm:ss"
 
   - id: "card"
     name: "Card"
