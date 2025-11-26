@@ -107,14 +107,13 @@ pub fn TextArea(
         }
     };
 
-    // input handler is defined inline at the usage sites to avoid moving captures
-
     // Render an optional "GenAI ribbon" icon overlay if requested.
     move || {
         if is_genai.get() {
             let update_ai = update.clone();
+            let test_id_clone = test_id.clone();
             view! {
-                <div id="context" style="position:relative" data-testid=test_id.clone()>
+                <div id="context" style="position:relative" data-testid=test_id_clone>
                     <Icon size=Size::Small classes="is-pulled-right ribbon">
                         <i class="fa-brands fa-openai"></i>
                     </Icon>
