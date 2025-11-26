@@ -1,5 +1,5 @@
 use lbc::prelude::{Block, Content, Control, Field, HeaderSize, Radio, Subtitle, Title};
-use leptos::prelude::{ClassAttribute, ElementChild, Get, IntoView, Set, component, view, signal};
+use leptos::prelude::{ClassAttribute, ElementChild, Get, IntoView, Set, component, signal, view};
 use std::sync::Arc;
 
 /// Example page showcasing the Radio form component.

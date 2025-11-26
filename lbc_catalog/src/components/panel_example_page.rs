@@ -2,8 +2,8 @@ use lbc::prelude::{
     Block, Content, HeaderSize, Icon, Panel, PanelBlock, PanelTabs, Subtitle, Title,
 };
 use leptos::prelude::{
-    AriaAttributes, ClassAttribute, ElementChild, Get, IntoView, OnAttribute, Set,
-    component, view, signal, Signal
+    AriaAttributes, ClassAttribute, ElementChild, Get, IntoView, OnAttribute, Set, Signal,
+    component, signal, view,
 };
 use std::rc::Rc;
 

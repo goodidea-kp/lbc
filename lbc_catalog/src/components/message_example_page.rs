@@ -2,8 +2,7 @@ use lbc::prelude::{
     Block, Button, Buttons, HeaderSize, Message, MessageBody, MessageHeader, Title,
 };
 use leptos::prelude::{
-    AddAnyAttr, ElementChild, Get, IntoAny, IntoView, Set, component,
-    view, signal
+    AddAnyAttr, ElementChild, Get, IntoAny, IntoView, Set, component, signal, view,
 };
 
 #[component]

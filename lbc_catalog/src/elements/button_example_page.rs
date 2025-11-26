@@ -8,7 +8,7 @@ AI Pair Programming Notes:
 */
 
 use lbc::prelude::{Block, Button, ButtonColor, Buttons, HeaderSize, Size, Title};
-use leptos::prelude::{ Get, IntoView, Update, component, view, signal};
+use leptos::prelude::{Get, IntoView, Update, component, signal, view};
 
 #[component]
 pub fn ButtonPage() -> impl IntoView {

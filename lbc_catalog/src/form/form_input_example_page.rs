@@ -1,7 +1,7 @@
 use lbc::prelude::{
     Block, Content, Control, Field, HeaderSize, Input, InputType, Size, Subtitle, Title,
 };
-use leptos::prelude::{ClassAttribute, ElementChild, Get, IntoView, Set, component, view, signal};
+use leptos::prelude::{ClassAttribute, ElementChild, Get, IntoView, Set, component, signal, view};
 use std::rc::Rc;
 
 /// Example page showcasing the Input form component.

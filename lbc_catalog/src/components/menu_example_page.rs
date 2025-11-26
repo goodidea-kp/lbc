@@ -1,6 +1,6 @@
 use lbc::prelude::{Block, Content, HeaderSize, Menu, MenuLabel, MenuList, Title};
 use leptos::prelude::{
-    ClassAttribute, ElementChild, Get, IntoAny, IntoView, OnAttribute, Set, component, view, signal
+    ClassAttribute, ElementChild, Get, IntoAny, IntoView, OnAttribute, Set, component, signal, view,
 };
 
 #[component]

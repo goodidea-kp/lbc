@@ -2,7 +2,7 @@ use lbc::prelude::{
     Block, Buttons, Content, HeaderSize, Navbar, NavbarDivider, NavbarDropdown, NavbarItem, Title,
 };
 use leptos::prelude::{
-    ClassAttribute, ElementChild, Get, IntoAny, IntoView, Set, signal, Signal, component, view,
+    ClassAttribute, ElementChild, Get, IntoAny, IntoView, Set, Signal, component, signal, view,
 };
 use std::rc::Rc;
 

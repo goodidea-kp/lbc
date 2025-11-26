@@ -10,7 +10,9 @@ AI Pair Programming Notes:
 use lbc::prelude::{
     Block, Button, ButtonColor, Buttons, HeaderSize, Progress, Size, Subtitle, Title,
 };
-use leptos::prelude::{ClassAttribute, ElementChild, Get, IntoView, Set, Update, component, view, signal};
+use leptos::prelude::{
+    ClassAttribute, ElementChild, Get, IntoView, Set, Update, component, signal, view,
+};
 use std::rc::Rc;
 
 #[component]

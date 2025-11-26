@@ -1,9 +1,9 @@
+use gloo_console::info;
 use lbc::prelude::{
     Block, Calendar, Content, Control, Field, HeaderSize, Notification, Subtitle, Title,
 };
-use leptos::prelude::{ClassAttribute, ElementChild, Get, IntoView, Set, component, view, signal};
+use leptos::prelude::{ClassAttribute, ElementChild, Get, IntoView, Set, component, signal, view};
 use std::sync::Arc;
-use gloo_console::info;
 
 #[component]
 pub fn CalendarPage() -> impl IntoView {

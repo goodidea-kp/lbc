@@ -3,8 +3,7 @@ use lbc::prelude::{
     HeaderSize, Size, Title,
 };
 use leptos::prelude::{
-    AddAnyAttr, ClassAttribute, ElementChild,  IntoView, Set,
-    component, view, signal
+    AddAnyAttr, ClassAttribute, ElementChild, IntoView, Set, component, signal, view,
 };
 
 #[component]

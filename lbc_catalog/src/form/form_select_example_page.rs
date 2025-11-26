@@ -1,7 +1,7 @@
 use lbc::prelude::{
-    Block, Content, Control, Field, HeaderSize, MultiSelect, Select, Subtitle, Title
+    Block, Content, Control, Field, HeaderSize, MultiSelect, Select, Subtitle, Title,
 };
-use leptos::prelude::{ClassAttribute, ElementChild, Get, IntoView, Set, component, view, signal};
+use leptos::prelude::{ClassAttribute, ElementChild, Get, IntoView, Set, component, signal, view};
 use std::sync::Arc;
 
 /// Example page showcasing the Select and MultiSelect form components.

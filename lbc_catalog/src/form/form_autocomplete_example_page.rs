@@ -1,5 +1,7 @@
 use lbc::prelude::{AutoComplete, Block, Content, HeaderSize, Subtitle, Title};
-use leptos::prelude::{ClassAttribute, ElementChild, Get, IntoView, Update, component, view, signal};
+use leptos::prelude::{
+    ClassAttribute, ElementChild, Get, IntoView, Update, component, signal, view,
+};
 use std::sync::Arc;
 
 /// Example page showcasing the AutoComplete component powered by Bulma TagsInput.

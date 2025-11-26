@@ -1,10 +1,10 @@
 use lbc::prelude::{
-    Block, Button, Card, CardContent, CardFooter, CardHeader, CardImage, Content,
-    HeaderSize, Image, Subtitle, Tag, TagColor, Title,
+    Block, Button, Card, CardContent, CardFooter, CardHeader, CardImage, Content, HeaderSize,
+    Image, Subtitle, Tag, TagColor, Title,
 };
 use leptos::prelude::{
-    AddAnyAttr, ClassAttribute, ElementChild, Get, GetUntracked, IntoView, OnAttribute,
-    Set, component, view, signal
+    AddAnyAttr, ClassAttribute, ElementChild, Get, GetUntracked, IntoView, OnAttribute, Set,
+    component, signal, view,
 };
 
 #[component]

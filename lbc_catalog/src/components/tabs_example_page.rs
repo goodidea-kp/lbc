@@ -1,6 +1,6 @@
 use lbc::prelude::{Alignment, Size, Tabs};
 use leptos::prelude::{
-    ClassAttribute, ElementChild, Get, IntoView, OnAttribute, Set, component, view, signal
+    ClassAttribute, ElementChild, Get, IntoView, OnAttribute, Set, component, signal, view,
 };
 
 #[component]

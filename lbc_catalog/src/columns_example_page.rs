@@ -6,7 +6,7 @@ AI Pair Programming Notes:
 */
 
 use lbc::prelude::{Block, Column, ColumnSize, Columns, HeaderSize, Notification, Title};
-use leptos::prelude::{ IntoView, component, view};
+use leptos::prelude::{IntoView, component, view};
 
 #[component]
 pub fn ColumnsPage() -> impl IntoView {

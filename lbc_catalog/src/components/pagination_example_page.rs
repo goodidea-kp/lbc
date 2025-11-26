@@ -2,7 +2,9 @@ use lbc::prelude::{
     Alignment, Block, Content, HeaderSize, Pagination, PaginationEllipsis, PaginationItem,
     PaginationItemType, Size, Subtitle, Title,
 };
-use leptos::prelude::{ClassAttribute, ElementChild, Get, IntoView, Set, signal, Signal, component, view};
+use leptos::prelude::{
+    ClassAttribute, ElementChild, Get, IntoView, Set, Signal, component, signal, view,
+};
 use std::sync::Arc;
 
 #[component]

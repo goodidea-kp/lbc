@@ -7,8 +7,8 @@ AI Pair Programming Notes:
 
 use lbc::prelude::{Block, Button, Buttons, Delete, HeaderSize, Notification, Title};
 use leptos::prelude::{
-    AddAnyAttr, ClassAttribute, ElementChild, Get, IntoAny, IntoView, Set, component,
-    set_timeout, view, signal
+    AddAnyAttr, ClassAttribute, ElementChild, Get, IntoAny, IntoView, Set, component, set_timeout,
+    signal, view,
 };
 use std::sync::Arc;
 use std::time::Duration;

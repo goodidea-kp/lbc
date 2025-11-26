@@ -3,8 +3,8 @@ use lbc::prelude::{
 };
 use leptos::context::provide_context;
 use leptos::prelude::{
-    AddAnyAttr, ClassAttribute, ElementChild, Get, IntoAny, IntoView, Set, component,
-    set_timeout, view, signal
+    AddAnyAttr, ClassAttribute, ElementChild, Get, IntoAny, IntoView, Set, component, set_timeout,
+    signal, view,
 };
 
 #[component]

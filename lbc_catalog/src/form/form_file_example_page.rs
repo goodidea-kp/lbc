@@ -1,5 +1,5 @@
 use lbc::prelude::{Block, Content, Control, Field, File, HeaderSize, Size, Subtitle, Title};
-use leptos::prelude::{ IntoView, Set, component, view, signal};
+use leptos::prelude::{IntoView, Set, component, signal, view};
 
 #[component]
 pub fn FormFilePage() -> impl IntoView {

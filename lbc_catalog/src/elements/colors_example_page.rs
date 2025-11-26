@@ -9,7 +9,7 @@ AI Pair Programming Notes:
 use lbc::prelude::{
     Block, Button, ButtonColor, Buttons, Content, HeaderSize, Subtitle, Tag, TagColor, Tags, Title,
 };
-use leptos::prelude::{ IntoView, component, view};
+use leptos::prelude::{IntoView, component, view};
 
 #[component]
 pub fn ColorsPage() -> impl IntoView {
