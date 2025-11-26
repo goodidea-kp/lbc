@@ -113,7 +113,7 @@ pub fn TextArea(
     };
 
     // Derive specific optional attributes that our macro can render.
-    let (data_testid, data_cy) = match &test_attr {
+    let (data_testid_opt, data_cy_opt) = match &test_attr {
         Some(attr) if attr.key == "data-testid" => (Some(attr.value.clone()), None),
         Some(attr) if attr.key == "data-cy" => (None, Some(attr.value.clone())),
         _ => (None, None),
@@ -121,6 +121,10 @@ pub fn TextArea(
 
     // Render an optional "GenAI ribbon" icon overlay if requested.
     move || {
+        // Clone the attribute values into locals each render so inner closures can move/clone them
+        let data_testid = data_testid_opt.clone();
+        let data_cy = data_cy_opt.clone();
+
         if is_genai.get() {
             let update_ai = update.clone();
             view! {
