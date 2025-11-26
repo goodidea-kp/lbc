@@ -51,6 +51,9 @@ pub fn Title(
     /// The size of this component.
     #[prop(optional)]
     size: Option<HeaderSize>,
+    /// Optional test identifier (renders as data-testid attribute)
+    #[prop(optional, into)]
+    test_id: Option<String>,
     /// Child content to render inside the title
     children: Children,
 ) -> AnyView {
@@ -82,16 +85,16 @@ pub fn Title(
     let tag_name = tag.get().to_lowercase();
 
     match tag_name.as_str() {
-        "h1" => view! { <h1 class=class_str()>{children()}</h1> }.into_any(),
-        "h2" => view! { <h2 class=class_str()>{children()}</h2> }.into_any(),
-        "h3" => view! { <h3 class=class_str()>{children()}</h3> }.into_any(),
-        "h4" => view! { <h4 class=class_str()>{children()}</h4> }.into_any(),
-        "h5" => view! { <h5 class=class_str()>{children()}</h5> }.into_any(),
-        "h6" => view! { <h6 class=class_str()>{children()}</h6> }.into_any(),
-        "p" => view! { <p class=class_str()>{children()}</p> }.into_any(),
-        "div" => view! { <div class=class_str()>{children()}</div> }.into_any(),
-        "span" => view! { <span class=class_str()>{children()}</span> }.into_any(),
-        _ => view! { <h3 class=class_str()>{children()}</h3> }.into_any(),
+        "h1" => view! { <h1 class=class_str() data-testid=test_id.clone()>{children()}</h1> }.into_any(),
+        "h2" => view! { <h2 class=class_str() data-testid=test_id.clone()>{children()}</h2> }.into_any(),
+        "h3" => view! { <h3 class=class_str() data-testid=test_id.clone()>{children()}</h3> }.into_any(),
+        "h4" => view! { <h4 class=class_str() data-testid=test_id.clone()>{children()}</h4> }.into_any(),
+        "h5" => view! { <h5 class=class_str() data-testid=test_id.clone()>{children()}</h5> }.into_any(),
+        "h6" => view! { <h6 class=class_str() data-testid=test_id.clone()>{children()}</h6> }.into_any(),
+        "p" => view! { <p class=class_str() data-testid=test_id.clone()>{children()}</p> }.into_any(),
+        "div" => view! { <div class=class_str() data-testid=test_id.clone()>{children()}</div> }.into_any(),
+        "span" => view! { <span class=class_str() data-testid=test_id.clone()>{children()}</span> }.into_any(),
+        _ => view! { <h3 class=class_str() data-testid=test_id>{children()}</h3> }.into_any(),
     }
 }
 
@@ -109,6 +112,9 @@ pub fn Subtitle(
     /// The size of this component.
     #[prop(optional)]
     size: Option<HeaderSize>,
+    /// Optional test identifier (renders as data-testid attribute)
+    #[prop(optional, into)]
+    test_id: Option<String>,
     /// Child content to render inside the subtitle
     children: Children,
 ) -> AnyView {
@@ -134,16 +140,16 @@ pub fn Subtitle(
     let tag_name = tag.get().to_lowercase();
 
     match tag_name.as_str() {
-        "h1" => view! { <h1 class=class_str()>{children()}</h1> }.into_any(),
-        "h2" => view! { <h2 class=class_str()>{children()}</h2> }.into_any(),
-        "h3" => view! { <h3 class=class_str()>{children()}</h3> }.into_any(),
-        "h4" => view! { <h4 class=class_str()>{children()}</h4> }.into_any(),
-        "h5" => view! { <h5 class=class_str()>{children()}</h5> }.into_any(),
-        "h6" => view! { <h6 class=class_str()>{children()}</h6> }.into_any(),
-        "p" => view! { <p class=class_str()>{children()}</p> }.into_any(),
-        "div" => view! { <div class=class_str()>{children()}</div> }.into_any(),
-        "span" => view! { <span class=class_str()>{children()}</span> }.into_any(),
-        _ => view! { <h3 class=class_str()>{children()}</h3> }.into_any(),
+        "h1" => view! { <h1 class=class_str() data-testid=test_id.clone()>{children()}</h1> }.into_any(),
+        "h2" => view! { <h2 class=class_str() data-testid=test_id.clone()>{children()}</h2> }.into_any(),
+        "h3" => view! { <h3 class=class_str() data-testid=test_id.clone()>{children()}</h3> }.into_any(),
+        "h4" => view! { <h4 class=class_str() data-testid=test_id.clone()>{children()}</h4> }.into_any(),
+        "h5" => view! { <h5 class=class_str() data-testid=test_id.clone()>{children()}</h5> }.into_any(),
+        "h6" => view! { <h6 class=class_str() data-testid=test_id.clone()>{children()}</h6> }.into_any(),
+        "p" => view! { <p class=class_str() data-testid=test_id.clone()>{children()}</p> }.into_any(),
+        "div" => view! { <div class=class_str() data-testid=test_id.clone()>{children()}</div> }.into_any(),
+        "span" => view! { <span class=class_str() data-testid=test_id.clone()>{children()}</span> }.into_any(),
+        _ => view! { <h3 class=class_str() data-testid=test_id>{children()}</h3> }.into_any(),
     }
 }
 
@@ -261,6 +267,71 @@ mod tests {
         assert!(
             html.contains("has-text-grey"),
             "expected custom class, got: {}",
+            html
+        );
+    }
+}
+
+#[cfg(all(test, target_arch = "wasm32"))]
+mod wasm_tests {
+    use super::*;
+    use leptos::prelude::*;
+    use wasm_bindgen_test::*;
+
+    wasm_bindgen_test_configure!(run_in_browser);
+
+    #[wasm_bindgen_test]
+    fn title_renders_test_id() {
+        let html = view! {
+            <Title test_id="title-test">"Title"</Title>
+        }
+        .to_html();
+
+        assert!(
+            html.contains(r#"data-testid="title-test""#),
+            "expected data-testid attribute; got: {}",
+            html
+        );
+    }
+
+    #[wasm_bindgen_test]
+    fn title_no_test_id_when_not_provided() {
+        let html = view! {
+            <Title>"Title"</Title>
+        }
+        .to_html();
+
+        assert!(
+            !html.contains("data-testid"),
+            "expected no data-testid attribute; got: {}",
+            html
+        );
+    }
+
+    #[wasm_bindgen_test]
+    fn subtitle_renders_test_id() {
+        let html = view! {
+            <Subtitle test_id="subtitle-test">"Subtitle"</Subtitle>
+        }
+        .to_html();
+
+        assert!(
+            html.contains(r#"data-testid="subtitle-test""#),
+            "expected data-testid attribute; got: {}",
+            html
+        );
+    }
+
+    #[wasm_bindgen_test]
+    fn subtitle_no_test_id_when_not_provided() {
+        let html = view! {
+            <Subtitle>"Subtitle"</Subtitle>
+        }
+        .to_html();
+
+        assert!(
+            !html.contains("data-testid"),
+            "expected no data-testid attribute; got: {}",
             html
         );
     }
