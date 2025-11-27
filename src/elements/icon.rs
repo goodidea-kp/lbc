@@ -9,7 +9,7 @@ use leptos::prelude::{
     component, view,
 };
 
-use crate::util::Size;
+use crate::util::{Size, TestAttr};
 
 /// Horizontal alignment for icons, typically used within form controls.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -39,24 +39,27 @@ pub fn Icon(
     /// The alignment of this icon, often used within form controls.
     #[prop(optional)]
     alignment: Option<IconAlignment>,
-    /// Optional test identifier (renders as data-testid attribute)
+    /// Optional test attribute (renders as data-* attribute) on the root <span>.
+    ///
+    /// When provided as a &str or String, this becomes `data-testid="value"`.
+    /// You can also pass a full `TestAttr` to override the attribute key.
     #[prop(optional, into)]
-    test_id: Option<String>,
+    test_attr: Option<TestAttr>,
     /// Child content to render inside the icon
     children: Children,
 ) -> impl IntoView {
     // Build class attribute: "icon [size/alignment/extra classes]"
     let mut class_parts: Vec<String> = vec!["icon".to_string()];
 
-    if let Some(sz) = size {
-        let s = sz.bulma();
-        if !s.is_empty() {
-            class_parts.push(s.to_string());
+    if let Some(size_value) = size {
+        let size_class = size_value.bulma();
+        if !size_class.is_empty() {
+            class_parts.push(size_class.to_string());
         }
     }
 
-    if let Some(align) = alignment {
-        class_parts.push(align.bulma().to_string());
+    if let Some(alignment_value) = alignment {
+        class_parts.push(alignment_value.bulma().to_string());
     }
 
     if let Some(extra) = classes {
@@ -68,7 +71,21 @@ pub fn Icon(
 
     let class_attr = class_parts.join(" ");
 
-    view! { <span class=class_attr data-testid=test_id>{children()}</span> }
+    let (data_testid, data_cy) = match &test_attr {
+        Some(attr) if attr.key == "data-testid" => (Some(attr.value.clone()), None),
+        Some(attr) if attr.key == "data-cy" => (None, Some(attr.value.clone())),
+        _ => (None, None),
+    };
+
+    view! {
+        <span
+            class=class_attr
+            attr:data-testid=move || data_testid.clone()
+            attr:data-cy=move || data_cy.clone()
+        >
+            {children()}
+        </span>
+    }
 }
 
 #[cfg(test)]
@@ -89,7 +106,16 @@ mod tests {
 
     #[test]
     fn icon_with_size_alignment_and_extra_classes() {
-        let html = view! { <Icon size=Size::Small alignment=IconAlignment::Left classes="has-text-danger"><i class="fa fa-x"></i></Icon> }.to_html();
+        let html = view! {
+            <Icon
+                size=Size::Small
+                alignment=IconAlignment::Left
+                classes="has-text-danger"
+            >
+                <i class="fa fa-x"></i>
+            </Icon>
+        }
+        .to_html();
         assert!(
             html.contains(r#"class="icon is-small is-left has-text-danger""#),
             "expected combined classes, got: {}",
@@ -101,6 +127,7 @@ mod tests {
 #[cfg(all(test, target_arch = "wasm32"))]
 mod wasm_tests {
     use super::*;
+    use crate::util::TestAttr;
     use leptos::prelude::*;
     use wasm_bindgen_test::*;
 
@@ -109,7 +136,7 @@ mod wasm_tests {
     #[wasm_bindgen_test]
     fn icon_renders_test_id() {
         let html = view! {
-            <Icon test_id="icon-test"><i class="fa"></i></Icon>
+            <Icon test_attr=TestAttr::test_id("icon-test")><i class="fa"></i></Icon>
         }
         .to_html();
 
@@ -121,15 +148,29 @@ mod wasm_tests {
     }
 
     #[wasm_bindgen_test]
-    fn icon_no_test_id_when_not_provided() {
+    fn icon_no_test_attr_when_not_provided() {
         let html = view! {
             <Icon><i class="fa"></i></Icon>
         }
         .to_html();
 
         assert!(
-            !html.contains("data-testid"),
-            "expected no data-testid attribute; got: {}",
+            !html.contains("data-testid") && !html.contains("data-cy"),
+            "expected no test attribute; got: {}",
+            html
+        );
+    }
+
+    #[wasm_bindgen_test]
+    fn icon_accepts_custom_test_attr_key() {
+        let html = view! {
+            <Icon test_attr=TestAttr::new("data-cy", "icon-cy")><i class="fa"></i></Icon>
+        }
+        .to_html();
+
+        assert!(
+            html.contains(r#"data-cy="icon-cy""#),
+            "expected custom data-cy attribute; got: {}",
             html
         );
     }
