@@ -9,18 +9,26 @@ use leptos::prelude::{
     Signal, component, view,
 };
 
+use crate::util::TestAttr;
+
 /// A single component to wrap WYSIWYG generated content, where only HTML tags are available.
 #[component]
 pub fn Content(
     /// Additional CSS classes to append to the base "content" class
     #[prop(optional, into)]
     classes: Option<Signal<String>>,
+
     /// The HTML tag to use for this component (div, article, section, nav, p, span)
     #[prop(optional, into)]
     tag: Option<Signal<String>>,
-    /// Optional test identifier (renders as data-testid attribute)
+
+    /// Optional test attribute (renders as data-* attribute) on the rendered element.
+    ///
+    /// When provided as a &str or String, this becomes `data-testid="value"`.
+    /// You can also pass a full `TestAttr` to override the attribute key.
     #[prop(optional, into)]
-    test_id: Option<String>,
+    test_attr: Option<TestAttr>,
+
     /// Child content to render inside the content block
     children: Children,
 ) -> AnyView {
@@ -40,30 +48,73 @@ pub fn Content(
         .map(|t| t.get().to_lowercase())
         .unwrap_or_else(|| "div".to_string());
 
+    let (data_testid, data_cy) = match &test_attr {
+        Some(attr) if attr.key == "data-testid" => (Some(attr.value.clone()), None),
+        Some(attr) if attr.key == "data-cy" => (None, Some(attr.value.clone())),
+        _ => (None, None),
+    };
+
     match tag_name.as_str() {
-        "article" => {
-            view! { <article class=class_attr.clone() data-testid=test_id.clone()>{children()}</article> }
-                .into_any()
+        "article" => view! {
+            <article
+                class=class_attr.clone()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
+                {children()}
+            </article>
         }
-        "section" => {
-            view! { <section class=class_attr.clone() data-testid=test_id.clone()>{children()}</section> }
-                .into_any()
+        .into_any(),
+        "section" => view! {
+            <section
+                class=class_attr.clone()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
+                {children()}
+            </section>
         }
-        "nav" => {
-            view! { <nav class=class_attr.clone() data-testid=test_id.clone()>{children()}</nav> }
-                .into_any()
+        .into_any(),
+        "nav" => view! {
+            <nav
+                class=class_attr.clone()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
+                {children()}
+            </nav>
         }
-        "p" => {
-            view! { <p class=class_attr.clone() data-testid=test_id.clone()>{children()}</p> }
-                .into_any()
+        .into_any(),
+        "p" => view! {
+            <p
+                class=class_attr.clone()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
+                {children()}
+            </p>
         }
-        "span" => {
-            view! { <span class=class_attr.clone() data-testid=test_id.clone()>{children()}</span> }
-                .into_any()
+        .into_any(),
+        "span" => view! {
+            <span
+                class=class_attr.clone()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
+                {children()}
+            </span>
         }
-        _ => {
-            view! { <div class=class_attr.clone() data-testid=test_id>{children()}</div> }.into_any()
+        .into_any(),
+        _ => view! {
+            <div
+                class=class_attr.clone()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
+                {children()}
+            </div>
         }
+        .into_any(),
     }
 }
 
@@ -108,6 +159,7 @@ mod tests {
 #[cfg(all(test, target_arch = "wasm32"))]
 mod wasm_tests {
     use super::*;
+    use crate::util::TestAttr;
     use leptos::prelude::*;
     use wasm_bindgen_test::*;
 
@@ -116,7 +168,7 @@ mod wasm_tests {
     #[wasm_bindgen_test]
     fn content_renders_test_id() {
         let html = view! {
-            <Content test_id="content-test"><p>"Content"</p></Content>
+            <Content test_attr=TestAttr::test_id("content-test")><p>"Content"</p></Content>
         }
         .to_html();
 
@@ -128,15 +180,29 @@ mod wasm_tests {
     }
 
     #[wasm_bindgen_test]
-    fn content_no_test_id_when_not_provided() {
+    fn content_no_test_attr_when_not_provided() {
         let html = view! {
             <Content><p>"Content"</p></Content>
         }
         .to_html();
 
         assert!(
-            !html.contains("data-testid"),
-            "expected no data-testid attribute; got: {}",
+            !html.contains("data-testid") && !html.contains("data-cy"),
+            "expected no test attribute; got: {}",
+            html
+        );
+    }
+
+    #[wasm_bindgen_test]
+    fn content_accepts_custom_test_attr_key() {
+        let html = view! {
+            <Content test_attr=TestAttr::new("data-cy", "content-cy")><p>"Content"</p></Content>
+        }
+        .to_html();
+
+        assert!(
+            html.contains(r#"data-cy="content-cy""#),
+            "expected custom data-cy attribute; got: {}",
             html
         );
     }

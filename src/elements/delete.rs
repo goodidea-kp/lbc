@@ -11,6 +11,8 @@ use leptos::prelude::{
 };
 use std::sync::Arc;
 
+use crate::util::TestAttr;
+
 /// A versatile delete cross.
 #[component]
 pub fn Delete(
@@ -26,9 +28,12 @@ pub fn Delete(
     /// Optional click handler passed through to the rendered element.
     #[prop(optional)]
     on_click: Option<Arc<dyn Fn(MouseEvent) + Send + Sync>>,
-    /// Optional test identifier (renders as data-testid attribute)
+    /// Optional test attribute (renders as data-* attribute) on the rendered element.
+    ///
+    /// When provided as a &str or String, this becomes `data-testid="value"`.
+    /// You can also pass a full `TestAttr` to override the attribute key (for example, `data-cy`).
     #[prop(optional, into)]
-    test_id: Option<String>,
+    test_attr: Option<TestAttr>,
 ) -> AnyView {
     // Build class attribute: "delete [extra classes]"
     let mut class_attr = String::from("delete");
@@ -60,27 +65,69 @@ pub fn Delete(
         }
     };
 
+    let (data_testid, data_cy) = match &test_attr {
+        Some(attr) if attr.key == "data-testid" => (Some(attr.value.clone()), None),
+        Some(attr) if attr.key == "data-cy" => (None, Some(attr.value.clone())),
+        _ => (None, None),
+    };
+
     match tag_name.as_str() {
         "a" => {
             let handler = on_click.clone();
-            view! { <a class=class_attr.clone() data-testid=test_id.clone() on:click=render_click(handler)>{content}</a> }
-                .into_any()
+            view! {
+                <a
+                    class=class_attr.clone()
+                    attr:data-testid=move || data_testid.clone()
+                    attr:data-cy=move || data_cy.clone()
+                    on:click=render_click(handler)
+                >
+                    {content}
+                </a>
+            }
+            .into_any()
         }
         "span" => {
             let handler = on_click.clone();
-            view! { <span class=class_attr.clone() data-testid=test_id.clone() on:click=render_click(handler)>{content}</span> }
-                .into_any()
+            view! {
+                <span
+                    class=class_attr.clone()
+                    attr:data-testid=move || data_testid.clone()
+                    attr:data-cy=move || data_cy.clone()
+                    on:click=render_click(handler)
+                >
+                    {content}
+                </span>
+            }
+            .into_any()
         }
         "div" => {
             let handler = on_click.clone();
-            view! { <div class=class_attr.clone() data-testid=test_id.clone() on:click=render_click(handler)>{content}</div> }
-                .into_any()
+            view! {
+                <div
+                    class=class_attr.clone()
+                    attr:data-testid=move || data_testid.clone()
+                    attr:data-cy=move || data_cy.clone()
+                    on:click=render_click(handler)
+                >
+                    {content}
+                </div>
+            }
+            .into_any()
         }
         // default "button"
         _ => {
             let handler = on_click;
-            view! { <button class=class_attr.clone() data-testid=test_id on:click=render_click(handler)>{content}</button> }
-                .into_any()
+            view! {
+                <button
+                    class=class_attr.clone()
+                    attr:data-testid=move || data_testid.clone()
+                    attr:data-cy=move || data_cy.clone()
+                    on:click=render_click(handler)
+                >
+                    {content}
+                </button>
+            }
+            .into_any()
         }
     }
 }
@@ -130,6 +177,7 @@ mod tests {
 #[cfg(all(test, target_arch = "wasm32"))]
 mod wasm_tests {
     use super::*;
+    use crate::util::TestAttr;
     use leptos::prelude::*;
     use wasm_bindgen_test::*;
 
@@ -138,7 +186,7 @@ mod wasm_tests {
     #[wasm_bindgen_test]
     fn delete_renders_test_id() {
         let html = view! {
-            <Delete test_id="delete-test"></Delete>
+            <Delete test_attr=TestAttr::test_id("delete-test")></Delete>
         }
         .to_html();
 
@@ -150,15 +198,29 @@ mod wasm_tests {
     }
 
     #[wasm_bindgen_test]
-    fn delete_no_test_id_when_not_provided() {
+    fn delete_no_test_attr_when_not_provided() {
         let html = view! {
             <Delete></Delete>
         }
         .to_html();
 
         assert!(
-            !html.contains("data-testid"),
-            "expected no data-testid attribute; got: {}",
+            !html.contains("data-testid") && !html.contains("data-cy"),
+            "expected no test attribute; got: {}",
+            html
+        );
+    }
+
+    #[wasm_bindgen_test]
+    fn delete_accepts_custom_test_attr_key() {
+        let html = view! {
+            <Delete test_attr=TestAttr::new("data-cy", "delete-cy")></Delete>
+        }
+        .to_html();
+
+        assert!(
+            html.contains(r#"data-cy="delete-cy""#),
+            "expected custom data-cy attribute; got: {}",
             html
         );
     }

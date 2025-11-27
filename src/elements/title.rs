@@ -9,6 +9,8 @@ use leptos::prelude::{
     component, view,
 };
 
+use crate::util::TestAttr;
+
 /// The six sizes available for titles & subtitles.
 ///
 /// https://bulma.io/documentation/elements/title/#sizes
@@ -52,9 +54,12 @@ pub fn Title(
     /// The size of this component.
     #[prop(optional)]
     size: Option<HeaderSize>,
-    /// Optional test identifier (renders as data-testid attribute)
+    /// Optional test attribute (renders as data-* attribute) on the rendered element.
+    ///
+    /// When provided as a &str or String, this becomes `data-testid="value"`.
+    /// You can also pass a full `TestAttr` to override the attribute key (for example, `data-cy`).
     #[prop(optional, into)]
-    test_id: Option<String>,
+    test_attr: Option<TestAttr>,
     /// Child content to render inside the title
     children: Children,
 ) -> AnyView {
@@ -85,33 +90,113 @@ pub fn Title(
 
     let tag_name = tag.get().to_lowercase();
 
+    let (data_testid, data_cy) = match &test_attr {
+        Some(attr) if attr.key == "data-testid" => (Some(attr.value.clone()), None),
+        Some(attr) if attr.key == "data-cy" => (None, Some(attr.value.clone())),
+        _ => (None, None),
+    };
+
     match tag_name.as_str() {
-        "h1" => {
-            view! { <h1 class=class_str() data-testid=test_id.clone()>{children()}</h1> }.into_any()
+        "h1" => view! {
+            <h1
+                class=class_str()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
+                {children()}
+            </h1>
         }
-        "h2" => {
-            view! { <h2 class=class_str() data-testid=test_id.clone()>{children()}</h2> }.into_any()
+        .into_any(),
+        "h2" => view! {
+            <h2
+                class=class_str()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
+                {children()}
+            </h2>
         }
-        "h3" => {
-            view! { <h3 class=class_str() data-testid=test_id.clone()>{children()}</h3> }.into_any()
+        .into_any(),
+        "h3" => view! {
+            <h3
+                class=class_str()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
+                {children()}
+            </h3>
         }
-        "h4" => {
-            view! { <h4 class=class_str() data-testid=test_id.clone()>{children()}</h4> }.into_any()
+        .into_any(),
+        "h4" => view! {
+            <h4
+                class=class_str()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
+                {children()}
+            </h4>
         }
-        "h5" => {
-            view! { <h5 class=class_str() data-testid=test_id.clone()>{children()}</h5> }.into_any()
+        .into_any(),
+        "h5" => view! {
+            <h5
+                class=class_str()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
+                {children()}
+            </h5>
         }
-        "h6" => {
-            view! { <h6 class=class_str() data-testid=test_id.clone()>{children()}</h6> }.into_any()
+        .into_any(),
+        "h6" => view! {
+            <h6
+                class=class_str()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
+                {children()}
+            </h6>
         }
-        "p" => {
-            view! { <p class=class_str() data-testid=test_id.clone()>{children()}</p> }.into_any()
+        .into_any(),
+        "p" => view! {
+            <p
+                class=class_str()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
+                {children()}
+            </p>
         }
-        "div" => view! { <div class=class_str() data-testid=test_id.clone()>{children()}</div> }
-            .into_any(),
-        "span" => view! { <span class=class_str() data-testid=test_id.clone()>{children()}</span> }
-            .into_any(),
-        _ => view! { <h3 class=class_str() data-testid=test_id>{children()}</h3> }.into_any(),
+        .into_any(),
+        "div" => view! {
+            <div
+                class=class_str()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
+                {children()}
+            </div>
+        }
+        .into_any(),
+        "span" => view! {
+            <span
+                class=class_str()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
+                {children()}
+            </span>
+        }
+        .into_any(),
+        _ => view! {
+            <h3
+                class=class_str()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
+                {children()}
+            </h3>
+        }
+        .into_any(),
     }
 }
 
@@ -129,9 +214,12 @@ pub fn Subtitle(
     /// The size of this component.
     #[prop(optional)]
     size: Option<HeaderSize>,
-    /// Optional test identifier (renders as data-testid attribute)
+    /// Optional test attribute (renders as data-* attribute) on the rendered element.
+    ///
+    /// When provided as a &str or String, this becomes `data-testid="value"`.
+    /// You can also pass a full `TestAttr` to override the attribute key (for example, `data-cy`).
     #[prop(optional, into)]
-    test_id: Option<String>,
+    test_attr: Option<TestAttr>,
     /// Child content to render inside the subtitle
     children: Children,
 ) -> AnyView {
@@ -156,33 +244,113 @@ pub fn Subtitle(
 
     let tag_name = tag.get().to_lowercase();
 
+    let (data_testid, data_cy) = match &test_attr {
+        Some(attr) if attr.key == "data-testid" => (Some(attr.value.clone()), None),
+        Some(attr) if attr.key == "data-cy" => (None, Some(attr.value.clone())),
+        _ => (None, None),
+    };
+
     match tag_name.as_str() {
-        "h1" => {
-            view! { <h1 class=class_str() data-testid=test_id.clone()>{children()}</h1> }.into_any()
+        "h1" => view! {
+            <h1
+                class=class_str()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
+                {children()}
+            </h1>
         }
-        "h2" => {
-            view! { <h2 class=class_str() data-testid=test_id.clone()>{children()}</h2> }.into_any()
+        .into_any(),
+        "h2" => view! {
+            <h2
+                class=class_str()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
+                {children()}
+            </h2>
         }
-        "h3" => {
-            view! { <h3 class=class_str() data-testid=test_id.clone()>{children()}</h3> }.into_any()
+        .into_any(),
+        "h3" => view! {
+            <h3
+                class=class_str()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
+                {children()}
+            </h3>
         }
-        "h4" => {
-            view! { <h4 class=class_str() data-testid=test_id.clone()>{children()}</h4> }.into_any()
+        .into_any(),
+        "h4" => view! {
+            <h4
+                class=class_str()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
+                {children()}
+            </h4>
         }
-        "h5" => {
-            view! { <h5 class=class_str() data-testid=test_id.clone()>{children()}</h5> }.into_any()
+        .into_any(),
+        "h5" => view! {
+            <h5
+                class=class_str()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
+                {children()}
+            </h5>
         }
-        "h6" => {
-            view! { <h6 class=class_str() data-testid=test_id.clone()>{children()}</h6> }.into_any()
+        .into_any(),
+        "h6" => view! {
+            <h6
+                class=class_str()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
+                {children()}
+            </h6>
         }
-        "p" => {
-            view! { <p class=class_str() data-testid=test_id.clone()>{children()}</p> }.into_any()
+        .into_any(),
+        "p" => view! {
+            <p
+                class=class_str()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
+                {children()}
+            </p>
         }
-        "div" => view! { <div class=class_str() data-testid=test_id.clone()>{children()}</div> }
-            .into_any(),
-        "span" => view! { <span class=class_str() data-testid=test_id.clone()>{children()}</span> }
-            .into_any(),
-        _ => view! { <h3 class=class_str() data-testid=test_id>{children()}</h3> }.into_any(),
+        .into_any(),
+        "div" => view! {
+            <div
+                class=class_str()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
+                {children()}
+            </div>
+        }
+        .into_any(),
+        "span" => view! {
+            <span
+                class=class_str()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
+                {children()}
+            </span>
+        }
+        .into_any(),
+        _ => view! {
+            <h3
+                class=class_str()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
+                {children()}
+            </h3>
+        }
+        .into_any(),
     }
 }
 
@@ -308,15 +476,16 @@ mod tests {
 #[cfg(all(test, target_arch = "wasm32"))]
 mod wasm_tests {
     use super::*;
+    use crate::util::TestAttr;
     use leptos::prelude::*;
     use wasm_bindgen_test::*;
 
     wasm_bindgen_test_configure!(run_in_browser);
 
     #[wasm_bindgen_test]
-    fn title_renders_test_id() {
+    fn title_renders_test_attr_as_data_testid() {
         let html = view! {
-            <Title test_id="title-test">"Title"</Title>
+            <Title test_attr=TestAttr::test_id("title-test")>"Title"</Title>
         }
         .to_html();
 
@@ -328,23 +497,23 @@ mod wasm_tests {
     }
 
     #[wasm_bindgen_test]
-    fn title_no_test_id_when_not_provided() {
+    fn title_no_test_attr_when_not_provided() {
         let html = view! {
             <Title>"Title"</Title>
         }
         .to_html();
 
         assert!(
-            !html.contains("data-testid"),
-            "expected no data-testid attribute; got: {}",
+            !html.contains("data-testid") && !html.contains("data-cy"),
+            "expected no test attribute; got: {}",
             html
         );
     }
 
     #[wasm_bindgen_test]
-    fn subtitle_renders_test_id() {
+    fn subtitle_renders_test_attr_as_data_testid() {
         let html = view! {
-            <Subtitle test_id="subtitle-test">"Subtitle"</Subtitle>
+            <Subtitle test_attr=TestAttr::test_id("subtitle-test")>"Subtitle"</Subtitle>
         }
         .to_html();
 
@@ -356,15 +525,43 @@ mod wasm_tests {
     }
 
     #[wasm_bindgen_test]
-    fn subtitle_no_test_id_when_not_provided() {
+    fn subtitle_no_test_attr_when_not_provided() {
         let html = view! {
             <Subtitle>"Subtitle"</Subtitle>
         }
         .to_html();
 
         assert!(
-            !html.contains("data-testid"),
-            "expected no data-testid attribute; got: {}",
+            !html.contains("data-testid") && !html.contains("data-cy"),
+            "expected no test attribute; got: {}",
+            html
+        );
+    }
+
+    #[wasm_bindgen_test]
+    fn title_accepts_custom_test_attr_key() {
+        let html = view! {
+            <Title test_attr=TestAttr::new("data-cy", "title-cy")>"Title"</Title>
+        }
+        .to_html();
+
+        assert!(
+            html.contains(r#"data-cy="title-cy""#),
+            "expected custom data-cy attribute; got: {}",
+            html
+        );
+    }
+
+    #[wasm_bindgen_test]
+    fn subtitle_accepts_custom_test_attr_key() {
+        let html = view! {
+            <Subtitle test_attr=TestAttr::new("data-cy", "subtitle-cy")>"Subtitle"</Subtitle>
+        }
+        .to_html();
+
+        assert!(
+            html.contains(r#"data-cy="subtitle-cy""#),
+            "expected custom data-cy attribute; got: {}",
             html
         );
     }

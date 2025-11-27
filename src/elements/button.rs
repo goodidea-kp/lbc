@@ -3,7 +3,7 @@ use leptos::ev::MouseEvent;
 use leptos::prelude::{ClassAttribute, CustomAttribute, ElementChild, Get, OnAttribute, Signal};
 use leptos::{IntoView, component, view};
 
-use crate::util::Size;
+use crate::util::{Size, TestAttr};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ButtonColor {
@@ -48,9 +48,12 @@ pub fn Button(
     #[prop(optional, into)] disabled: Signal<bool>,
     #[prop(optional, into)] classes: Option<Signal<String>>,
     #[prop(optional)] on_click: Option<std::rc::Rc<dyn Fn(MouseEvent)>>,
-    /// Optional test identifier (renders as data-testid attribute)
+    /// Optional test attribute (renders as data-* attribute)
+    ///
+    /// When provided as a &str or String, this becomes `data-testid="value"`.
+    /// You can also pass a full `TestAttr` to override the attribute key.
     #[prop(optional, into)]
-    test_id: Option<String>,
+    test_attr: Option<TestAttr>,
     children: Children,
 ) -> impl IntoView {
     let on_click_callback = on_click.clone();
@@ -87,11 +90,18 @@ pub fn Button(
         class_parts.join(" ")
     };
 
+    let (data_testid, data_cy) = match &test_attr {
+        Some(attr) if attr.key == "data-testid" => (Some(attr.value.clone()), None),
+        Some(attr) if attr.key == "data-cy" => (None, Some(attr.value.clone())),
+        _ => (None, None),
+    };
+
     view! {
         <button
             class=class
             disabled=move || disabled.get()
-            data-testid=test_id
+            attr:data-testid=move || data_testid.clone()
+            attr:data-cy=move || data_cy.clone()
             on:click=move |event| {
                 if let Some(cb) = on_click_callback.as_ref() {
                     (cb)(event);
@@ -145,6 +155,7 @@ mod tests {
 #[cfg(all(test, target_arch = "wasm32"))]
 mod wasm_tests {
     use super::*;
+    use crate::util::TestAttr;
     use leptos::prelude::*;
     use wasm_bindgen_test::*;
 
@@ -153,7 +164,7 @@ mod wasm_tests {
     #[wasm_bindgen_test]
     fn button_renders_test_id() {
         let html = view! {
-            <Button test_id="test-button">"Content"</Button>
+            <Button test_attr=TestAttr::test_id("test-button")>"Content"</Button>
         }
         .to_html();
 
@@ -172,8 +183,22 @@ mod wasm_tests {
         .to_html();
 
         assert!(
-            !html.contains("data-testid"),
-            "expected no data-testid attribute; got: {}",
+            !html.contains("data-testid") && !html.contains("data-cy"),
+            "expected no test attribute; got: {}",
+            html
+        );
+    }
+
+    #[wasm_bindgen_test]
+    fn button_accepts_custom_test_attr_key() {
+        let html = view! {
+            <Button test_attr=TestAttr::new("data-cy", "button-cy")>"Content"</Button>
+        }
+        .to_html();
+
+        assert!(
+            html.contains(r#"data-cy="button-cy""#),
+            "expected custom data-cy attribute; got: {}",
             html
         );
     }

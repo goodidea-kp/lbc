@@ -9,15 +9,22 @@ use leptos::prelude::{
     component, view,
 };
 
+use crate::util::TestAttr;
+
 /// A white box to contain other elements.
 #[component]
 pub fn Box(
     /// Additional CSS classes to append to the base "box" class
     #[prop(optional, into)]
     classes: Option<Signal<String>>,
-    /// Optional test identifier (renders as data-testid attribute)
+
+    /// Optional test attribute (renders as data-* attribute) on the root <div>.
+    ///
+    /// When provided as a &str or String, this becomes `data-testid="value"`.
+    /// You can also pass a full `TestAttr` to override the attribute key.
     #[prop(optional, into)]
-    test_id: Option<String>,
+    test_attr: Option<TestAttr>,
+
     /// Child content to render inside the box
     children: Children,
 ) -> impl IntoView {
@@ -32,7 +39,21 @@ pub fn Box(
         }
     }
 
-    view! { <div class=class_attr data-testid=test_id>{children()}</div> }
+    let (data_testid, data_cy) = match &test_attr {
+        Some(attr) if attr.key == "data-testid" => (Some(attr.value.clone()), None),
+        Some(attr) if attr.key == "data-cy" => (None, Some(attr.value.clone())),
+        _ => (None, None),
+    };
+
+    view! {
+        <div
+            class=class_attr
+            attr:data-testid=move || data_testid.clone()
+            attr:data-cy=move || data_cy.clone()
+        >
+            {children()}
+        </div>
+    }
 }
 
 #[cfg(test)]
@@ -66,6 +87,7 @@ mod tests {
 #[cfg(all(test, target_arch = "wasm32"))]
 mod wasm_tests {
     use super::*;
+    use crate::util::TestAttr;
     use leptos::prelude::*;
     use wasm_bindgen_test::*;
 
@@ -74,7 +96,7 @@ mod wasm_tests {
     #[wasm_bindgen_test]
     fn box_renders_test_id() {
         let html = view! {
-            <Box test_id="box-test">"Content"</Box>
+            <Box test_attr=TestAttr::test_id("box-test")>"Content"</Box>
         }
         .to_html();
 
@@ -93,8 +115,22 @@ mod wasm_tests {
         .to_html();
 
         assert!(
-            !html.contains("data-testid"),
-            "expected no data-testid attribute; got: {}",
+            !html.contains("data-testid") && !html.contains("data-cy"),
+            "expected no test attribute; got: {}",
+            html
+        );
+    }
+
+    #[wasm_bindgen_test]
+    fn box_accepts_custom_test_attr_key() {
+        let html = view! {
+            <Box test_attr=TestAttr::new("data-cy", "box-cy")>"Content"</Box>
+        }
+        .to_html();
+
+        assert!(
+            html.contains(r#"data-cy="box-cy""#),
+            "expected custom data-cy attribute; got: {}",
             html
         );
     }
