@@ -37,11 +37,22 @@ pub fn Progress(
     let current_value = move || value.get();
     let is_indeterminate = move || current_value() == -1.0;
 
-    let (data_testid, data_cy) = match &test_attr {
-        Some(attr) if attr.key == "data-testid" => (Some(attr.value.clone()), None),
-        Some(attr) if attr.key == "data-cy" => (None, Some(attr.value.clone())),
-        _ => (None, None),
-    };
+    // Wrap test_attr in Signals so the attribute closures can be FnMut and clone safely.
+    let data_testid_signal: Signal<Option<String>> = Signal::derive({
+        let test_attr = test_attr.clone();
+        move || match &test_attr {
+            Some(attr) if attr.key == "data-testid" => Some(attr.value.clone()),
+            _ => None,
+        }
+    });
+
+    let data_cy_signal: Signal<Option<String>> = Signal::derive({
+        let test_attr = test_attr.clone();
+        move || match &test_attr {
+            Some(attr) if attr.key == "data-cy" => Some(attr.value.clone()),
+            _ => None,
+        }
+    });
 
     move || {
         if is_indeterminate() {
@@ -49,8 +60,8 @@ pub fn Progress(
                 <progress
                     class=class
                     max=move || max_value()
-                    attr:data-testid=move || data_testid.clone()
-                    attr:data-cy=move || data_cy.clone()
+                    attr:data-testid=move || data_testid_signal.get()
+                    attr:data-cy=move || data_cy_signal.get()
                 />
             }
             .into_any()
@@ -60,8 +71,8 @@ pub fn Progress(
                     class=class
                     max=move || max_value()
                     value=move || current_value()
-                    attr:data-testid=move || data_testid.clone()
-                    attr:data-cy=move || data_cy.clone()
+                    attr:data-testid=move || data_testid_signal.get()
+                    attr:data-cy=move || data_cy_signal.get()
                 >
                     {move || format!("{:.0}%", current_value())}
                 </progress>
