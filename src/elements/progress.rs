@@ -1,6 +1,8 @@
 use leptos::prelude::{ClassAttribute, CustomAttribute, ElementChild, Get, Signal};
 use leptos::tachys::view::any_view::IntoAny;
-use leptos::{IntoView, component, view};
+use leptos::{component, view, IntoView};
+
+use crate::util::TestAttr;
 
 /// A native HTML progress bar.
 ///
@@ -15,9 +17,12 @@ pub fn Progress(
     /// Use -1.0 for an indeterminate progress bar.
     #[prop(default = 0.0.into(), into)]
     value: Signal<f32>,
-    /// Optional test identifier (renders as data-testid attribute)
+    /// Optional test attribute (renders as data-* attribute) on the <progress> element.
+    ///
+    /// When provided as a &str or String, this becomes `data-testid="value"`.
+    /// You can also pass a full `TestAttr` to override the attribute key (for example, `data-cy`).
     #[prop(optional, into)]
-    test_id: Option<String>,
+    test_attr: Option<TestAttr>,
 ) -> impl IntoView {
     let class = move || {
         let extras = classes.get();
@@ -32,10 +37,21 @@ pub fn Progress(
     let current_value = move || value.get();
     let is_indeterminate = move || current_value() == -1.0;
 
+    let (data_testid, data_cy) = match &test_attr {
+        Some(attr) if attr.key == "data-testid" => (Some(attr.value.clone()), None),
+        Some(attr) if attr.key == "data-cy" => (None, Some(attr.value.clone())),
+        _ => (None, None),
+    };
+
     move || {
         if is_indeterminate() {
             view! {
-                <progress class=class max=move || max_value() data-testid=test_id.clone() />
+                <progress
+                    class=class
+                    max=move || max_value()
+                    attr:data-testid=move || data_testid.clone()
+                    attr:data-cy=move || data_cy.clone()
+                />
             }
             .into_any()
         } else {
@@ -44,7 +60,8 @@ pub fn Progress(
                     class=class
                     max=move || max_value()
                     value=move || current_value()
-                    data-testid=test_id.clone()
+                    attr:data-testid=move || data_testid.clone()
+                    attr:data-cy=move || data_cy.clone()
                 >
                     {move || format!("{:.0}%", current_value())}
                 </progress>
@@ -135,6 +152,7 @@ mod tests {
 #[cfg(all(test, target_arch = "wasm32"))]
 mod wasm_tests {
     use super::*;
+    use crate::util::TestAttr;
     use leptos::prelude::*;
     use wasm_bindgen_test::*;
 
@@ -143,7 +161,7 @@ mod wasm_tests {
     #[wasm_bindgen_test]
     fn progress_renders_test_id() {
         let html = view! {
-            <Progress test_id="progress-test" />
+            <Progress test_attr=TestAttr::test_id("progress-test") />
         }
         .to_html();
 
@@ -155,15 +173,29 @@ mod wasm_tests {
     }
 
     #[wasm_bindgen_test]
-    fn progress_no_test_id_when_not_provided() {
+    fn progress_no_test_attr_when_not_provided() {
         let html = view! {
             <Progress />
         }
         .to_html();
 
         assert!(
-            !html.contains("data-testid"),
-            "expected no data-testid attribute; got: {}",
+            !html.contains("data-testid") && !html.contains("data-cy"),
+            "expected no test attribute; got: {}",
+            html
+        );
+    }
+
+    #[wasm_bindgen_test]
+    fn progress_accepts_custom_test_attr_key() {
+        let html = view! {
+            <Progress test_attr=TestAttr::new("data-cy", "progress-cy") />
+        }
+        .to_html();
+
+        assert!(
+            html.contains(r#"data-cy="progress-cy""#),
+            "expected custom data-cy attribute; got: {}",
             html
         );
     }
