@@ -55,78 +55,66 @@ pub fn Content(
     };
 
     match tag_name.as_str() {
-        "article" => {
-            view! {
-                <article
-                    class=class_attr.clone()
-                    attr:data-testid=move || data_testid.clone()
-                    attr:data-cy=move || data_cy.clone()
-                >
-                    {children()}
-                </article>
-            }
-            .into_any()
+        "article" => view! {
+            <article
+                class=class_attr.clone()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
+                {children()}
+            </article>
         }
-        "section" => {
-            view! {
-                <section
-                    class=class_attr.clone()
-                    attr:data-testid=move || data_testid.clone()
-                    attr:data-cy=move || data_cy.clone()
-                >
-                    {children()}
-                </section>
-            }
-            .into_any()
+        .into_any(),
+        "section" => view! {
+            <section
+                class=class_attr.clone()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
+                {children()}
+            </section>
         }
-        "nav" => {
-            view! {
-                <nav
-                    class=class_attr.clone()
-                    attr:data-testid=move || data_testid.clone()
-                    attr:data-cy=move || data_cy.clone()
-                >
-                    {children()}
-                </nav>
-            }
-            .into_any()
+        .into_any(),
+        "nav" => view! {
+            <nav
+                class=class_attr.clone()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
+                {children()}
+            </nav>
         }
-        "p" => {
-            view! {
-                <p
-                    class=class_attr.clone()
-                    attr:data-testid=move || data_testid.clone()
-                    attr:data-cy=move || data_cy.clone()
-                >
-                    {children()}
-                </p>
-            }
-            .into_any()
+        .into_any(),
+        "p" => view! {
+            <p
+                class=class_attr.clone()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
+                {children()}
+            </p>
         }
-        "span" => {
-            view! {
-                <span
-                    class=class_attr.clone()
-                    attr:data-testid=move || data_testid.clone()
-                    attr:data-cy=move || data_cy.clone()
-                >
-                    {children()}
-                </span>
-            }
-            .into_any()
+        .into_any(),
+        "span" => view! {
+            <span
+                class=class_attr.clone()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
+                {children()}
+            </span>
         }
-        _ => {
-            view! {
-                <div
-                    class=class_attr.clone()
-                    attr:data-testid=move || data_testid.clone()
-                    attr:data-cy=move || data_cy.clone()
-                >
-                    {children()}
-                </div>
-            }
-            .into_any()
+        .into_any(),
+        _ => view! {
+            <div
+                class=class_attr.clone()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
+                {children()}
+            </div>
         }
+        .into_any(),
     }
 }
 

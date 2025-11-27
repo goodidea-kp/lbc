@@ -6,7 +6,7 @@ Bulma docs: https://bulma.io/documentation/elements/tag/
 
 use leptos::children::Children;
 use leptos::prelude::{ClassAttribute, CustomAttribute, ElementChild, Get, Signal};
-use leptos::{component, view, IntoView};
+use leptos::{IntoView, component, view};
 
 use crate::util::{Size, TestAttr};
 

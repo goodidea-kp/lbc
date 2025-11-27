@@ -97,126 +97,106 @@ pub fn Title(
     };
 
     match tag_name.as_str() {
-        "h1" => {
-            view! {
-                <h1
-                    class=class_str()
-                    attr:data-testid=move || data_testid.clone()
-                    attr:data-cy=move || data_cy.clone()
-                >
-                    {children()}
-                </h1>
-            }
-            .into_any()
+        "h1" => view! {
+            <h1
+                class=class_str()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
+                {children()}
+            </h1>
         }
-        "h2" => {
-            view! {
-                <h2
-                    class=class_str()
-                    attr:data-testid=move || data_testid.clone()
-                    attr:data-cy=move || data_cy.clone()
-                >
-                    {children()}
-                </h2>
-            }
-            .into_any()
+        .into_any(),
+        "h2" => view! {
+            <h2
+                class=class_str()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
+                {children()}
+            </h2>
         }
-        "h3" => {
-            view! {
-                <h3
-                    class=class_str()
-                    attr:data-testid=move || data_testid.clone()
-                    attr:data-cy=move || data_cy.clone()
-                >
-                    {children()}
-                </h3>
-            }
-            .into_any()
+        .into_any(),
+        "h3" => view! {
+            <h3
+                class=class_str()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
+                {children()}
+            </h3>
         }
-        "h4" => {
-            view! {
-                <h4
-                    class=class_str()
-                    attr:data-testid=move || data_testid.clone()
-                    attr:data-cy=move || data_cy.clone()
-                >
-                    {children()}
-                </h4>
-            }
-            .into_any()
+        .into_any(),
+        "h4" => view! {
+            <h4
+                class=class_str()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
+                {children()}
+            </h4>
         }
-        "h5" => {
-            view! {
-                <h5
-                    class=class_str()
-                    attr:data-testid=move || data_testid.clone()
-                    attr:data-cy=move || data_cy.clone()
-                >
-                    {children()}
-                </h5>
-            }
-            .into_any()
+        .into_any(),
+        "h5" => view! {
+            <h5
+                class=class_str()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
+                {children()}
+            </h5>
         }
-        "h6" => {
-            view! {
-                <h6
-                    class=class_str()
-                    attr:data-testid=move || data_testid.clone()
-                    attr:data-cy=move || data_cy.clone()
-                >
-                    {children()}
-                </h6>
-            }
-            .into_any()
+        .into_any(),
+        "h6" => view! {
+            <h6
+                class=class_str()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
+                {children()}
+            </h6>
         }
-        "p" => {
-            view! {
-                <p
-                    class=class_str()
-                    attr:data-testid=move || data_testid.clone()
-                    attr:data-cy=move || data_cy.clone()
-                >
-                    {children()}
-                </p>
-            }
-            .into_any()
+        .into_any(),
+        "p" => view! {
+            <p
+                class=class_str()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
+                {children()}
+            </p>
         }
-        "div" => {
-            view! {
-                <div
-                    class=class_str()
-                    attr:data-testid=move || data_testid.clone()
-                    attr:data-cy=move || data_cy.clone()
-                >
-                    {children()}
-                </div>
-            }
-            .into_any()
+        .into_any(),
+        "div" => view! {
+            <div
+                class=class_str()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
+                {children()}
+            </div>
         }
-        "span" => {
-            view! {
-                <span
-                    class=class_str()
-                    attr:data-testid=move || data_testid.clone()
-                    attr:data-cy=move || data_cy.clone()
-                >
-                    {children()}
-                </span>
-            }
-            .into_any()
+        .into_any(),
+        "span" => view! {
+            <span
+                class=class_str()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
+                {children()}
+            </span>
         }
-        _ => {
-            view! {
-                <h3
-                    class=class_str()
-                    attr:data-testid=move || data_testid.clone()
-                    attr:data-cy=move || data_cy.clone()
-                >
-                    {children()}
-                </h3>
-            }
-            .into_any()
+        .into_any(),
+        _ => view! {
+            <h3
+                class=class_str()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
+                {children()}
+            </h3>
         }
+        .into_any(),
     }
 }
 
@@ -271,126 +251,106 @@ pub fn Subtitle(
     };
 
     match tag_name.as_str() {
-        "h1" => {
-            view! {
-                <h1
-                    class=class_str()
-                    attr:data-testid=move || data_testid.clone()
-                    attr:data-cy=move || data_cy.clone()
-                >
-                    {children()}
-                </h1>
-            }
-            .into_any()
+        "h1" => view! {
+            <h1
+                class=class_str()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
+                {children()}
+            </h1>
         }
-        "h2" => {
-            view! {
-                <h2
-                    class=class_str()
-                    attr:data-testid=move || data_testid.clone()
-                    attr:data-cy=move || data_cy.clone()
-                >
-                    {children()}
-                </h2>
-            }
-            .into_any()
+        .into_any(),
+        "h2" => view! {
+            <h2
+                class=class_str()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
+                {children()}
+            </h2>
         }
-        "h3" => {
-            view! {
-                <h3
-                    class=class_str()
-                    attr:data-testid=move || data_testid.clone()
-                    attr:data-cy=move || data_cy.clone()
-                >
-                    {children()}
-                </h3>
-            }
-            .into_any()
+        .into_any(),
+        "h3" => view! {
+            <h3
+                class=class_str()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
+                {children()}
+            </h3>
         }
-        "h4" => {
-            view! {
-                <h4
-                    class=class_str()
-                    attr:data-testid=move || data_testid.clone()
-                    attr:data-cy=move || data_cy.clone()
-                >
-                    {children()}
-                </h4>
-            }
-            .into_any()
+        .into_any(),
+        "h4" => view! {
+            <h4
+                class=class_str()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
+                {children()}
+            </h4>
         }
-        "h5" => {
-            view! {
-                <h5
-                    class=class_str()
-                    attr:data-testid=move || data_testid.clone()
-                    attr:data-cy=move || data_cy.clone()
-                >
-                    {children()}
-                </h5>
-            }
-            .into_any()
+        .into_any(),
+        "h5" => view! {
+            <h5
+                class=class_str()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
+                {children()}
+            </h5>
         }
-        "h6" => {
-            view! {
-                <h6
-                    class=class_str()
-                    attr:data-testid=move || data_testid.clone()
-                    attr:data-cy=move || data_cy.clone()
-                >
-                    {children()}
-                </h6>
-            }
-            .into_any()
+        .into_any(),
+        "h6" => view! {
+            <h6
+                class=class_str()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
+                {children()}
+            </h6>
         }
-        "p" => {
-            view! {
-                <p
-                    class=class_str()
-                    attr:data-testid=move || data_testid.clone()
-                    attr:data-cy=move || data_cy.clone()
-                >
-                    {children()}
-                </p>
-            }
-            .into_any()
+        .into_any(),
+        "p" => view! {
+            <p
+                class=class_str()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
+                {children()}
+            </p>
         }
-        "div" => {
-            view! {
-                <div
-                    class=class_str()
-                    attr:data-testid=move || data_testid.clone()
-                    attr:data-cy=move || data_cy.clone()
-                >
-                    {children()}
-                </div>
-            }
-            .into_any()
+        .into_any(),
+        "div" => view! {
+            <div
+                class=class_str()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
+                {children()}
+            </div>
         }
-        "span" => {
-            view! {
-                <span
-                    class=class_str()
-                    attr:data-testid=move || data_testid.clone()
-                    attr:data-cy=move || data_cy.clone()
-                >
-                    {children()}
-                </span>
-            }
-            .into_any()
+        .into_any(),
+        "span" => view! {
+            <span
+                class=class_str()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
+                {children()}
+            </span>
         }
-        _ => {
-            view! {
-                <h3
-                    class=class_str()
-                    attr:data-testid=move || data_testid.clone()
-                    attr:data-cy=move || data_cy.clone()
-                >
-                    {children()}
-                </h3>
-            }
-            .into_any()
+        .into_any(),
+        _ => view! {
+            <h3
+                class=class_str()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
+                {children()}
+            </h3>
         }
+        .into_any(),
     }
 }
 

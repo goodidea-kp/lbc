@@ -1,6 +1,6 @@
 use leptos::prelude::{ClassAttribute, CustomAttribute, ElementChild, Get, Signal};
 use leptos::tachys::view::any_view::IntoAny;
-use leptos::{component, view, IntoView};
+use leptos::{IntoView, component, view};
 
 use crate::util::TestAttr;
 

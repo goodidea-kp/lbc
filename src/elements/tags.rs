@@ -71,12 +71,17 @@ mod tests {
             "expected base 'tags' class, got: {}",
             html
         );
-        assert!(html.contains(">X<"), "expected children to render, got: {}", html);
+        assert!(
+            html.contains(">X<"),
+            "expected children to render, got: {}",
+            html
+        );
     }
 
     #[test]
     fn tags_appends_custom_classes() {
-        let html = view! { <Tags classes="is-centered is-medium"><span>"Y"</span></Tags> }.to_html();
+        let html =
+            view! { <Tags classes="is-centered is-medium"><span>"Y"</span></Tags> }.to_html();
         assert!(
             html.contains(r#"class="tags is-centered is-medium""#),
             "expected combined classes, got: {}",

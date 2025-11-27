@@ -1,7 +1,7 @@
 use leptos::children::Children;
 use leptos::ev::MouseEvent;
 use leptos::prelude::{ClassAttribute, CustomAttribute, ElementChild, Get, OnAttribute, Signal};
-use leptos::{component, view, IntoView};
+use leptos::{IntoView, component, view};
 
 use crate::util::{Size, TestAttr};
 
