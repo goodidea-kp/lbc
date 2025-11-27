@@ -7,14 +7,12 @@ AI Pair Programming Notes:
 - Keep examples deterministic and small; avoid hidden state outside this module.
 */
 
-use lbc::prelude::{Block, Title, HeaderSize, Buttons, Button, ButtonColor, Size};
-use leptos::prelude::{
-    ClassAttribute, ElementChild, Get, IntoView, Update, component, create_signal, view,
-};
+use lbc::prelude::{Block, Button, ButtonColor, Buttons, HeaderSize, Size, Title};
+use leptos::prelude::{Get, IntoView, Update, component, signal, view};
 
 #[component]
 pub fn ButtonPage() -> impl IntoView {
-    let (is_loading, set_is_loading) = create_signal(false);
+    let (is_loading, set_is_loading) = signal(false);
     view! {
         <Block>
             <Title size=HeaderSize::Is5>"Button"</Title>

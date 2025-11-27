@@ -11,9 +11,11 @@ Follows existing crate patterns:
 */
 
 use leptos::prelude::{
-    AnyView, Children, ClassAttribute, ElementChild, Get, GetUntracked, IntoAny, Signal, component,
-    view,
+    AnyView, Children, ClassAttribute, CustomAttribute, ElementChild, Get, GetUntracked, IntoAny,
+    Signal, component, view,
 };
+
+use crate::util::TestAttr;
 
 /// Tile context modifiers.
 /// https://bulma.io/documentation/layout/tiles/#modifiers
@@ -83,6 +85,14 @@ pub fn Tile(
     /// The HTML tag to use for this component (div, article, section, nav, span)
     #[prop(optional, into)]
     tag: Option<Signal<String>>,
+
+    /// Optional test attribute for the root element.
+    ///
+    /// When provided as a &str or String, this becomes `data-testid="value"`.
+    /// You can also pass a full `TestAttr` to override the attribute key (e.g., `data-cy`).
+    #[prop(optional, into)]
+    test_attr: Option<TestAttr>,
+
     children: Children,
 ) -> AnyView {
     // Build class attribute: "tile [ctx] [is-vertical] [is-N] [extra classes]"
@@ -115,12 +125,65 @@ pub fn Tile(
         .map(|t| t.get().to_lowercase())
         .unwrap_or_else(|| "div".to_string());
 
+    // Derive specific optional attributes that our macro can render.
+    // This mirrors the Pagination implementation: we support a small, explicit set of keys.
+    let (data_testid, data_cy) = match &test_attr {
+        Some(attr) if attr.key == "data-testid" => (Some(attr.value.clone()), None),
+        Some(attr) if attr.key == "data-cy" => (None, Some(attr.value.clone())),
+        _ => (None, None),
+    };
+
     let node: AnyView = match tag_name.as_str() {
-        "article" => view! { <article class=class_attr.clone()>{children()}</article> }.into_any(),
-        "section" => view! { <section class=class_attr.clone()>{children()}</section> }.into_any(),
-        "nav" => view! { <nav class=class_attr.clone()>{children()}</nav> }.into_any(),
-        "span" => view! { <span class=class_attr.clone()>{children()}</span> }.into_any(),
-        _ => view! { <div class=class_attr.clone()>{children()}</div> }.into_any(),
+        "article" => view! {
+            <article
+                class=class_attr.clone()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
+                {children()}
+            </article>
+        }
+        .into_any(),
+        "section" => view! {
+            <section
+                class=class_attr.clone()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
+                {children()}
+            </section>
+        }
+        .into_any(),
+        "nav" => view! {
+            <nav
+                class=class_attr.clone()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
+                {children()}
+            </nav>
+        }
+        .into_any(),
+        "span" => view! {
+            <span
+                class=class_attr.clone()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
+                {children()}
+            </span>
+        }
+        .into_any(),
+        _ => view! {
+            <div
+                class=class_attr.clone()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
+                {children()}
+            </div>
+        }
+        .into_any(),
     };
     node
 }
@@ -163,6 +226,76 @@ mod tests {
         assert!(
             html.contains("tile is-child box"),
             "expected child and box classes, got: {}",
+            html
+        );
+    }
+}
+
+#[cfg(all(test, target_arch = "wasm32"))]
+mod wasm_tests {
+    use super::*;
+    use crate::util::TestAttr;
+    use leptos::prelude::*;
+    use wasm_bindgen_test::*;
+
+    wasm_bindgen_test_configure!(run_in_browser);
+
+    #[wasm_bindgen_test]
+    fn tile_renders_test_attr_as_data_testid() {
+        let html = view! {
+            <Tile
+                ctx=TileCtx::Parent
+                vertical=true
+                size=TileSize::Four
+                classes="box"
+                test_attr=TestAttr::test_id("tile-test")
+            >
+                "X"
+            </Tile>
+        }
+        .to_html();
+
+        assert!(
+            html.contains(r#"data-testid="tile-test""#),
+            "expected data-testid attribute on Tile; got: {}",
+            html
+        );
+    }
+
+    #[wasm_bindgen_test]
+    fn tile_no_test_attr_when_not_provided() {
+        let html = view! {
+            <Tile ctx=TileCtx::Parent vertical=true size=TileSize::Four classes="box">
+                "X"
+            </Tile>
+        }
+        .to_html();
+
+        assert!(
+            !html.contains("data-testid") && !html.contains("data-cy"),
+            "expected no data attribute on Tile when not provided; got: {}",
+            html
+        );
+    }
+
+    #[wasm_bindgen_test]
+    fn tile_accepts_custom_test_attr_key() {
+        let html = view! {
+            <Tile
+                ctx=TileCtx::Parent
+                vertical=true
+                size=TileSize::Four
+                classes="box"
+                test_attr=TestAttr::new("data-cy", "tile-cy")
+            >
+                "X"
+            </Tile>
+        }
+        .to_html();
+
+        assert!(
+            html.contains(r#"data-cy="tile-cy""#),
+            "expected custom data-cy attribute on Tile; got: {}",
             html
         );
     }

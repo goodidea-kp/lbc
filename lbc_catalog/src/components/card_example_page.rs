@@ -1,10 +1,16 @@
-use leptos::prelude::{component, create_signal, view, ClassAttribute, ElementChild, Get, GetUntracked, IntoAny, IntoView, OnAttribute, Set, AddAnyAttr};
-use lbc::prelude::{Block, Content, Title, Subtitle, HeaderSize, Tag, TagColor, Button, ButtonColor, Card, CardContent, CardFooter, CardHeader, CardImage, Image};
+use lbc::prelude::{
+    Block, Button, Card, CardContent, CardFooter, CardHeader, CardImage, Content, HeaderSize,
+    Image, Subtitle, Tag, TagColor, Title,
+};
+use leptos::prelude::{
+    AddAnyAttr, ClassAttribute, ElementChild, Get, GetUntracked, IntoView, OnAttribute, Set,
+    component, signal, view,
+};
 
 #[component]
 pub fn CardPage() -> impl IntoView {
-    let (liked, set_liked) = create_signal(false);
-    let (theme, set_theme) = create_signal(String::new());
+    let (liked, set_liked) = signal(false);
+    let (theme, set_theme) = signal(String::new());
 
     let toggle_like = {
         let set_liked = set_liked.clone();

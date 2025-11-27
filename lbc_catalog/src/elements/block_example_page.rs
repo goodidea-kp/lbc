@@ -5,7 +5,7 @@ AI Pair Programming Notes:
 - Demonstrates Bulma Block element for vertical spacing/sectioning.
 */
 
-use lbc::prelude::{Block, Title, HeaderSize};
+use lbc::prelude::{Block, HeaderSize, Title};
 use leptos::prelude::{ClassAttribute, ElementChild, IntoView, component, view};
 
 #[component]

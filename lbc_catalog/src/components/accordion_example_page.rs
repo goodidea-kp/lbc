@@ -1,5 +1,5 @@
-use leptos::prelude::{component, view, IntoView, ElementChild};
-use lbc::prelude::{Accordions, AccordionItem, Block, Content, HeaderSize, Subtitle, Title, List};
+use lbc::prelude::{AccordionItem, Accordions, Block, Content, HeaderSize, List, Subtitle, Title};
+use leptos::prelude::{ElementChild, IntoView, component, view};
 
 #[component]
 pub fn AccordionPage() -> impl IntoView {

@@ -1,11 +1,16 @@
-use leptos::prelude::{component, view, IntoView, ClassAttribute, ElementChild, Get, Set, OnAttribute, Signal, AriaAttributes, create_signal};
-use lbc::prelude::{Block, Content, HeaderSize, Subtitle, Title, Panel, PanelBlock, PanelTabs, Icon};
+use lbc::prelude::{
+    Block, Content, HeaderSize, Icon, Panel, PanelBlock, PanelTabs, Subtitle, Title,
+};
+use leptos::prelude::{
+    AriaAttributes, ClassAttribute, ElementChild, Get, IntoView, OnAttribute, Set, Signal,
+    component, signal, view,
+};
 use std::rc::Rc;
 
 #[component]
 pub fn PanelPage() -> impl IntoView {
-    let (active_tab, set_active_tab) = create_signal(0usize);
-    let (active_block, set_active_block) = create_signal(0usize);
+    let (active_tab, set_active_tab) = signal(0usize);
+    let (active_block, set_active_block) = signal(0usize);
     view! {
         <Block>
             <Title size=HeaderSize::Is5>"Panel"</Title>

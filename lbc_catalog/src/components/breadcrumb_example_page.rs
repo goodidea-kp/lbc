@@ -1,11 +1,16 @@
-use leptos::prelude::{component, create_signal, view, ClassAttribute, ElementChild, Get, IntoAny, IntoView, OnAttribute, Set, Signal, AddAnyAttr};
-use lbc::prelude::{Block, Button, Buttons, Content, HeaderSize, Size, Title, Breadcrumb, BreadcrumbSeparator, BreadcrumbSize, Alignment};
+use lbc::prelude::{
+    Alignment, Block, Breadcrumb, BreadcrumbSeparator, BreadcrumbSize, Button, Buttons, Content,
+    HeaderSize, Size, Title,
+};
+use leptos::prelude::{
+    AddAnyAttr, ClassAttribute, ElementChild, IntoView, Set, component, signal, view,
+};
 
 #[component]
 pub fn BreadcrumbPage() -> impl IntoView {
-    let (size, set_size) = create_signal::<Option<BreadcrumbSize>>(None);
-    let (alignment, set_alignment) = create_signal::<Option<Alignment>>(None);
-    let (separator, set_separator) = create_signal::<Option<BreadcrumbSeparator>>(None);
+    let (size, set_size) = signal::<Option<BreadcrumbSize>>(None);
+    let (alignment, set_alignment) = signal::<Option<Alignment>>(None);
+    let (separator, set_separator) = signal::<Option<BreadcrumbSeparator>>(None);
 
     view! {
         <Block>

@@ -1,8 +1,10 @@
 use leptos::prelude::{
-    AriaAttributes, Children, ClassAttribute, ElementChild, Get, IntoView, OnAttribute, Set,
-    Signal, StyleAttribute, component, view,
+    AriaAttributes, Children, ClassAttribute, CustomAttribute, ElementChild, Get, IntoView,
+    OnAttribute, Set, Signal, StyleAttribute, component, view,
 };
 use std::rc::Rc;
+
+use crate::util::TestAttr;
 
 fn base_class(extra: &str) -> String {
     if extra.trim().is_empty() {
@@ -28,6 +30,13 @@ pub fn Message(
     #[prop(optional)]
     on_close: Option<Rc<dyn Fn()>>,
 
+    /// Optional test attribute (renders as data-* attribute) on the root <article>.
+    ///
+    /// When provided as a &str or String, this becomes `data-testid="value"`.
+    /// You can also pass a full `TestAttr` to override the attribute key.
+    #[prop(optional, into)]
+    test_attr: Option<TestAttr>,
+
     /// Child content of the message (usually MessageHeader and MessageBody).
     children: Children,
 ) -> impl IntoView {
@@ -48,9 +57,17 @@ pub fn Message(
         }
     };
 
+    let (data_testid, data_cy) = match &test_attr {
+        Some(attr) if attr.key == "data-testid" => (Some(attr.value.clone()), None),
+        Some(attr) if attr.key == "data-cy" => (None, Some(attr.value.clone())),
+        _ => (None, None),
+    };
+
     view! {
         <article
             class=class
+            attr:data-testid=move || data_testid.clone()
+            attr:data-cy=move || data_cy.clone()
             style=move || {
                 let mut parts: Vec<&str> = Vec::new();
                 if closable.get() {
@@ -85,6 +102,13 @@ pub fn MessageHeader(
     #[prop(optional, into)]
     classes: Signal<String>,
 
+    /// Optional test attribute (renders as data-* attribute) on the header <div>.
+    ///
+    /// When provided as a &str or String, this becomes `data-testid="value"`.
+    /// You can also pass a full `TestAttr` to override the attribute key.
+    #[prop(optional, into)]
+    test_attr: Option<TestAttr>,
+
     /// Header children (e.g., title text, a delete button).
     children: Children,
 ) -> impl IntoView {
@@ -100,8 +124,18 @@ pub fn MessageHeader(
         }
     };
 
+    let (data_testid, data_cy) = match &test_attr {
+        Some(attr) if attr.key == "data-testid" => (Some(attr.value.clone()), None),
+        Some(attr) if attr.key == "data-cy" => (None, Some(attr.value.clone())),
+        _ => (None, None),
+    };
+
     view! {
-        <div class=class>
+        <div
+            class=class
+            attr:data-testid=move || data_testid.clone()
+            attr:data-cy=move || data_cy.clone()
+        >
             {children()}
         </div>
     }
@@ -114,6 +148,13 @@ pub fn MessageBody(
     /// Extra classes to apply to the body.
     #[prop(optional, into)]
     classes: Signal<String>,
+
+    /// Optional test attribute (renders as data-* attribute) on the body <div>.
+    ///
+    /// When provided as a &str or String, this becomes `data-testid="value"`.
+    /// You can also pass a full `TestAttr` to override the attribute key.
+    #[prop(optional, into)]
+    test_attr: Option<TestAttr>,
 
     /// Body children.
     children: Children,
@@ -130,8 +171,18 @@ pub fn MessageBody(
         }
     };
 
+    let (data_testid, data_cy) = match &test_attr {
+        Some(attr) if attr.key == "data-testid" => (Some(attr.value.clone()), None),
+        Some(attr) if attr.key == "data-cy" => (None, Some(attr.value.clone())),
+        _ => (None, None),
+    };
+
     view! {
-        <div class=class>
+        <div
+            class=class
+            attr:data-testid=move || data_testid.clone()
+            attr:data-cy=move || data_cy.clone()
+        >
             {children()}
         </div>
     }
@@ -186,6 +237,84 @@ mod tests {
         assert!(
             html.contains(r#"class="message is-primary""#) || html.contains("message is-primary "),
             "expected color class on message; got: {}",
+            html
+        );
+    }
+}
+
+#[cfg(all(test, target_arch = "wasm32"))]
+mod wasm_tests {
+    use super::*;
+    use leptos::prelude::*;
+    use std::rc::Rc;
+    use wasm_bindgen_test::*;
+
+    wasm_bindgen_test_configure!(run_in_browser);
+
+    fn noop_close() -> Option<Rc<dyn Fn()>> {
+        Some(Rc::new(|| {}))
+    }
+
+    #[wasm_bindgen_test]
+    fn message_renders_test_attr_as_data_testid() {
+        let html = view! {
+            <Message classes="is-primary" test_attr="message-test">
+                <MessageBody><p>"Body"</p></MessageBody>
+            </Message>
+        }
+        .to_html();
+
+        assert!(
+            html.contains(r#"data-testid="message-test""#),
+            "expected data-testid attribute on Message; got: {}",
+            html
+        );
+    }
+
+    #[wasm_bindgen_test]
+    fn message_no_test_attr_when_not_provided() {
+        let html = view! {
+            <Message>
+                <MessageBody><p>"Body"</p></MessageBody>
+            </Message>
+        }
+        .to_html();
+
+        assert!(
+            !html.contains("data-testid") && !html.contains("data-cy"),
+            "expected no test attribute on Message when not provided; got: {}",
+            html
+        );
+    }
+
+    #[wasm_bindgen_test]
+    fn message_header_renders_test_attr_as_data_testid() {
+        let html = view! {
+            <MessageHeader classes="extra" test_attr="message-header-test">
+                <p>"Header"</p>
+            </MessageHeader>
+        }
+        .to_html();
+
+        assert!(
+            html.contains(r#"data-testid="message-header-test""#),
+            "expected data-testid attribute on MessageHeader; got: {}",
+            html
+        );
+    }
+
+    #[wasm_bindgen_test]
+    fn message_body_renders_test_attr_as_data_testid() {
+        let html = view! {
+            <MessageBody classes="extra" test_attr="message-body-test">
+                <p>"Body"</p>
+            </MessageBody>
+        }
+        .to_html();
+
+        assert!(
+            html.contains(r#"data-testid="message-body-test""#),
+            "expected data-testid attribute on MessageBody; got: {}",
             html
         );
     }

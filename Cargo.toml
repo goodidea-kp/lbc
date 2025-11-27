@@ -1,6 +1,6 @@
 [package]
 name = "lbc"
-version = "0.1.0"
+version = "0.1.2"
 edition = "2024"
 description = "A Leptos component library based on the Bulma CSS framework."
 authors = ["Konstantin Pupkov <konstantin.pupkov@fromkos.com>"]
@@ -17,6 +17,10 @@ wasm-bindgen = "0.2.105"
 
 [dev-dependencies]
 leptos = { version = "0.8.12", features = ["ssr"] }
+wasm-bindgen-test = "0.3"
+
+[target.'cfg(target_arch = "wasm32")'.dev-dependencies]
+web-sys = { version = "0.3", features = ["Document", "Element", "HtmlElement"] }
 
 [package.metadata.docs.rs]
 all-features = true

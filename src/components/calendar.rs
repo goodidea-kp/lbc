@@ -19,17 +19,17 @@ Required static assets
 
 use leptos::html;
 use leptos::prelude::{
-    ClassAttribute, Get, GetUntracked, GlobalAttributes, IntoView, NodeRef, NodeRefAttribute,
-    Signal, component, view,
+    ClassAttribute, CustomAttribute, Get, GetUntracked, GlobalAttributes, IntoView, NodeRef,
+    NodeRefAttribute, Signal, component, view,
 };
 #[cfg(target_arch = "wasm32")]
 use leptos::wasm_bindgen::closure::Closure;
 #[cfg(target_arch = "wasm32")]
-use leptos::wasm_bindgen::prelude::wasm_bindgen;
-#[cfg(target_arch = "wasm32")]
 use leptos::wasm_bindgen::{JsCast, JsValue};
 #[cfg(target_arch = "wasm32")]
 use leptos::web_sys::Element;
+
+use crate::util::TestAttr;
 
 /// A date/time input enhanced by bulma-calendar.
 ///
@@ -57,6 +57,13 @@ pub fn Calendar(
     /// Extra classes appended after Bulma "input".
     #[prop(optional, into)]
     classes: Signal<String>,
+
+    /// Optional test attribute (renders as data-* attribute) on the input.
+    ///
+    /// When provided as a &str or String, this becomes `data-testid="value"`.
+    /// You can also pass a full `TestAttr` to override the attribute key.
+    #[prop(optional, into)]
+    test_attr: Option<TestAttr>,
 ) -> impl IntoView {
     let input_ref: NodeRef<html::Input> = NodeRef::new();
 
@@ -156,6 +163,13 @@ pub fn Calendar(
         detach_date_picker(&JsValue::from(_id_for_cleanup.as_str()));
     });
 
+    // Derive specific optional attributes that our macro can render.
+    let (data_testid, data_cy) = match &test_attr {
+        Some(attr) if attr.key == "data-testid" => (Some(attr.value.clone()), None),
+        Some(attr) if attr.key == "data-cy" => (None, Some(attr.value.clone())),
+        _ => (None, None),
+    };
+
     view! {
         <input
             id=id.clone()
@@ -166,6 +180,8 @@ pub fn Calendar(
             }
             value=initial_value
             node_ref=input_ref
+            attr:data-testid=move || data_testid.clone()
+            attr:data-cy=move || data_cy.clone()
         />
     }
 }
@@ -182,6 +198,7 @@ export function setup_date_picker(element, callback, initial_date, date_format, 
             lang: 'en',
             dateFormat: date_format,
             timeFormat: time_format,
+            showTodayButton: false
         });
         init.set(element.id, calendarInstances[0]);
         let calendarInstance = calendarInstances[0];
@@ -203,7 +220,7 @@ export function detach_date_picker(id) {
 "#)]
 #[cfg(target_arch = "wasm32")]
 #[allow(improper_ctypes, improper_ctypes_definitions)]
-unsafe extern "C" {
+extern "C" {
     fn setup_date_picker(
         element: &Element,
         callback: &JsValue,
@@ -308,5 +325,47 @@ mod tests {
             />
         }
         .to_html();
+    }
+}
+
+#[cfg(all(test, target_arch = "wasm32"))]
+mod wasm_tests {
+    use super::*;
+    use leptos::prelude::*;
+    use std::sync::Arc;
+    use wasm_bindgen_test::*;
+
+    fn noop() -> Arc<dyn Fn(String) + Send + Sync> {
+        Arc::new(|_| {})
+    }
+
+    wasm_bindgen_test_configure!(run_in_browser);
+
+    #[wasm_bindgen_test]
+    fn calendar_renders_test_id() {
+        let html = view! {
+            <Calendar id="appt".to_string() update=noop() test_attr=TestAttr::test_id("calendar-test") />
+        }
+        .to_html();
+
+        assert!(
+            html.contains(r#"data-testid="calendar-test""#),
+            "expected data-testid attribute; got: {}",
+            html
+        );
+    }
+
+    #[wasm_bindgen_test]
+    fn calendar_no_test_id_when_not_provided() {
+        let html = view! {
+            <Calendar id="appt".to_string() update=noop() />
+        }
+        .to_html();
+
+        assert!(
+            !html.contains("data-testid") && !html.contains("data-cy"),
+            "expected no test attribute; got: {}",
+            html
+        );
     }
 }

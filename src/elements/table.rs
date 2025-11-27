@@ -5,8 +5,8 @@ Bulma docs: https://bulma.io/documentation/elements/table/
 */
 
 use leptos::prelude::{
-    AnyView, Children, ClassAttribute, ElementChild, Get, GetUntracked, IntoAny, Signal, component,
-    view,
+    AnyView, Children, ClassAttribute, CustomAttribute, ElementChild, Get, GetUntracked, IntoAny,
+    Signal, component, view,
 };
 
 /// An HTML table component.
@@ -35,6 +35,9 @@ pub fn Table(
     /// Make the table scrollable, wrapping the table in a `div.table-container`.
     #[prop(optional, into)]
     scrollable: Signal<bool>,
+    /// Optional test identifier (renders as data-testid attribute)
+    #[prop(optional, into)]
+    test_id: Option<String>,
     /// Child content to render inside the table
     children: Children,
 ) -> AnyView {
@@ -73,7 +76,7 @@ pub fn Table(
     if scrollable.get_untracked() {
         view! {
             <div class="table-container">
-                <table class=move || class_str()>
+                <table class=move || class_str() data-testid=test_id.clone()>
                     {children()}
                 </table>
             </div>
@@ -81,7 +84,7 @@ pub fn Table(
         .into_any()
     } else {
         view! {
-            <table class=move || class_str()>
+            <table class=move || class_str() data-testid=test_id>
                 {children()}
             </table>
         }
@@ -257,6 +260,47 @@ mod tests {
         assert!(
             html.contains("is-bordered"),
             "expected is-bordered on table inside container"
+        );
+    }
+}
+
+#[cfg(all(test, target_arch = "wasm32"))]
+mod wasm_tests {
+    use super::*;
+    use leptos::prelude::*;
+    use wasm_bindgen_test::*;
+
+    wasm_bindgen_test_configure!(run_in_browser);
+
+    #[wasm_bindgen_test]
+    fn table_renders_test_id() {
+        let html = view! {
+            <Table test_id="table-test">
+                <tbody><tr><td>"Cell"</td></tr></tbody>
+            </Table>
+        }
+        .to_html();
+
+        assert!(
+            html.contains(r#"data-testid="table-test""#),
+            "expected data-testid attribute; got: {}",
+            html
+        );
+    }
+
+    #[wasm_bindgen_test]
+    fn table_no_test_id_when_not_provided() {
+        let html = view! {
+            <Table>
+                <tbody><tr><td>"Cell"</td></tr></tbody>
+            </Table>
+        }
+        .to_html();
+
+        assert!(
+            !html.contains("data-testid"),
+            "expected no data-testid attribute; got: {}",
+            html
         );
     }
 }

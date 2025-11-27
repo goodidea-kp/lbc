@@ -1,11 +1,11 @@
 use leptos::prelude::{
-    ClassAttribute, ElementChild, Get, GlobalAttributes, IntoAny, IntoView, OnAttribute,
-    PropAttribute, Signal, StyleAttribute, component, event_target_value, view,
+    ClassAttribute, CustomAttribute, ElementChild, Get, GlobalAttributes, IntoAny, IntoView,
+    OnAttribute, PropAttribute, Signal, StyleAttribute, component, event_target_value, view,
 };
 use std::sync::Arc;
 
 use crate::elements::icon::Icon;
-use crate::util::Size;
+use crate::util::{Size, TestAttr};
 
 fn size_class(size: Size) -> &'static str {
     match size {
@@ -73,6 +73,15 @@ pub fn TextArea(
     /// Show GenAI ribbon icon (cosmetic helper).
     #[prop(optional, into)]
     is_genai: Signal<bool>,
+
+    /// Optional test attribute (renders as data-* attribute) on the root element:
+    /// - when `is_genai=true`, on the wrapping <div>
+    /// - otherwise, on the <textarea> itself.
+    ///
+    /// When provided as a &str or String, this becomes `data-testid="value"`.
+    /// You can also pass a full `TestAttr` to override the attribute key.
+    #[prop(optional, into)]
+    test_attr: Option<TestAttr>,
 ) -> impl IntoView {
     let class = {
         let classes = classes.clone();
@@ -103,14 +112,28 @@ pub fn TextArea(
         }
     };
 
-    // input handler is defined inline at the usage sites to avoid moving captures
+    // Derive specific optional attributes that our macro can render.
+    let (data_testid_opt, data_cy_opt) = match &test_attr {
+        Some(attr) if attr.key == "data-testid" => (Some(attr.value.clone()), None),
+        Some(attr) if attr.key == "data-cy" => (None, Some(attr.value.clone())),
+        _ => (None, None),
+    };
 
     // Render an optional "GenAI ribbon" icon overlay if requested.
     move || {
+        // Clone the attribute values into locals each render so inner closures can move/clone them
+        let data_testid = data_testid_opt.clone();
+        let data_cy = data_cy_opt.clone();
+
         if is_genai.get() {
             let update_ai = update.clone();
             view! {
-                <div id="context" style="position:relative">
+                <div
+                    id="context"
+                    style="position:relative"
+                    attr:data-testid=move || data_testid.clone()
+                    attr:data-cy=move || data_cy.clone()
+                >
                     <Icon size=Size::Small classes="is-pulled-right ribbon">
                         <i class="fa-brands fa-openai"></i>
                     </Icon>
@@ -145,6 +168,8 @@ pub fn TextArea(
                     disabled=disabled.get()
                     readonly=readonly.get()
                     rows=rows.unwrap_or(0).to_string()
+                    attr:data-testid=move || data_testid.clone()
+                    attr:data-cy=move || data_cy.clone()
                 />
             }
             .into_any()
@@ -155,6 +180,7 @@ pub fn TextArea(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::util::Size;
     use leptos::prelude::RenderHtml;
 
     use std::sync::Arc;
@@ -253,6 +279,49 @@ mod tests {
         assert!(
             html.contains("ribbon"),
             "expected ribbon icon when is_genai; got: {}",
+            html
+        );
+    }
+}
+
+#[cfg(all(test, target_arch = "wasm32"))]
+mod wasm_tests {
+    use super::*;
+    use crate::util::{Size, TestAttr};
+    use leptos::prelude::*;
+    use std::sync::Arc;
+    use wasm_bindgen_test::*;
+
+    fn noop() -> Arc<dyn Fn(String) + Send + Sync> {
+        Arc::new(|_v| {})
+    }
+
+    wasm_bindgen_test_configure!(run_in_browser);
+
+    #[wasm_bindgen_test]
+    fn textarea_renders_test_attr_as_data_testid() {
+        let html = view! {
+            <TextArea name="notes" value="" update=noop() test_attr=TestAttr::test_id("textarea-test") />
+        }
+        .to_html();
+
+        assert!(
+            html.contains(r#"data-testid="textarea-test""#),
+            "expected data-testid attribute; got: {}",
+            html
+        );
+    }
+
+    #[wasm_bindgen_test]
+    fn textarea_no_test_attr_when_not_provided() {
+        let html = view! {
+            <TextArea name="notes" value="" update=noop() />
+        }
+        .to_html();
+
+        assert!(
+            !html.contains("data-testid") && !html.contains("data-cy"),
+            "expected no data attribute; got: {}",
             html
         );
     }

@@ -4,7 +4,7 @@ use leptos::prelude::*;
 
 /// Example page showcasing the Control form component.
 pub fn FormControlPage() -> impl IntoView {
-    let (typed_text, set_typed_text) = create_signal(String::new());
+    let (typed_text, set_typed_text) = signal(String::new());
     view! {
         <Block>
             <Title size=HeaderSize::Is5>"Form: Control"</Title>

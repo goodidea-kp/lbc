@@ -1,5 +1,7 @@
-use leptos::prelude::{component, view, IntoView, ClassAttribute};
-use lbc::prelude::{Alignment, Block, Button, ButtonColor, Buttons, HeaderSize, Size, Subtitle, Title};
+use lbc::prelude::{
+    Alignment, Block, Button, ButtonColor, Buttons, HeaderSize, Size, Subtitle, Title,
+};
+use leptos::prelude::{ClassAttribute, IntoView, component, view};
 
 #[component]
 pub fn ButtonsPage() -> impl IntoView {

@@ -5,7 +5,8 @@ Bulma docs: https://bulma.io/documentation/elements/box/
 */
 
 use leptos::prelude::{
-    Children, ClassAttribute, ElementChild, GetUntracked, IntoView, Signal, component, view,
+    Children, ClassAttribute, CustomAttribute, ElementChild, GetUntracked, IntoView, Signal,
+    component, view,
 };
 
 /// A white box to contain other elements.
@@ -14,6 +15,9 @@ pub fn Box(
     /// Additional CSS classes to append to the base "box" class
     #[prop(optional, into)]
     classes: Option<Signal<String>>,
+    /// Optional test identifier (renders as data-testid attribute)
+    #[prop(optional, into)]
+    test_id: Option<String>,
     /// Child content to render inside the box
     children: Children,
 ) -> impl IntoView {
@@ -28,7 +32,7 @@ pub fn Box(
         }
     }
 
-    view! { <div class=class_attr>{children()}</div> }
+    view! { <div class=class_attr data-testid=test_id>{children()}</div> }
 }
 
 #[cfg(test)]
@@ -56,5 +60,42 @@ mod tests {
             html
         );
         assert!(html.contains('Y'));
+    }
+}
+
+#[cfg(all(test, target_arch = "wasm32"))]
+mod wasm_tests {
+    use super::*;
+    use leptos::prelude::*;
+    use wasm_bindgen_test::*;
+
+    wasm_bindgen_test_configure!(run_in_browser);
+
+    #[wasm_bindgen_test]
+    fn box_renders_test_id() {
+        let html = view! {
+            <Box test_id="box-test">"Content"</Box>
+        }
+        .to_html();
+
+        assert!(
+            html.contains(r#"data-testid="box-test""#),
+            "expected data-testid attribute; got: {}",
+            html
+        );
+    }
+
+    #[wasm_bindgen_test]
+    fn box_no_test_id_when_not_provided() {
+        let html = view! {
+            <Box>"Content"</Box>
+        }
+        .to_html();
+
+        assert!(
+            !html.contains("data-testid"),
+            "expected no data-testid attribute; got: {}",
+            html
+        );
     }
 }

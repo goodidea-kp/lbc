@@ -5,7 +5,7 @@ AI Pair Programming Notes:
 - Demonstrates Bulma Box element for content container.
 */
 
-use lbc::prelude::{Block, Title, HeaderSize, Box};
+use lbc::prelude::{Block, Box, HeaderSize, Title};
 use leptos::prelude::{ClassAttribute, ElementChild, IntoView, component, view};
 
 #[component]

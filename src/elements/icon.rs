@@ -5,7 +5,8 @@ Bulma docs: https://bulma.io/documentation/elements/icon/
 */
 
 use leptos::prelude::{
-    Children, ClassAttribute, ElementChild, GetUntracked, IntoView, Signal, component, view,
+    Children, ClassAttribute, CustomAttribute, ElementChild, GetUntracked, IntoView, Signal,
+    component, view,
 };
 
 use crate::util::Size;
@@ -38,6 +39,9 @@ pub fn Icon(
     /// The alignment of this icon, often used within form controls.
     #[prop(optional)]
     alignment: Option<IconAlignment>,
+    /// Optional test identifier (renders as data-testid attribute)
+    #[prop(optional, into)]
+    test_id: Option<String>,
     /// Child content to render inside the icon
     children: Children,
 ) -> impl IntoView {
@@ -64,7 +68,7 @@ pub fn Icon(
 
     let class_attr = class_parts.join(" ");
 
-    view! { <span class=class_attr>{children()}</span> }
+    view! { <span class=class_attr data-testid=test_id>{children()}</span> }
 }
 
 #[cfg(test)]
@@ -89,6 +93,43 @@ mod tests {
         assert!(
             html.contains(r#"class="icon is-small is-left has-text-danger""#),
             "expected combined classes, got: {}",
+            html
+        );
+    }
+}
+
+#[cfg(all(test, target_arch = "wasm32"))]
+mod wasm_tests {
+    use super::*;
+    use leptos::prelude::*;
+    use wasm_bindgen_test::*;
+
+    wasm_bindgen_test_configure!(run_in_browser);
+
+    #[wasm_bindgen_test]
+    fn icon_renders_test_id() {
+        let html = view! {
+            <Icon test_id="icon-test"><i class="fa"></i></Icon>
+        }
+        .to_html();
+
+        assert!(
+            html.contains(r#"data-testid="icon-test""#),
+            "expected data-testid attribute; got: {}",
+            html
+        );
+    }
+
+    #[wasm_bindgen_test]
+    fn icon_no_test_id_when_not_provided() {
+        let html = view! {
+            <Icon><i class="fa"></i></Icon>
+        }
+        .to_html();
+
+        assert!(
+            !html.contains("data-testid"),
+            "expected no data-testid attribute; got: {}",
             html
         );
     }

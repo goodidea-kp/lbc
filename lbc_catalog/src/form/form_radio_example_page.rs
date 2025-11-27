@@ -1,11 +1,11 @@
-use leptos::prelude::{component, view, IntoView, ClassAttribute, ElementChild, Get, Set, create_signal};
 use lbc::prelude::{Block, Content, Control, Field, HeaderSize, Radio, Subtitle, Title};
+use leptos::prelude::{ClassAttribute, ElementChild, Get, IntoView, Set, component, signal, view};
 use std::sync::Arc;
 
 /// Example page showcasing the Radio form component.
 #[component]
 pub fn FormRadioPage() -> impl IntoView {
-    let (selected, set_selected) = create_signal(String::from("b"));
+    let (selected, set_selected) = signal(String::from("b"));
 
     let update = Arc::new(move |v: String| set_selected.set(v));
     // Clone update for each radio to avoid moving it into multiple closures

@@ -5,7 +5,7 @@ use leptos::prelude::*;
 
 /// Example page showcasing the Checkbox form component.
 pub fn FormCheckboxPage() -> impl IntoView {
-    let (is_checked, set_is_checked) = create_signal(false);
+    let (is_checked, set_is_checked) = signal(false);
 
     view! {
         <Block>

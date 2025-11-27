@@ -5,8 +5,8 @@ Bulma docs: https://bulma.io/documentation/elements/content/
 */
 
 use leptos::prelude::{
-    AnyView, Children, ClassAttribute, ElementChild, Get, GetUntracked, IntoAny, Signal, component,
-    view,
+    AnyView, Children, ClassAttribute, CustomAttribute, ElementChild, Get, GetUntracked, IntoAny,
+    Signal, component, view,
 };
 
 /// A single component to wrap WYSIWYG generated content, where only HTML tags are available.
@@ -18,6 +18,9 @@ pub fn Content(
     /// The HTML tag to use for this component (div, article, section, nav, p, span)
     #[prop(optional, into)]
     tag: Option<Signal<String>>,
+    /// Optional test identifier (renders as data-testid attribute)
+    #[prop(optional, into)]
+    test_id: Option<String>,
     /// Child content to render inside the content block
     children: Children,
 ) -> AnyView {
@@ -38,12 +41,29 @@ pub fn Content(
         .unwrap_or_else(|| "div".to_string());
 
     match tag_name.as_str() {
-        "article" => view! { <article class=class_attr.clone()>{children()}</article> }.into_any(),
-        "section" => view! { <section class=class_attr.clone()>{children()}</section> }.into_any(),
-        "nav" => view! { <nav class=class_attr.clone()>{children()}</nav> }.into_any(),
-        "p" => view! { <p class=class_attr.clone()>{children()}</p> }.into_any(),
-        "span" => view! { <span class=class_attr.clone()>{children()}</span> }.into_any(),
-        _ => view! { <div class=class_attr.clone()>{children()}</div> }.into_any(),
+        "article" => {
+            view! { <article class=class_attr.clone() data-testid=test_id.clone()>{children()}</article> }
+                .into_any()
+        }
+        "section" => {
+            view! { <section class=class_attr.clone() data-testid=test_id.clone()>{children()}</section> }
+                .into_any()
+        }
+        "nav" => {
+            view! { <nav class=class_attr.clone() data-testid=test_id.clone()>{children()}</nav> }
+                .into_any()
+        }
+        "p" => {
+            view! { <p class=class_attr.clone() data-testid=test_id.clone()>{children()}</p> }
+                .into_any()
+        }
+        "span" => {
+            view! { <span class=class_attr.clone() data-testid=test_id.clone()>{children()}</span> }
+                .into_any()
+        }
+        _ => {
+            view! { <div class=class_attr.clone() data-testid=test_id>{children()}</div> }.into_any()
+        }
     }
 }
 
@@ -80,6 +100,43 @@ mod tests {
         assert!(
             html.contains("<article"),
             "expected article tag, got: {}",
+            html
+        );
+    }
+}
+
+#[cfg(all(test, target_arch = "wasm32"))]
+mod wasm_tests {
+    use super::*;
+    use leptos::prelude::*;
+    use wasm_bindgen_test::*;
+
+    wasm_bindgen_test_configure!(run_in_browser);
+
+    #[wasm_bindgen_test]
+    fn content_renders_test_id() {
+        let html = view! {
+            <Content test_id="content-test"><p>"Content"</p></Content>
+        }
+        .to_html();
+
+        assert!(
+            html.contains(r#"data-testid="content-test""#),
+            "expected data-testid attribute; got: {}",
+            html
+        );
+    }
+
+    #[wasm_bindgen_test]
+    fn content_no_test_id_when_not_provided() {
+        let html = view! {
+            <Content><p>"Content"</p></Content>
+        }
+        .to_html();
+
+        assert!(
+            !html.contains("data-testid"),
+            "expected no data-testid attribute; got: {}",
             html
         );
     }

@@ -13,7 +13,7 @@ Notes:
   a console.warn is emitted and a small warning notification is shown on the page so you can add the link.
 */
 
-use lbc::prelude::{Block, Title, HeaderSize, Notification, Icon, IconAlignment, Size};
+use lbc::prelude::{Block, HeaderSize, Icon, IconAlignment, Notification, Size, Title};
 use leptos::prelude::{ClassAttribute, ElementChild, IntoView, component, view};
 use leptos::web_sys;
 

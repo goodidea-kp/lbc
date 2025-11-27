@@ -52,10 +52,10 @@ pub fn Buttons(
         move || {
             let mut parts: Vec<String> = vec!["buttons".to_string()];
 
-            if let Some(sz) = size {
-                let sc = size_class_for_group(sz);
-                if !sc.is_empty() {
-                    parts.push(sc.to_string());
+            if let Some(size_value) = size {
+                let size_class = size_class_for_group(size_value);
+                if !size_class.is_empty() {
+                    parts.push(size_class.to_string());
                 }
             }
 
@@ -71,9 +71,9 @@ pub fn Buttons(
             }
 
             if let Some(extra) = &classes {
-                let s = extra.get();
-                if !s.trim().is_empty() {
-                    parts.push(s);
+                let value = extra.get();
+                if !value.trim().is_empty() {
+                    parts.push(value);
                 }
             }
 
@@ -82,4 +82,59 @@ pub fn Buttons(
     };
 
     view! { <div class=class>{children()}</div> }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::components::tabs::Alignment;
+    use crate::util::Size;
+    use leptos::prelude::RenderHtml;
+
+    #[test]
+    fn buttons_renders_base_class_and_children() {
+        let html = view! {
+            <Buttons>
+                <button class="button">"One"</button>
+            </Buttons>
+        }
+        .to_html();
+
+        assert!(
+            html.contains(r#"class="buttons""#),
+            "expected base 'buttons' class; got: {}",
+            html
+        );
+        assert!(
+            html.contains("One"),
+            "expected child content; got: {}",
+            html
+        );
+    }
+
+    #[test]
+    fn buttons_applies_size_alignment_and_addons() {
+        let html = view! {
+            <Buttons size=Size::Small alignment=Alignment::Right addons=true>
+                <button class="button">"X"</button>
+            </Buttons>
+        }
+        .to_html();
+
+        assert!(
+            html.contains("are-small"),
+            "expected size class; got: {}",
+            html
+        );
+        assert!(
+            html.contains("is-right"),
+            "expected alignment class; got: {}",
+            html
+        );
+        assert!(
+            html.contains("has-addons"),
+            "expected has-addons class; got: {}",
+            html
+        );
+    }
 }

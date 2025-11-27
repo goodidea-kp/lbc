@@ -43,7 +43,7 @@ mod tests {
         let html = view! {
             <Tile ctx=TileCtx::Ancestor>
                 <Tile ctx=TileCtx::Parent size=TileSize::Four>
-                    <Tile ctx=TileCtx::Child tag="article" classes="box"></Tile>
+                    <Tile ctx=TileCtx::Child tag="article" classes="box">""</Tile>
                 </Tile>
             </Tile>
         }

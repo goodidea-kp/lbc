@@ -5,7 +5,7 @@ Bulma docs: https://bulma.io/documentation/elements/tag/
 */
 
 use leptos::children::Children;
-use leptos::prelude::{ClassAttribute, ElementChild, Get, Signal};
+use leptos::prelude::{ClassAttribute, CustomAttribute, ElementChild, Get, Signal};
 use leptos::{IntoView, component, view};
 
 use crate::util::Size;
@@ -62,6 +62,9 @@ pub fn Tag(
     /// Additional CSS classes to append to the base "tag" class.
     #[prop(optional, into)]
     classes: Option<Signal<String>>,
+    /// Optional test identifier (renders as data-testid attribute)
+    #[prop(optional, into)]
+    test_id: Option<String>,
     /// Child content to render inside the tag.
     children: Children,
 ) -> impl IntoView {
@@ -90,7 +93,7 @@ pub fn Tag(
         }
         class_parts.join(" ")
     };
-    view! { <span class=class>{children()}</span> }
+    view! { <span class=class data-testid=test_id>{children()}</span> }
 }
 
 #[cfg(test)]
@@ -111,6 +114,43 @@ mod tests {
         assert!(
             html.contains(r#"class="tag is-success is-rounded""#),
             "expected color and rounded classes"
+        );
+    }
+}
+
+#[cfg(all(test, target_arch = "wasm32"))]
+mod wasm_tests {
+    use super::*;
+    use leptos::prelude::*;
+    use wasm_bindgen_test::*;
+
+    wasm_bindgen_test_configure!(run_in_browser);
+
+    #[wasm_bindgen_test]
+    fn tag_renders_test_id() {
+        let html = view! {
+            <Tag test_id="tag-test">"Content"</Tag>
+        }
+        .to_html();
+
+        assert!(
+            html.contains(r#"data-testid="tag-test""#),
+            "expected data-testid attribute; got: {}",
+            html
+        );
+    }
+
+    #[wasm_bindgen_test]
+    fn tag_no_test_id_when_not_provided() {
+        let html = view! {
+            <Tag>"Content"</Tag>
+        }
+        .to_html();
+
+        assert!(
+            !html.contains("data-testid"),
+            "expected no data-testid attribute; got: {}",
+            html
         );
     }
 }

@@ -1,4 +1,4 @@
-use leptos::prelude::{ClassAttribute, ElementChild, Get, Signal};
+use leptos::prelude::{ClassAttribute, CustomAttribute, ElementChild, Get, Signal};
 use leptos::tachys::view::any_view::IntoAny;
 use leptos::{IntoView, component, view};
 
@@ -15,6 +15,9 @@ pub fn Progress(
     /// Use -1.0 for an indeterminate progress bar.
     #[prop(default = 0.0.into(), into)]
     value: Signal<f32>,
+    /// Optional test identifier (renders as data-testid attribute)
+    #[prop(optional, into)]
+    test_id: Option<String>,
 ) -> impl IntoView {
     let class = move || {
         let extras = classes.get();
@@ -32,12 +35,17 @@ pub fn Progress(
     move || {
         if is_indeterminate() {
             view! {
-                <progress class=class max=move || max_value() />
+                <progress class=class max=move || max_value() data-testid=test_id.clone() />
             }
             .into_any()
         } else {
             view! {
-                <progress class=class max=move || max_value() value=move || current_value()>
+                <progress
+                    class=class
+                    max=move || max_value()
+                    value=move || current_value()
+                    data-testid=test_id.clone()
+                >
                     {move || format!("{:.0}%", current_value())}
                 </progress>
             }
@@ -121,5 +129,42 @@ mod tests {
             "expected value=100, got: {html}"
         );
         assert!(html.contains("100%"), "expected 100% text, got: {html}");
+    }
+}
+
+#[cfg(all(test, target_arch = "wasm32"))]
+mod wasm_tests {
+    use super::*;
+    use leptos::prelude::*;
+    use wasm_bindgen_test::*;
+
+    wasm_bindgen_test_configure!(run_in_browser);
+
+    #[wasm_bindgen_test]
+    fn progress_renders_test_id() {
+        let html = view! {
+            <Progress test_id="progress-test" />
+        }
+        .to_html();
+
+        assert!(
+            html.contains(r#"data-testid="progress-test""#),
+            "expected data-testid attribute; got: {}",
+            html
+        );
+    }
+
+    #[wasm_bindgen_test]
+    fn progress_no_test_id_when_not_provided() {
+        let html = view! {
+            <Progress />
+        }
+        .to_html();
+
+        assert!(
+            !html.contains("data-testid"),
+            "expected no data-testid attribute; got: {}",
+            html
+        );
     }
 }

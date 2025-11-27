@@ -1,12 +1,14 @@
-use leptos::prelude::{component, view, IntoView, ClassAttribute, ElementChild, Get, Set, OnAttribute, create_signal};
-use lbc::prelude::{Tabs, Size, Alignment};
+use lbc::prelude::{Alignment, Size, Tabs};
+use leptos::prelude::{
+    ClassAttribute, ElementChild, Get, IntoView, OnAttribute, Set, component, signal, view,
+};
 
 #[component]
 pub fn TabsPage() -> impl IntoView {
     // Track active selection for each tabs example.
-    let (active_basic, set_active_basic) = create_signal(0usize);
-    let (active_centered, set_active_centered) = create_signal(0usize);
-    let (active_toggle, set_active_toggle) = create_signal(0usize);
+    let (active_basic, set_active_basic) = signal(0usize);
+    let (active_centered, set_active_centered) = signal(0usize);
+    let (active_toggle, set_active_toggle) = signal(0usize);
 
     view! {
         <div class="block">

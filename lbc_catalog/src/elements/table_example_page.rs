@@ -7,7 +7,7 @@ AI Pair Programming Notes:
 - Keep examples deterministic and small; avoid hidden state outside this module.
 */
 
-use lbc::prelude::{Block, Title, Subtitle, HeaderSize, Content, Table};
+use lbc::prelude::{Block, Content, HeaderSize, Subtitle, Table, Title};
 use leptos::prelude::{ElementChild, IntoView, component, view};
 
 #[component]

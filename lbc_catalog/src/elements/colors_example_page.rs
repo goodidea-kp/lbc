@@ -6,8 +6,10 @@ AI Pair Programming Notes:
 - Tests use SSR RenderHtml to validate Bulma class application.
 */
 
-use lbc::prelude::{Block, Buttons, Content, HeaderSize, Subtitle, Title, Button, ButtonColor, Tag, TagColor, Tags};
-use leptos::prelude::{ClassAttribute, ElementChild, IntoView, component, view};
+use lbc::prelude::{
+    Block, Button, ButtonColor, Buttons, Content, HeaderSize, Subtitle, Tag, TagColor, Tags, Title,
+};
+use leptos::prelude::{IntoView, component, view};
 
 #[component]
 pub fn ColorsPage() -> impl IntoView {

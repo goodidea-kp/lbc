@@ -1,8 +1,8 @@
 use leptos::prelude::{
-    Children, ClassAttribute, ElementChild, Get, IntoView, Signal, component, view,
+    Children, ClassAttribute, CustomAttribute, ElementChild, Get, IntoView, Signal, component, view,
 };
 
-use crate::util::Size;
+use crate::util::{Size, TestAttr};
 
 fn size_class(size: Size) -> &'static str {
     match size {
@@ -65,6 +65,13 @@ pub fn Tabs(
     /// Make this component fullwidth.
     #[prop(optional, into)]
     fullwidth: Signal<bool>,
+
+    /// Optional test attribute for the root <div>.
+    ///
+    /// When provided as a &str or String, this becomes `data-testid="value"`.
+    /// You can also pass a full `TestAttr` to override the attribute key (e.g., `data-cy`).
+    #[prop(optional, into)]
+    test_attr: Option<TestAttr>,
 ) -> impl IntoView {
     let class = {
         let classes = classes.clone();
@@ -103,8 +110,19 @@ pub fn Tabs(
         }
     };
 
+    // Derive specific optional attributes that our macro can render.
+    let (data_testid, data_cy) = match &test_attr {
+        Some(attr) if attr.key == "data-testid" => (Some(attr.value.clone()), None),
+        Some(attr) if attr.key == "data-cy" => (None, Some(attr.value.clone())),
+        _ => (None, None),
+    };
+
     view! {
-        <div class=move || class()>
+        <div
+            class=move || class()
+            attr:data-testid=move || data_testid.clone()
+            attr:data-cy=move || data_cy.clone()
+        >
             <ul>
                 {children()}
             </ul>
@@ -115,6 +133,7 @@ pub fn Tabs(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::util::Size;
     use leptos::prelude::RenderHtml;
 
     #[test]
@@ -182,5 +201,81 @@ mod tests {
                 html
             );
         }
+    }
+}
+
+#[cfg(all(test, target_arch = "wasm32"))]
+mod wasm_tests {
+    use super::*;
+    use crate::util::Size;
+    use leptos::prelude::*;
+    use wasm_bindgen_test::*;
+
+    wasm_bindgen_test_configure!(run_in_browser);
+
+    #[wasm_bindgen_test]
+    fn tabs_renders_test_attr_as_data_testid() {
+        let html = view! {
+            <Tabs
+                classes="is-toggle"
+                alignment=Alignment::Centered
+                size=Size::Small
+                boxed=true
+                toggle=true
+                rounded=true
+                fullwidth=true
+                test_attr="tabs-test"
+            >
+                <li class="is-active"><a>"One"</a></li>
+            </Tabs>
+        }
+        .to_html();
+
+        assert!(
+            html.contains(r#"data-testid="tabs-test""#),
+            "expected data-testid attribute on Tabs; got: {}",
+            html
+        );
+    }
+
+    #[wasm_bindgen_test]
+    fn tabs_no_test_attr_when_not_provided() {
+        let html = view! {
+            <Tabs>
+                <li class="is-active"><a>"One"</a></li>
+            </Tabs>
+        }
+        .to_html();
+
+        assert!(
+            !html.contains("data-testid"),
+            "expected no data-testid attribute on Tabs when not provided; got: {}",
+            html
+        );
+    }
+
+    #[wasm_bindgen_test]
+    fn tabs_accepts_custom_test_attr_key() {
+        let html = view! {
+            <Tabs
+                classes="is-toggle"
+                alignment=Alignment::Centered
+                size=Size::Small
+                boxed=true
+                toggle=true
+                rounded=true
+                fullwidth=true
+                test_attr=TestAttr::new("data-cy", "tabs-cy")
+            >
+                <li class="is-active"><a>"One"</a></li>
+            </Tabs>
+        }
+        .to_html();
+
+        assert!(
+            html.contains(r#"data-cy="tabs-cy""#),
+            "expected custom data-cy attribute on Tabs; got: {}",
+            html
+        );
     }
 }

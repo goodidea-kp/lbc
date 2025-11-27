@@ -1,9 +1,9 @@
 use leptos::prelude::{
-    AriaAttributes, Children, ClassAttribute, ElementChild, Get, GlobalAttributes, IntoView,
-    OnAttribute, Signal, component, view,
+    AriaAttributes, Children, ClassAttribute, CustomAttribute, ElementChild, Get, GlobalAttributes,
+    IntoView, OnAttribute, Signal, component, view,
 };
 
-use crate::util::Size;
+use crate::util::{Size, TestAttr};
 
 fn size_class(size: Size) -> &'static str {
     match size {
@@ -75,6 +75,13 @@ pub fn Pagination(
     /// Click handler for the next control.
     #[prop(optional)]
     on_next: Option<std::sync::Arc<dyn Fn() + Send + Sync>>,
+
+    /// Optional test attribute for the root <nav>.
+    ///
+    /// When provided as a &str or String, this becomes `data-testid="value"`.
+    /// You can also pass a full `TestAttr` to override the attribute key.
+    #[prop(optional, into)]
+    test_attr: Option<TestAttr>,
 ) -> impl IntoView {
     let class = {
         let classes = classes.clone();
@@ -120,8 +127,22 @@ pub fn Pagination(
         }
     };
 
+    // Derive specific optional attributes that our macro can render.
+    let (data_testid, data_cy) = match &test_attr {
+        Some(ta) if ta.key == "data-testid" => (Some(ta.value.clone()), None),
+        Some(ta) if ta.key == "data-cy" => (None, Some(ta.value.clone())),
+        _ => (None, None),
+    };
+
     view! {
-        <nav class=move || class() role="navigation" aria-label="pagination">
+        <nav
+            class=move || class()
+            role="navigation"
+            aria-label="pagination"
+            // Only support a known small set of custom attributes here.
+            attr:data-testid=move || data_testid.clone()
+            attr:data-cy=move || data_cy.clone()
+        >
             <a class="pagination-previous" on:click=prev_click>{previous_label.get()}</a>
             <a class="pagination-next" on:click=next_click>{next_label.get()}</a>
             <ul class="pagination-list">
@@ -152,6 +173,13 @@ pub fn PaginationItem(
     /// Click handler for this item.
     #[prop(optional)]
     on_click: Option<std::sync::Arc<dyn Fn() + Send + Sync>>,
+
+    /// Optional test attribute for the <a>.
+    ///
+    /// When provided as a &str or String, this becomes `data-testid="value"`.
+    /// You can also pass a full `TestAttr` to override the attribute key.
+    #[prop(optional, into)]
+    test_attr: Option<TestAttr>,
 ) -> impl IntoView {
     let class = {
         let current = current.clone();
@@ -173,8 +201,21 @@ pub fn PaginationItem(
         }
     };
 
+    // Derive specific optional attributes that our macro can render.
+    let (data_testid, data_cy) = match &test_attr {
+        Some(ta) if ta.key == "data-testid" => (Some(ta.value.clone()), None),
+        Some(ta) if ta.key == "data-cy" => (None, Some(ta.value.clone())),
+        _ => (None, None),
+    };
+
     view! {
-        <a class=move || class() aria-label=label.get() on:click=click>
+        <a
+            class=move || class()
+            aria-label=label.get()
+            on:click=click
+            attr:data-testid=move || data_testid.clone()
+            attr:data-cy=move || data_cy.clone()
+        >
             {children()}
         </a>
     }
@@ -264,6 +305,150 @@ mod tests {
         assert!(
             html.contains("pagination-ellipsis") && html.contains("..."),
             "expected ellipsis; got: {}",
+            html
+        );
+    }
+}
+
+#[cfg(all(test, target_arch = "wasm32"))]
+mod wasm_tests {
+    use super::*;
+    use crate::components::tabs::Alignment;
+    use crate::util::{Size, TestAttr};
+    use leptos::prelude::*;
+    use std::sync::Arc;
+    use wasm_bindgen_test::*;
+
+    fn noop() -> Arc<dyn Fn() + Send + Sync> {
+        Arc::new(|| {})
+    }
+
+    wasm_bindgen_test_configure!(run_in_browser);
+
+    #[wasm_bindgen_test]
+    fn pagination_renders_test_attr_as_data_testid() {
+        let html = view! {
+            <Pagination
+                previous_label="Prev"
+                next_label="Next"
+                classes="is-centered"
+                size=Size::Small
+                alignment=Alignment::Centered
+                rounded=true
+                on_previous=noop()
+                on_next=noop()
+                test_attr="pagination-test"
+            >
+                <li>
+                    <PaginationItem item_type=PaginationItemType::Link label="1" current=true>
+                        {"1"}
+                    </PaginationItem>
+                </li>
+            </Pagination>
+        }
+        .to_html();
+
+        assert!(
+            html.contains(r#"data-testid="pagination-test""#),
+            "expected data-testid attribute on Pagination; got: {}",
+            html
+        );
+    }
+
+    #[wasm_bindgen_test]
+    fn pagination_no_test_attr_when_not_provided() {
+        let html = view! {
+            <Pagination previous_label="Prev" next_label="Next">
+                <li>
+                    <PaginationItem item_type=PaginationItemType::Link label="1" current=true>
+                        {"1"}
+                    </PaginationItem>
+                </li>
+            </Pagination>
+        }
+        .to_html();
+
+        assert!(
+            !html.contains("data-testid"),
+            "expected no data-testid attribute on Pagination when not provided; got: {}",
+            html
+        );
+    }
+
+    #[wasm_bindgen_test]
+    fn pagination_item_renders_test_attr_as_data_testid() {
+        let html = view! {
+            <PaginationItem
+                item_type=PaginationItemType::Link
+                label="1"
+                current=true
+                on_click=noop()
+                test_attr="pagination-item-test"
+            >
+                {"1"}
+            </PaginationItem>
+        }
+        .to_html();
+
+        assert!(
+            html.contains(r#"data-testid="pagination-item-test""#),
+            "expected data-testid attribute on PaginationItem; got: {}",
+            html
+        );
+    }
+
+    #[wasm_bindgen_test]
+    fn pagination_item_no_test_attr_when_not_provided() {
+        let html = view! {
+            <PaginationItem
+                item_type=PaginationItemType::Link
+                label="1"
+                current=true
+                on_click=noop()
+            >
+                {"1"}
+            </PaginationItem>
+        }
+        .to_html();
+
+        assert!(
+            !html.contains("data-testid"),
+            "expected no data-testid attribute on PaginationItem when not provided; got: {}",
+            html
+        );
+    }
+
+    #[wasm_bindgen_test]
+    fn pagination_accepts_custom_test_attr_key() {
+        let custom = TestAttr::new("data-cy", "pagination-cy");
+        let html = view! {
+            <Pagination
+                previous_label="Prev"
+                next_label="Next"
+                test_attr=custom
+            >
+                <li>
+                    <PaginationItem
+                        item_type=PaginationItemType::Link
+                        label="1"
+                        current=true
+                        test_attr=TestAttr::new("data-cy", "pagination-item-cy")
+                    >
+                        {"1"}
+                    </PaginationItem>
+                </li>
+            </Pagination>
+        }
+        .to_html();
+
+        assert!(
+            html.contains(r#"data-cy="pagination-cy""#),
+            "expected custom data-cy attribute on Pagination; got: {}",
+            html
+        );
+        assert!(
+            html.contains(r#"data-cy="pagination-item-cy""#),
+            "expected custom data-cy attribute on PaginationItem; got: {}",
             html
         );
     }

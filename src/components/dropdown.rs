@@ -1,7 +1,8 @@
 use crate::elements::button::Button;
+use crate::util::TestAttr;
 use leptos::prelude::{
-    AddAnyAttr, Children, ClassAttribute, ElementChild, Get, GlobalAttributes, IntoAny, IntoView,
-    OnAttribute, Set, Signal, StyleAttribute, component, view,
+    AddAnyAttr, Children, ClassAttribute, CustomAttribute, ElementChild, Get, GlobalAttributes,
+    IntoAny, IntoView, OnAttribute, Set, Signal, StyleAttribute, component, view,
 };
 
 /// A Bulma dropdown menu with a trigger button.
@@ -25,6 +26,13 @@ pub fn Dropdown(
 
     /// Content placed inside the dropdown-content container.
     children: Children,
+
+    /// Optional test attribute (renders as data-* attribute) on the root <div>.
+    ///
+    /// When provided as a &str or String, this becomes `data-testid="value"`.
+    /// You can also pass a full `TestAttr` to override the attribute key.
+    #[prop(optional, into)]
+    test_attr: Option<TestAttr>,
 ) -> impl IntoView {
     let (is_active, set_is_active) = leptos::prelude::signal(false);
 
@@ -54,8 +62,18 @@ pub fn Dropdown(
     };
     let close_click = move |_| set_is_active.set(false);
 
+    let (data_testid, data_cy) = match &test_attr {
+        Some(attr) if attr.key == "data-testid" => (Some(attr.value.clone()), None),
+        Some(attr) if attr.key == "data-cy" => (None, Some(attr.value.clone())),
+        _ => (None, None),
+    };
+
     view! {
-        <div class=move || class()>
+        <div
+            class=move || class()
+            attr:data-testid=move || data_testid.clone()
+            attr:data-cy=move || data_cy.clone()
+        >
             {move || if is_active.get() && !hoverable.get() {
                 // overlay to close when clicking outside
                 view! {
@@ -128,6 +146,81 @@ mod tests {
         assert!(
             html.contains("is-hoverable"),
             "expected is-hoverable class; got: {}",
+            html
+        );
+    }
+}
+
+#[cfg(all(test, target_arch = "wasm32"))]
+mod wasm_tests {
+    use super::*;
+    use crate::elements::button::ButtonColor;
+    use crate::util::TestAttr;
+    use leptos::prelude::*;
+    use wasm_bindgen_test::*;
+
+    wasm_bindgen_test_configure!(run_in_browser);
+
+    fn trigger() -> Children {
+        Box::new(|| view! { "Open" }.into_any())
+    }
+
+    #[wasm_bindgen_test]
+    fn dropdown_renders_test_attr_as_data_testid() {
+        let html = view! {
+            <Dropdown
+                classes="is-right"
+                hoverable=true
+                button_classes="is-primary"
+                button=trigger()
+                test_attr="dropdown-test"
+            >
+                <a class="dropdown-item">"Item"</a>
+            </Dropdown>
+        }
+        .to_html();
+
+        assert!(
+            html.contains(r#"data-testid="dropdown-test""#),
+            "expected data-testid attribute on Dropdown; got: {}",
+            html
+        );
+    }
+
+    #[wasm_bindgen_test]
+    fn dropdown_no_test_attr_when_not_provided() {
+        let html = view! {
+            <Dropdown button=trigger()>
+                <a class="dropdown-item">"Item"</a>
+            </Dropdown>
+        }
+        .to_html();
+
+        assert!(
+            !html.contains("data-testid") && !html.contains("data-cy"),
+            "expected no test attribute on Dropdown when not provided; got: {}",
+            html
+        );
+    }
+
+    #[wasm_bindgen_test]
+    fn dropdown_accepts_custom_test_attr_key() {
+        let html = view! {
+            <Dropdown
+                classes="is-right"
+                hoverable=true
+                button_classes="is-primary"
+                button=trigger()
+                test_attr=TestAttr::new("data-cy", "dropdown-cy")
+            >
+                <a class="dropdown-item">"Item"</a>
+            </Dropdown>
+        }
+        .to_html();
+
+        assert!(
+            html.contains(r#"data-cy="dropdown-cy""#),
+            "expected custom data-cy attribute on Dropdown; got: {}",
             html
         );
     }

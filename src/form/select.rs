@@ -1,11 +1,11 @@
 use leptos::html;
 use leptos::prelude::{
-    Children, ClassAttribute, ElementChild, Get, IntoView, NodeRef, NodeRefAttribute, OnAttribute,
-    PropAttribute, Signal, component, event_target_value, view,
+    Children, ClassAttribute, CustomAttribute, ElementChild, Get, IntoView, NodeRef,
+    NodeRefAttribute, OnAttribute, PropAttribute, Signal, component, event_target_value, view,
 };
 use std::sync::Arc;
 
-use crate::util::Size;
+use crate::util::{Size, TestAttr};
 
 fn size_class(size: Size) -> &'static str {
     match size {
@@ -53,6 +53,13 @@ pub fn Select(
     /// Disable this component.
     #[prop(optional, into)]
     disabled: Signal<bool>,
+
+    /// Optional test attribute (renders as data-* attribute) on the wrapper <div>.
+    ///
+    /// When provided as a &str or String, this becomes `data-testid="value"`.
+    /// You can also pass a full `TestAttr` to override the attribute key (e.g., `data-cy`).
+    #[prop(optional, into)]
+    test_attr: Option<TestAttr>,
 ) -> impl IntoView {
     let class = {
         let classes = classes.clone();
@@ -83,8 +90,19 @@ pub fn Select(
         }
     };
 
+    // Derive specific optional attributes that our macro can render.
+    let (data_testid, data_cy) = match &test_attr {
+        Some(attr) if attr.key == "data-testid" => (Some(attr.value.clone()), None),
+        Some(attr) if attr.key == "data-cy" => (None, Some(attr.value.clone())),
+        _ => (None, None),
+    };
+
     view! {
-        <div class=move || class()>
+        <div
+            class=move || class()
+            attr:data-testid=move || data_testid.clone()
+            attr:data-cy=move || data_cy.clone()
+        >
             <select
                 name=name.get()
                 prop:value=value.get()
@@ -137,6 +155,13 @@ pub fn MultiSelect(
     /// Disable this component.
     #[prop(optional, into)]
     disabled: Signal<bool>,
+
+    /// Optional test attribute (renders as data-* attribute) on the wrapper <div>.
+    ///
+    /// When provided as a &str or String, this becomes `data-testid="value"`.
+    /// You can also pass a full `TestAttr` to override the attribute key (e.g., `data-cy`).
+    #[prop(optional, into)]
+    test_attr: Option<TestAttr>,
 ) -> impl IntoView {
     let class = {
         let classes = classes.clone();
@@ -186,8 +211,19 @@ pub fn MultiSelect(
     let size_attr = list_size.unwrap_or(4).to_string();
     let joined_value = move || value.get().join(",");
 
+    // Derive specific optional attributes that our macro can render.
+    let (data_testid, data_cy) = match &test_attr {
+        Some(attr) if attr.key == "data-testid" => (Some(attr.value.clone()), None),
+        Some(attr) if attr.key == "data-cy" => (None, Some(attr.value.clone())),
+        _ => (None, None),
+    };
+
     view! {
-        <div class=move || class()>
+        <div
+            class=move || class()
+            attr:data-testid=move || data_testid.clone()
+            attr:data-cy=move || data_cy.clone()
+        >
             <select
                 multiple=true
                 size=size_attr
@@ -206,6 +242,7 @@ pub fn MultiSelect(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::util::Size;
     use leptos::prelude::RenderHtml;
 
     use std::sync::Arc;
@@ -300,6 +337,148 @@ mod tests {
         assert!(
             html.contains(r#"size="6""#),
             "expected size attribute; got: {}",
+            html
+        );
+    }
+}
+
+#[cfg(all(test, target_arch = "wasm32"))]
+mod wasm_tests {
+    use super::*;
+    use crate::util::{Size, TestAttr};
+    use leptos::prelude::*;
+    use std::sync::Arc;
+    use wasm_bindgen_test::*;
+
+    fn noop() -> Arc<dyn Fn(String) + Send + Sync> {
+        Arc::new(|_v| {})
+    }
+
+    fn noop_vec() -> Arc<dyn Fn(Vec<String>) + Send + Sync> {
+        Arc::new(|_v| {})
+    }
+
+    wasm_bindgen_test_configure!(run_in_browser);
+
+    #[wasm_bindgen_test]
+    fn select_renders_test_attr_as_data_testid() {
+        let html = view! {
+            <Select
+                name="kind"
+                value="x"
+                update=noop()
+                test_attr=TestAttr::test_id("select-test")
+            >
+                <option value="x">"X"</option>
+            </Select>
+        }
+        .to_html();
+
+        assert!(
+            html.contains(r#"data-testid="select-test""#),
+            "expected data-testid attribute; got: {}",
+            html
+        );
+    }
+
+    #[wasm_bindgen_test]
+    fn select_no_test_attr_when_not_provided() {
+        let html = view! {
+            <Select name="kind" value="x" update=noop()>
+                <option value="x">"X"</option>
+            </Select>
+        }
+        .to_html();
+
+        assert!(
+            !html.contains("data-testid") && !html.contains("data-cy"),
+            "expected no test attribute; got: {}",
+            html
+        );
+    }
+
+    #[wasm_bindgen_test]
+    fn multi_select_renders_test_attr_as_data_testid() {
+        let html = view! {
+            <MultiSelect
+                name="m"
+                value=vec!["a".to_string()]
+                list_size=6
+                update=noop_vec()
+                test_attr=TestAttr::test_id("multiselect-test")
+            >
+                <option value="a">"A"</option>
+            </MultiSelect>
+        }
+        .to_html();
+
+        assert!(
+            html.contains(r#"data-testid="multiselect-test""#),
+            "expected data-testid attribute; got: {}",
+            html
+        );
+    }
+
+    #[wasm_bindgen_test]
+    fn multi_select_no_test_attr_when_not_provided() {
+        let html = view! {
+            <MultiSelect
+                name="m"
+                value=vec!["a".to_string()]
+                list_size=6
+                update=noop_vec()
+            >
+                <option value="a">"A"</option>
+            </MultiSelect>
+        }
+        .to_html();
+
+        assert!(
+            !html.contains("data-testid") && !html.contains("data-cy"),
+            "expected no test attribute; got: {}",
+            html
+        );
+    }
+
+    #[wasm_bindgen_test]
+    fn select_accepts_custom_test_attr_key() {
+        let html = view! {
+            <Select
+                name="kind"
+                value="x"
+                update=noop()
+                test_attr=TestAttr::new("data-cy", "select-cy")
+            >
+                <option value="x">"X"</option>
+            </Select>
+        }
+        .to_html();
+
+        assert!(
+            html.contains(r#"data-cy="select-cy""#),
+            "expected custom data-cy attribute on Select; got: {}",
+            html
+        );
+    }
+
+    #[wasm_bindgen_test]
+    fn multi_select_accepts_custom_test_attr_key() {
+        let html = view! {
+            <MultiSelect
+                name="m"
+                value=vec!["a".to_string()]
+                list_size=6
+                update=noop_vec()
+                test_attr=TestAttr::new("data-cy", "multiselect-cy")
+            >
+                <option value="a">"A"</option>
+            </MultiSelect>
+        }
+        .to_html();
+
+        assert!(
+            html.contains(r#"data-cy="multiselect-cy""#),
+            "expected custom data-cy attribute on MultiSelect; got: {}",
             html
         );
     }

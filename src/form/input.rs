@@ -1,12 +1,12 @@
 use leptos::html;
 use leptos::prelude::{
-    ClassAttribute, Get, IntoAny, IntoView, NodeRef, NodeRefAttribute, OnAttribute, Signal,
-    component, event_target_value, view,
+    ClassAttribute, CustomAttribute, Get, IntoAny, IntoView, NodeRef, NodeRefAttribute,
+    OnAttribute, Signal, component, event_target_value, view,
 };
 use std::fmt;
 use std::rc::Rc;
 
-use crate::util::Size;
+use crate::util::{Size, TestAttr};
 
 /// The 5 allowed types for an input component (Bulma-focused).
 /// https://bulma.io/documentation/form/input/
@@ -96,6 +96,13 @@ pub fn Input(
     /// Step value for number input. If not provided, defaults to 1.0.
     #[prop(optional)]
     step: Option<f32>,
+
+    /// Optional test attribute (renders as data-* attribute) on the <input>.
+    ///
+    /// When provided as a &str or String, this becomes `data-testid="value"`.
+    /// You can also pass a full `TestAttr` to override the attribute key.
+    #[prop(optional, into)]
+    test_attr: Option<TestAttr>,
 ) -> impl IntoView {
     let input_type = r#type.unwrap_or(InputType::Text);
     let input_ref: NodeRef<html::Input> = NodeRef::new();
@@ -173,6 +180,12 @@ pub fn Input(
 
     let numeric_step = step.unwrap_or(1.0).to_string();
 
+    let (data_testid, data_cy) = match &test_attr {
+        Some(attr) if attr.key == "data-testid" => (Some(attr.value.clone()), None),
+        Some(attr) if attr.key == "data-cy" => (None, Some(attr.value.clone())),
+        _ => (None, None),
+    };
+
     view! {
         {
             if matches!(input_type, InputType::Number) {
@@ -190,6 +203,8 @@ pub fn Input(
                         readonly=readonly.get()
                         step=numeric_step.clone()
                         pattern="[0-9]+([.][0-9]{0,2})?"
+                        attr:data-testid=move || data_testid.clone()
+                        attr:data-cy=move || data_cy.clone()
                     />
                 }.into_any()
             } else {
@@ -203,6 +218,8 @@ pub fn Input(
                         placeholder=placeholder.get()
                         disabled=disabled.get()
                         readonly=readonly.get()
+                        attr:data-testid=move || data_testid.clone()
+                        attr:data-cy=move || data_cy.clone()
                     />
                 }.into_any()
             }
@@ -302,6 +319,49 @@ mod tests {
         assert!(
             html.contains(r#"step="1""#),
             "expected step=1; got: {}",
+            html
+        );
+    }
+}
+
+#[cfg(all(test, target_arch = "wasm32"))]
+mod wasm_tests {
+    use super::*;
+    use crate::util::{Size, TestAttr};
+    use leptos::prelude::*;
+    use std::rc::Rc;
+    use wasm_bindgen_test::*;
+
+    fn noop() -> Rc<dyn Fn(String)> {
+        Rc::new(|_value: String| {})
+    }
+
+    wasm_bindgen_test_configure!(run_in_browser);
+
+    #[wasm_bindgen_test]
+    fn input_renders_test_attr_as_data_testid() {
+        let html = view! {
+            <Input name="username" value="" update=noop() test_attr=TestAttr::test_id("input-test") />
+        }
+        .to_html();
+
+        assert!(
+            html.contains(r#"data-testid="input-test""#),
+            "expected data-testid attribute; got: {}",
+            html
+        );
+    }
+
+    #[wasm_bindgen_test]
+    fn input_no_test_attr_when_not_provided() {
+        let html = view! {
+            <Input name="username" value="" update=noop() />
+        }
+        .to_html();
+
+        assert!(
+            !html.contains("data-testid") && !html.contains("data-cy"),
+            "expected no data attribute; got: {}",
             html
         );
     }

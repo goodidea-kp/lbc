@@ -31,6 +31,8 @@ use leptos::wasm_bindgen::prelude::wasm_bindgen;
 #[cfg(target_arch = "wasm32")]
 use leptos::web_sys::Element;
 
+use crate::util::TestAttr;
+
 /// A tags autocomplete input based on Bulma TagsInput.
 ///
 /// Two modes:
@@ -50,10 +52,10 @@ pub fn AutoComplete(
     items: Option<Vec<String>>,
 
     /// Called when a tag is added.
-    on_update: Arc<dyn Fn(String) + Send + Sync>,
+    _on_update: Arc<dyn Fn(String) + Send + Sync>,
 
     /// Called when a tag is removed.
-    on_remove: Arc<dyn Fn(String) + Send + Sync>,
+    _on_remove: Arc<dyn Fn(String) + Send + Sync>,
 
     /// Currently selected single tag (for initial value).
     #[prop(optional, into)]
@@ -69,7 +71,7 @@ pub fn AutoComplete(
 
     /// Case sensitive matching.
     #[prop(optional, into)]
-    case_sensitive: Signal<bool>,
+    _case_sensitive: Signal<bool>,
 
     /// For dynamic mode: object field to show as text.
     #[prop(optional, into)]
@@ -81,13 +83,20 @@ pub fn AutoComplete(
 
     /// For dynamic mode: base URL to fetch suggestions (the plugin appends the typed value).
     #[prop(optional, into)]
-    url_for_fetch: Signal<String>,
+    _url_for_fetch: Signal<String>,
 
     /// Optional Authorization header value for dynamic fetches.
     #[prop(optional, into)]
-    auth_header: Signal<String>,
+    _auth_header: Signal<String>,
+
+    /// Optional test attribute (renders as data-* attribute) on the rendered input/select wrapper.
+    ///
+    /// When provided as a &str or String, this becomes `data-testid="value"`.
+    /// You can also pass a full `TestAttr` to override the attribute key (e.g., `data-cy`).
+    #[prop(optional, into)]
+    test_attr: Option<TestAttr>,
 ) -> impl IntoView {
-    let max_items = max_items.unwrap_or(10);
+    let _max_items_value = max_items.unwrap_or(10);
 
     // Build base input class
     let input_class = {
@@ -107,6 +116,13 @@ pub fn AutoComplete(
         && data_item_text.get().trim().is_empty()
         && data_item_value.get().trim().is_empty();
 
+    // Derive specific optional attributes that our macro can render.
+    let (data_testid, data_cy) = match &test_attr {
+        Some(attr) if attr.key == "data-testid" => (Some(attr.value.clone()), None),
+        Some(attr) if attr.key == "data-cy" => (None, Some(attr.value.clone())),
+        _ => (None, None),
+    };
+
     let body = if static_mode {
         let options_view = {
             let items = items.clone().unwrap_or_default();
@@ -124,10 +140,14 @@ pub fn AutoComplete(
             .into_any()
         };
         view! {
-            <div class=move || {
-                let extra = classes.get();
-                if extra.trim().is_empty() { "select".to_string() } else { format!("select {}", extra) }
-            }>
+            <div
+                class=move || {
+                    let extra = classes.get();
+                    if extra.trim().is_empty() { "select".to_string() } else { format!("select {}", extra) }
+                }
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+            >
                 <select
                     id=id.clone()
                     data-type="tags"
@@ -157,6 +177,8 @@ pub fn AutoComplete(
                 data-item-value=data_item_value.get()
                 data-placeholder=placeholder.get()
                 value=value_json
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
             />
         }
         .into_any()
@@ -169,6 +191,8 @@ pub fn AutoComplete(
                 class=move || input_class()
                 data-placeholder=placeholder.get()
                 value=current_selector.get()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
             />
         }
         .into_any()
@@ -178,11 +202,11 @@ pub fn AutoComplete(
     #[cfg(target_arch = "wasm32")]
     {
         let id_for_js = id.clone();
-        let max_items = max_items.clone();
+        let max_items = _max_items_value;
         let current_selector = current_selector.clone();
-        let case_sensitive = case_sensitive.clone();
-        let url_for_fetch = url_for_fetch.clone();
-        let auth_header = auth_header.clone();
+        let case_sensitive = _case_sensitive.clone();
+        let url_for_fetch = _url_for_fetch.clone();
+        let auth_header = _auth_header.clone();
         let data_item_value = data_item_value.clone();
 
         leptos::prelude::Effect::new(move |_| {
@@ -190,8 +214,8 @@ pub fn AutoComplete(
             if let Some(element) = document.get_element_by_id(&id_for_js) {
                 // Build callback to route ops to on_update/on_remove
                 let cb = {
-                    let on_update = on_update.clone();
-                    let on_remove = on_remove.clone();
+                    let on_update = _on_update.clone();
+                    let on_remove = _on_remove.clone();
                     Closure::wrap(Box::new(move |json: JsValue| {
                         if let Some(s) = json.as_string() {
                             if let Some((op, value)) =
@@ -352,8 +376,8 @@ mod tests {
                 id="ac1".to_string()
                 items=vec!["A".to_string(), "B".to_string()]
                 placeholder="Choose"
-                on_update=noop()
-                on_remove=noop()
+                _on_update=noop()
+                _on_remove=noop()
             />
         }
         .to_html();
@@ -373,9 +397,9 @@ mod tests {
                 id="ac2".to_string()
                 data_item_text="name"
                 data_item_value="name"
-                url_for_fetch="/api?q="
-                on_update=noop()
-                on_remove=noop()
+                _url_for_fetch="/api?q="
+                _on_update=noop()
+                _on_remove=noop()
             />
         }
         .to_html();
@@ -398,8 +422,8 @@ mod tests {
             <AutoComplete
                 id="ac3".to_string()
                 placeholder="Type..."
-                on_update=noop()
-                on_remove=noop()
+                _on_update=noop()
+                _on_remove=noop()
             />
         }
         .to_html();
@@ -407,6 +431,62 @@ mod tests {
         assert!(
             html.contains(r#"class="input""#) && html.contains(r#"id="ac3""#),
             "expected plain input; got: {}",
+            html
+        );
+    }
+}
+
+#[cfg(all(test, target_arch = "wasm32"))]
+mod wasm_tests {
+    use super::*;
+    use crate::util::TestAttr;
+    use leptos::prelude::*;
+    use std::sync::Arc;
+    use wasm_bindgen_test::*;
+
+    fn noop() -> Arc<dyn Fn(String) + Send + Sync> {
+        Arc::new(|_| {})
+    }
+
+    wasm_bindgen_test_configure!(run_in_browser);
+
+    #[wasm_bindgen_test]
+    fn autocomplete_renders_test_attr_static_mode() {
+        let html = view! {
+            <AutoComplete
+                id="ac1".to_string()
+                items=vec!["A".to_string(), "B".to_string()]
+                placeholder="Choose"
+                _on_update=noop()
+                _on_remove=noop()
+                test_attr=TestAttr::test_id("autocomplete-test")
+            />
+        }
+        .to_html();
+
+        assert!(
+            html.contains(r#"data-testid="autocomplete-test""#),
+            "expected data-testid attribute; got: {}",
+            html
+        );
+    }
+
+    #[wasm_bindgen_test]
+    fn autocomplete_no_test_attr_when_not_provided() {
+        let html = view! {
+            <AutoComplete
+                id="ac1".to_string()
+                items=vec!["A".to_string(), "B".to_string()]
+                placeholder="Choose"
+                _on_update=noop()
+                _on_remove=noop()
+            />
+        }
+        .to_html();
+
+        assert!(
+            !html.contains("data-testid") && !html.contains("data-cy"),
+            "expected no test attribute; got: {}",
             html
         );
     }

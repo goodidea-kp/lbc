@@ -1,8 +1,10 @@
 use leptos::prelude::{
-    Children, ClassAttribute, ElementChild, Get, IntoAny, IntoView, OnAttribute, Signal, component,
-    view,
+    Children, ClassAttribute, CustomAttribute, ElementChild, Get, IntoAny, IntoView, OnAttribute,
+    Signal, component, view,
 };
 use std::rc::Rc;
+
+use crate::util::TestAttr;
 
 /// A composable panel, for compact controls.
 /// https://bulma.io/documentation/components/panel/
@@ -15,6 +17,13 @@ pub fn Panel(
     /// Optional heading text for the panel.
     #[prop(optional, into)]
     heading: Option<Signal<String>>,
+
+    /// Optional test attribute for the root <nav>.
+    ///
+    /// When provided as a &str or String, this becomes `data-testid="value"`.
+    /// You can also pass a full `TestAttr` to override the attribute key (e.g., `data-cy`).
+    #[prop(optional, into)]
+    test_attr: Option<TestAttr>,
 
     /// Panel body content.
     children: Children,
@@ -40,8 +49,19 @@ pub fn Panel(
         }
     };
 
+    // Derive specific optional attributes that our macro can render.
+    let (data_testid, data_cy) = match &test_attr {
+        Some(attr) if attr.key == "data-testid" => (Some(attr.value.clone()), None),
+        Some(attr) if attr.key == "data-cy" => (None, Some(attr.value.clone())),
+        _ => (None, None),
+    };
+
     view! {
-        <nav class=move || class()>
+        <nav
+            class=move || class()
+            attr:data-testid=move || data_testid.clone()
+            attr:data-cy=move || data_cy.clone()
+        >
             {heading_node()}
             {children()}
         </nav>
@@ -54,8 +74,29 @@ pub fn Panel(
 pub fn PanelTabs(
     /// Tab anchors (<a>) to render inside this container.
     children: Children,
+
+    /// Optional test attribute for the <p>.
+    ///
+    /// When provided as a &str or String, this becomes `data-testid="value"`.
+    /// You can also pass a full `TestAttr` to override the attribute key.
+    #[prop(optional, into)]
+    test_attr: Option<TestAttr>,
 ) -> impl IntoView {
-    view! { <p class="panel-tabs">{children()}</p> }
+    let (data_testid, data_cy) = match &test_attr {
+        Some(attr) if attr.key == "data-testid" => (Some(attr.value.clone()), None),
+        Some(attr) if attr.key == "data-cy" => (None, Some(attr.value.clone())),
+        _ => (None, None),
+    };
+
+    view! {
+        <p
+            class="panel-tabs"
+            attr:data-testid=move || data_testid.clone()
+            attr:data-cy=move || data_cy.clone()
+        >
+            {children()}
+        </p>
+    }
 }
 
 /// An individual element of the panel.
@@ -78,6 +119,13 @@ pub fn PanelBlock(
     #[prop(optional, into)]
     classes: Signal<String>,
 
+    /// Optional test attribute for the rendered element.
+    ///
+    /// When provided as a &str or String, this becomes `data-testid="value"`.
+    /// You can also pass a full `TestAttr` to override the attribute key.
+    #[prop(optional, into)]
+    test_attr: Option<TestAttr>,
+
     /// Child content for the block.
     children: Children,
 ) -> impl IntoView {
@@ -97,6 +145,13 @@ pub fn PanelBlock(
         }
     };
 
+    // Derive specific optional attributes that our macro can render.
+    let (data_testid, data_cy) = match &test_attr {
+        Some(attr) if attr.key == "data-testid" => (Some(attr.value.clone()), None),
+        Some(attr) if attr.key == "data-cy" => (None, Some(attr.value.clone())),
+        _ => (None, None),
+    };
+
     view! {
         {
             let on_click_cb = {
@@ -108,11 +163,56 @@ pub fn PanelBlock(
                 }
             };
             match tag.as_deref().unwrap_or("div") {
-                "a" => view! { <a class=move || class() on:click=on_click_cb.clone()>{children()}</a> }.into_any(),
-                "button" => view! { <button class=move || class() on:click=on_click_cb.clone()>{children()}</button> }.into_any(),
-                "p" => view! { <p class=move || class() on:click=on_click_cb.clone()>{children()}</p> }.into_any(),
-                "span" => view! { <span class=move || class() on:click=on_click_cb.clone()>{children()}</span> }.into_any(),
-                _ => view! { <div class=move || class() on:click=on_click_cb.clone()>{children()}</div> }.into_any(),
+                "a" => view! {
+                    <a
+                        class=move || class()
+                        on:click=on_click_cb.clone()
+                        attr:data-testid=move || data_testid.clone()
+                        attr:data-cy=move || data_cy.clone()
+                    >
+                        {children()}
+                    </a>
+                }.into_any(),
+                "button" => view! {
+                    <button
+                        class=move || class()
+                        on:click=on_click_cb.clone()
+                        attr:data-testid=move || data_testid.clone()
+                        attr:data-cy=move || data_cy.clone()
+                    >
+                        {children()}
+                    </button>
+                }.into_any(),
+                "p" => view! {
+                    <p
+                        class=move || class()
+                        on:click=on_click_cb.clone()
+                        attr:data-testid=move || data_testid.clone()
+                        attr:data-cy=move || data_cy.clone()
+                    >
+                        {children()}
+                    </p>
+                }.into_any(),
+                "span" => view! {
+                    <span
+                        class=move || class()
+                        on:click=on_click_cb.clone()
+                        attr:data-testid=move || data_testid.clone()
+                        attr:data-cy=move || data_cy.clone()
+                    >
+                        {children()}
+                    </span>
+                }.into_any(),
+                _ => view! {
+                    <div
+                        class=move || class()
+                        on:click=on_click_cb.clone()
+                        attr:data-testid=move || data_testid.clone()
+                        attr:data-cy=move || data_cy.clone()
+                    >
+                        {children()}
+                    </div>
+                }.into_any(),
             }
         }
     }
@@ -192,6 +292,121 @@ mod tests {
         assert!(
             html.contains("<a") && html.contains("panel-block"),
             "expected <a> tag with panel-block class; got: {}",
+            html
+        );
+    }
+}
+
+#[cfg(all(test, target_arch = "wasm32"))]
+mod wasm_tests {
+    use super::*;
+    use crate::util::TestAttr;
+    use leptos::prelude::*;
+    use std::rc::Rc;
+    use wasm_bindgen_test::*;
+
+    wasm_bindgen_test_configure!(run_in_browser);
+
+    fn noop() -> Rc<dyn Fn()> {
+        Rc::new(|| {})
+    }
+
+    #[wasm_bindgen_test]
+    fn panel_renders_test_attr_as_data_testid() {
+        let html = view! {
+            <Panel classes="is-primary" heading="Heading" test_attr="panel-test">
+                <div class="panel-block">"Child"</div>
+            </Panel>
+        }
+        .to_html();
+
+        assert!(
+            html.contains(r#"data-testid="panel-test""#),
+            "expected data-testid attribute on Panel; got: {}",
+            html
+        );
+    }
+
+    #[wasm_bindgen_test]
+    fn panel_no_test_attr_when_not_provided() {
+        let html = view! {
+            <Panel heading="Heading">
+                <div class="panel-block">"Child"</div>
+            </Panel>
+        }
+        .to_html();
+
+        assert!(
+            !html.contains("data-testid"),
+            "expected no data-testid attribute on Panel when not provided; got: {}",
+            html
+        );
+    }
+
+    #[wasm_bindgen_test]
+    fn panel_tabs_renders_test_attr_as_data_testid() {
+        let html = view! {
+            <PanelTabs test_attr="panel-tabs-test">
+                <a>"All"</a>
+            </PanelTabs>
+        }
+        .to_html();
+
+        assert!(
+            html.contains(r#"data-testid="panel-tabs-test""#),
+            "expected data-testid attribute on PanelTabs; got: {}",
+            html
+        );
+    }
+
+    #[wasm_bindgen_test]
+    fn panel_block_renders_test_attr_as_data_testid() {
+        let html = view! {
+            <PanelBlock active=true on_click=noop() test_attr="panel-block-test">
+                "Item"
+            </PanelBlock>
+        }
+        .to_html();
+
+        assert!(
+            html.contains(r#"data-testid="panel-block-test""#),
+            "expected data-testid attribute on PanelBlock; got: {}",
+            html
+        );
+    }
+
+    #[wasm_bindgen_test]
+    fn panel_block_no_test_attr_when_not_provided() {
+        let html = view! {
+            <PanelBlock active=true on_click=noop()>
+                "Item"
+            </PanelBlock>
+        }
+        .to_html();
+
+        assert!(
+            !html.contains("data-testid"),
+            "expected no data-testid attribute on PanelBlock when not provided; got: {}",
+            html
+        );
+    }
+
+    #[wasm_bindgen_test]
+    fn panel_accepts_custom_test_attr_key() {
+        let html = view! {
+            <Panel
+                classes="is-primary"
+                heading="Heading"
+                test_attr=TestAttr::new("data-cy", "panel-cy")
+            >
+                <div class="panel-block">"Child"</div>
+            </Panel>
+        }
+        .to_html();
+
+        assert!(
+            html.contains(r#"data-cy="panel-cy""#),
+            "expected custom data-cy attribute on Panel; got: {}",
             html
         );
     }

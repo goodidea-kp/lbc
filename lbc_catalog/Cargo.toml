@@ -8,6 +8,7 @@ console_error_panic_hook = "0.1.7"
 leptos = { version = "0.8.12", features = ["csr"] }
 leptos_router = "0.8.9"
 lbc = { path = ".." }
+gloo-console = "0.3.0"
 
 [dev-dependencies]
 leptos = { version = "0.8.12", features = ["ssr"] }

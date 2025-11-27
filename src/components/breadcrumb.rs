@@ -1,6 +1,8 @@
 use crate::components::tabs::Alignment;
+use crate::util::TestAttr;
 use leptos::prelude::{
-    AriaAttributes, Children, ClassAttribute, ElementChild, Get, IntoView, Signal, component, view,
+    AriaAttributes, Children, ClassAttribute, CustomAttribute, ElementChild, Get, IntoView, Signal,
+    component, view,
 };
 
 /// The 3 sizes available for a breadcrumb.
@@ -64,6 +66,13 @@ pub fn Breadcrumb(
     /// The separator type to use between breadcrumb segments.
     #[prop(optional, into)]
     separator: Signal<Option<BreadcrumbSeparator>>,
+
+    /// Optional test attribute (renders as data-* attribute) on the root <nav>.
+    ///
+    /// When provided as a &str or String, this becomes `data-testid="value"`.
+    /// You can also pass a full `TestAttr` to override the attribute key.
+    #[prop(optional, into)]
+    test_attr: Option<TestAttr>,
 ) -> impl IntoView {
     let class = {
         let classes = classes.clone();
@@ -92,8 +101,19 @@ pub fn Breadcrumb(
         }
     };
 
+    let (data_testid, data_cy) = match &test_attr {
+        Some(attr) if attr.key == "data-testid" => (Some(attr.value.clone()), None),
+        Some(attr) if attr.key == "data-cy" => (None, Some(attr.value.clone())),
+        _ => (None, None),
+    };
+
     view! {
-        <nav class=move || class() aria-label="breadcrumbs">
+        <nav
+            class=move || class()
+            aria-label="breadcrumbs"
+            attr:data-testid=move || data_testid.clone()
+            attr:data-cy=move || data_cy.clone()
+        >
             <ul>
                 {children()}
             </ul>
@@ -162,6 +182,55 @@ mod tests {
         assert!(
             html.contains("has-dot-separator"),
             "expected separator class; got: {}",
+            html
+        );
+    }
+}
+
+#[cfg(all(test, target_arch = "wasm32"))]
+mod wasm_tests {
+    use super::*;
+    use crate::components::tabs::Alignment;
+    use crate::util::TestAttr;
+    use leptos::prelude::*;
+    use wasm_bindgen_test::*;
+
+    wasm_bindgen_test_configure!(run_in_browser);
+
+    #[wasm_bindgen_test]
+    fn breadcrumb_renders_test_attr_as_data_testid() {
+        let html = view! {
+            <Breadcrumb
+                classes="extra"
+                size=Signal::derive(|| Some(BreadcrumbSize::Small))
+                alignment=Signal::derive(|| Some(Alignment::Centered))
+                separator=Signal::derive(|| Some(BreadcrumbSeparator::Arrow))
+                test_attr="breadcrumb-test"
+            >
+                <li><a href="#">"A"</a></li>
+            </Breadcrumb>
+        }
+        .to_html();
+
+        assert!(
+            html.contains(r#"data-testid="breadcrumb-test""#),
+            "expected data-testid attribute; got: {}",
+            html
+        );
+    }
+
+    #[wasm_bindgen_test]
+    fn breadcrumb_no_test_attr_when_not_provided() {
+        let html = view! {
+            <Breadcrumb>
+                <li><a href="#">"A"</a></li>
+            </Breadcrumb>
+        }
+        .to_html();
+
+        assert!(
+            !html.contains("data-testid") && !html.contains("data-cy"),
+            "expected no test attribute; got: {}",
             html
         );
     }
