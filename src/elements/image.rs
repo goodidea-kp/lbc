@@ -9,6 +9,8 @@ use leptos::prelude::{
     ClassAttribute, CustomAttribute, Get, IntoView, Signal, StyleAttribute, component, view,
 };
 
+use crate::util::TestAttr;
+
 /// Simple image element with optional classes and style.
 #[component]
 pub fn Image(
@@ -28,15 +30,18 @@ pub fn Image(
     #[prop(optional, into)]
     style: Option<Signal<String>>,
 
-    /// Optional test identifier (renders as data-testid attribute)
+    /// Optional test attribute (renders as data-* attribute) on the <img>.
+    ///
+    /// When provided as a &str or String, this becomes `data-testid="value"`.
+    /// You can also pass a full `TestAttr` to override the attribute key (for example, `data-cy`).
     #[prop(optional, into)]
-    test_id: Option<String>,
+    test_attr: Option<TestAttr>,
 ) -> impl IntoView {
     let class_attr = {
         let classes = classes.clone();
         move || {
-            if let Some(c) = &classes {
-                let value = c.get();
+            if let Some(class_signal) = &classes {
+                let value = class_signal.get();
                 if value.trim().is_empty() {
                     String::new()
                 } else {
@@ -51,12 +56,18 @@ pub fn Image(
     let style_attr = {
         let style = style.clone();
         move || {
-            if let Some(s) = &style {
-                s.get()
+            if let Some(style_signal) = &style {
+                style_signal.get()
             } else {
                 String::new()
             }
         }
+    };
+
+    let (data_testid, data_cy) = match &test_attr {
+        Some(attr) if attr.key == "data-testid" => (Some(attr.value.clone()), None),
+        Some(attr) if attr.key == "data-cy" => (None, Some(attr.value.clone())),
+        _ => (None, None),
     };
 
     view! {
@@ -65,7 +76,8 @@ pub fn Image(
             alt=alt.get()
             class=class_attr
             style=style_attr
-            data-testid=test_id
+            attr:data-testid=move || data_testid.clone()
+            attr:data-cy=move || data_cy.clone()
         />
     }
 }
@@ -121,6 +133,7 @@ mod tests {
 #[cfg(all(test, target_arch = "wasm32"))]
 mod wasm_tests {
     use super::*;
+    use crate::util::TestAttr;
     use leptos::prelude::*;
     use wasm_bindgen_test::*;
 
@@ -129,7 +142,7 @@ mod wasm_tests {
     #[wasm_bindgen_test]
     fn image_renders_test_id() {
         let html = view! {
-            <Image src="x.png" alt="alt" test_id="image-test" />
+            <Image src="x.png" alt="alt" test_attr=TestAttr::test_id("image-test") />
         }
         .to_html();
 
@@ -141,15 +154,29 @@ mod wasm_tests {
     }
 
     #[wasm_bindgen_test]
-    fn image_no_test_id_when_not_provided() {
+    fn image_no_test_attr_when_not_provided() {
         let html = view! {
             <Image src="x.png" alt="alt" />
         }
         .to_html();
 
         assert!(
-            !html.contains("data-testid"),
-            "expected no data-testid attribute; got: {}",
+            !html.contains("data-testid") && !html.contains("data-cy"),
+            "expected no test attribute; got: {}",
+            html
+        );
+    }
+
+    #[wasm_bindgen_test]
+    fn image_accepts_custom_test_attr_key() {
+        let html = view! {
+            <Image src="x.png" alt="alt" test_attr=TestAttr::new("data-cy", "image-cy") />
+        }
+        .to_html();
+
+        assert!(
+            html.contains(r#"data-cy="image-cy""#),
+            "expected custom data-cy attribute; got: {}",
             html
         );
     }
