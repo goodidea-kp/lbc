@@ -6,9 +6,9 @@ Bulma docs: https://bulma.io/documentation/elements/tag/
 
 use leptos::children::Children;
 use leptos::prelude::{ClassAttribute, CustomAttribute, ElementChild, Get, Signal};
-use leptos::{IntoView, component, view};
+use leptos::{component, view, IntoView};
 
-use crate::util::Size;
+use crate::util::{Size, TestAttr};
 
 /// Available color variants for a Bulma tag.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -62,9 +62,12 @@ pub fn Tag(
     /// Additional CSS classes to append to the base "tag" class.
     #[prop(optional, into)]
     classes: Option<Signal<String>>,
-    /// Optional test identifier (renders as data-testid attribute)
+    /// Optional test attribute (renders as data-* attribute) on the root `<span>`.
+    ///
+    /// When provided as a &str or String, this becomes `data-testid="value"`.
+    /// You can also pass a full `TestAttr` to override the attribute key (for example, `data-cy`).
     #[prop(optional, into)]
-    test_id: Option<String>,
+    test_attr: Option<TestAttr>,
     /// Child content to render inside the tag.
     children: Children,
 ) -> impl IntoView {
@@ -93,7 +96,22 @@ pub fn Tag(
         }
         class_parts.join(" ")
     };
-    view! { <span class=class data-testid=test_id>{children()}</span> }
+
+    let (data_testid, data_cy) = match &test_attr {
+        Some(attr) if attr.key == "data-testid" => (Some(attr.value.clone()), None),
+        Some(attr) if attr.key == "data-cy" => (None, Some(attr.value.clone())),
+        _ => (None, None),
+    };
+
+    view! {
+        <span
+            class=class
+            attr:data-testid=move || data_testid.clone()
+            attr:data-cy=move || data_cy.clone()
+        >
+            {children()}
+        </span>
+    }
 }
 
 #[cfg(test)]
@@ -121,6 +139,7 @@ mod tests {
 #[cfg(all(test, target_arch = "wasm32"))]
 mod wasm_tests {
     use super::*;
+    use crate::util::TestAttr;
     use leptos::prelude::*;
     use wasm_bindgen_test::*;
 
@@ -129,7 +148,7 @@ mod wasm_tests {
     #[wasm_bindgen_test]
     fn tag_renders_test_id() {
         let html = view! {
-            <Tag test_id="tag-test">"Content"</Tag>
+            <Tag test_attr=TestAttr::test_id("tag-test")>"Content"</Tag>
         }
         .to_html();
 
@@ -141,15 +160,29 @@ mod wasm_tests {
     }
 
     #[wasm_bindgen_test]
-    fn tag_no_test_id_when_not_provided() {
+    fn tag_no_test_attr_when_not_provided() {
         let html = view! {
             <Tag>"Content"</Tag>
         }
         .to_html();
 
         assert!(
-            !html.contains("data-testid"),
-            "expected no data-testid attribute; got: {}",
+            !html.contains("data-testid") && !html.contains("data-cy"),
+            "expected no test attribute; got: {}",
+            html
+        );
+    }
+
+    #[wasm_bindgen_test]
+    fn tag_accepts_custom_test_attr_key() {
+        let html = view! {
+            <Tag test_attr=TestAttr::new("data-cy", "tag-cy")>"Content"</Tag>
+        }
+        .to_html();
+
+        assert!(
+            html.contains(r#"data-cy="tag-cy""#),
+            "expected custom data-cy attribute; got: {}",
             html
         );
     }
