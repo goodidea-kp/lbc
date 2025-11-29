@@ -14,6 +14,20 @@ pub mod form;
 pub mod layout;
 pub mod util;
 
+// Conditional logging macro; enable with `--features logging`
+// When disabled, expands to a no-op.
+#[cfg(feature = "logging")]
+#[macro_export]
+macro_rules! lbc_log {
+    ($($t:tt)*) => { ::leptos::logging::log!($($t)*) };
+}
+
+#[cfg(not(feature = "logging"))]
+#[macro_export]
+macro_rules! lbc_log {
+    ($($t:tt)*) => {{ /* logging disabled */ }};
+}
+
 pub mod prelude {
     //! Commonly used re-exports for building UIs with LBC.
     //! Import this to bring the most frequently used components into scope.

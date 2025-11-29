@@ -1,8 +1,11 @@
 use leptos::html;
 use leptos::prelude::{
-    ClassAttribute, CustomAttribute, Get, IntoAny, IntoView, NodeRef, NodeRefAttribute,
-    OnAttribute, Signal, component, event_target_value, view,
+    ClassAttribute, CustomAttribute, Get, GetUntracked, IntoAny, IntoView, NodeRef,
+    NodeRefAttribute, OnAttribute, PropAttribute, Signal, component, event_target_value, view,
 };
+// use crate-level conditional logging macro
+// Bring conditional logging macro into scope
+use crate::lbc_log;
 use std::fmt;
 use std::rc::Rc;
 
@@ -140,6 +143,11 @@ pub fn Input(
         let update = update.clone();
         move |ev| {
             let new_value = event_target_value(&ev);
+            lbc_log!(
+                "<Input> on:input (text) name='{}' -> '{}'",
+                name.get_untracked(),
+                new_value
+            );
             (update)(new_value);
         }
     };
@@ -158,6 +166,12 @@ pub fn Input(
                         "Please enter a number with up to two decimal places.",
                     );
                 }
+                lbc_log!(
+                    "<Input> on:input (number) name='{}' -> '{}' | valid={}",
+                    name.get_untracked(),
+                    new_value,
+                    is_valid
+                );
             }
             (update)(new_value);
         }
@@ -174,6 +188,11 @@ pub fn Input(
                         "Please enter a number with up to two decimal places.",
                     );
                 }
+                lbc_log!(
+                    "<Input> on:invalid name='{}' current='{}'",
+                    name.get_untracked(),
+                    input.value()
+                );
             }
         }
     };
@@ -186,21 +205,38 @@ pub fn Input(
         _ => (None, None),
     };
 
+    // Render-time debug logging
+    lbc_log!(
+        "<Input> render name='{}' type='{}' initial='{}'",
+        name.get_untracked(),
+        input_type,
+        value.get_untracked()
+    );
+
     view! {
         {
             if matches!(input_type, InputType::Number) {
                 view! {
                     <input
-                        name=name.get()
-                        value=value.get()
+                        name=name.get_untracked()
+                        // Use reactive property binding so changes from parent update the input
+                        prop:value=move || {
+                            let v = value.get();
+                            lbc_log!(
+                                "<Input> prop:value update (number) name='{}' -> '{}'",
+                                name.get_untracked(),
+                                v
+                            );
+                            v
+                        }
                         class=move || class()
                         type=input_type.to_string()
                         node_ref=input_ref
                         on:input=on_input_number
                         on:invalid=on_invalid
-                        placeholder=placeholder.get()
-                        disabled=disabled.get()
-                        readonly=readonly.get()
+                        placeholder=placeholder.get_untracked()
+                        disabled=disabled.get_untracked()
+                        readonly=readonly.get_untracked()
                         step=numeric_step.clone()
                         pattern="[0-9]+([.][0-9]{0,2})?"
                         attr:data-testid=move || data_testid.clone()
@@ -210,14 +246,23 @@ pub fn Input(
             } else {
                 view! {
                     <input
-                        name=name.get()
-                        value=value.get()
+                        name=name.get_untracked()
+                        // Use reactive property binding so changes from parent update the input
+                        prop:value=move || {
+                            let v = value.get();
+                            lbc_log!(
+                                "<Input> prop:value update (text) name='{}' -> '{}'",
+                                name.get_untracked(),
+                                v
+                            );
+                            v
+                        }
                         on:input=on_input_text
                         class=move || class()
                         type=input_type.to_string()
-                        placeholder=placeholder.get()
-                        disabled=disabled.get()
-                        readonly=readonly.get()
+                        placeholder=placeholder.get_untracked()
+                        disabled=disabled.get_untracked()
+                        readonly=readonly.get_untracked()
                         attr:data-testid=move || data_testid.clone()
                         attr:data-cy=move || data_cy.clone()
                     />

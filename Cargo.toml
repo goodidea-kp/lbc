@@ -1,6 +1,6 @@
 [package]
 name = "lbc"
-version = "0.1.3"
+version = "0.1.4"
 edition = "2024"
 description = "A Leptos component library based on the Bulma CSS framework."
 authors = ["Konstantin Pupkov <konstantin.pupkov@fromkos.com>"]
@@ -10,13 +10,19 @@ documentation = "https://docs.rs/lbc"
 categories = ["wasm", "web-programming"]
 keywords = ["wasm", "web", "bulma", "sass", "leptos"]
 
+[features]
+default = []
+# Enable library debug logging (uses `leptos::logging::log!`).
+# Disabled by default to avoid noisy console output in production.
+logging = []
+
 [dependencies]
 console_error_panic_hook = "0.1.7"
-leptos = { version = "0.8.12", features = ["csr", "ssr"] }
-wasm-bindgen = "0.2.105"
+leptos = { version = "0.8", features = ["csr", "ssr"] }
+wasm-bindgen = "0.2"
 
 [dev-dependencies]
-leptos = { version = "0.8.12", features = ["ssr"] }
+leptos = { version = "0.8", features = ["ssr"] }
 wasm-bindgen-test = "0.3"
 
 [target.'cfg(target_arch = "wasm32")'.dev-dependencies]
