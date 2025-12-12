@@ -5,9 +5,10 @@ Bulma docs: https://bulma.io/documentation/elements/delete/
 */
 
 use leptos::ev::MouseEvent;
+use leptos::html;
 use leptos::prelude::{
-    AnyView, Children, ClassAttribute, CustomAttribute, ElementChild, Get, IntoAny, OnAttribute,
-    Signal, component, view,
+    AnyView, Children, ClassAttribute, CustomAttribute, Effect, ElementChild, Get, IntoAny,
+    IntoView, NodeRef, NodeRefAttribute, Signal, component, view,
 };
 use std::sync::Arc;
 
@@ -48,21 +49,13 @@ pub fn Delete(
 
     let tag_name = tag
         .as_ref()
-        .map(|t| t.get().to_lowercase())
+        .map(|tag| tag.get().to_lowercase())
         .unwrap_or_else(|| "button".to_string());
 
     // Render children only if provided; otherwise render nothing.
     let content = match children {
-        Some(c) => c(),
+        Some(children) => children(),
         None => view! {}.into_any(),
-    };
-
-    let render_click = |handler: Option<Arc<dyn Fn(MouseEvent) + Send + Sync>>| {
-        move |event: MouseEvent| {
-            if let Some(cb) = handler.as_ref() {
-                (cb)(event);
-            }
-        }
     };
 
     let (data_testid, data_cy) = match &test_attr {
@@ -71,15 +64,58 @@ pub fn Delete(
         _ => (None, None),
     };
 
+    // Workaround for tachys 0.2.11 panic "callback removed before attaching":
+    // avoid `on:click` and attach the click listener manually on wasm32.
+    #[cfg(target_arch = "wasm32")]
+    fn attach_click_listener<E: JsCast + Clone + 'static>(
+        element_ref: NodeRef<E>,
+        on_click: Option<Arc<dyn Fn(MouseEvent) + Send + Sync>>,
+    ) {
+        use leptos::wasm_bindgen::closure::Closure;
+        use leptos::wasm_bindgen::JsCast;
+        use leptos::web_sys::Event;
+
+        let on_click_for_effect = on_click.clone();
+
+        Effect::new(move |_| {
+            let Some(element) = element_ref.get() else {
+                return;
+            };
+
+            let Some(on_click_callback) = on_click_for_effect.clone() else {
+                return;
+            };
+
+            let click_closure: Closure<dyn FnMut(Event)> =
+                Closure::wrap(Box::new(move |event: Event| {
+                    let Ok(mouse_event) = event.dyn_into::<MouseEvent>() else {
+                        return;
+                    };
+                    (on_click_callback)(mouse_event);
+                }));
+
+            element
+                .add_event_listener_with_callback("click", click_closure.as_ref().unchecked_ref())
+                .ok();
+
+            // Keep closure alive for the lifetime of the page/app.
+            click_closure.forget();
+        });
+    }
+
     match tag_name.as_str() {
         "a" => {
-            let handler = on_click.clone();
+            let element_ref: NodeRef<html::A> = NodeRef::new();
+
+            #[cfg(target_arch = "wasm32")]
+            attach_click_listener(element_ref.clone(), on_click.clone());
+
             view! {
                 <a
+                    node_ref=element_ref
                     class=class_attr.clone()
                     attr:data-testid=move || data_testid.clone()
                     attr:data-cy=move || data_cy.clone()
-                    on:click=render_click(handler)
                 >
                     {content}
                 </a>
@@ -87,13 +123,17 @@ pub fn Delete(
             .into_any()
         }
         "span" => {
-            let handler = on_click.clone();
+            let element_ref: NodeRef<html::Span> = NodeRef::new();
+
+            #[cfg(target_arch = "wasm32")]
+            attach_click_listener(element_ref.clone(), on_click.clone());
+
             view! {
                 <span
+                    node_ref=element_ref
                     class=class_attr.clone()
                     attr:data-testid=move || data_testid.clone()
                     attr:data-cy=move || data_cy.clone()
-                    on:click=render_click(handler)
                 >
                     {content}
                 </span>
@@ -101,13 +141,17 @@ pub fn Delete(
             .into_any()
         }
         "div" => {
-            let handler = on_click.clone();
+            let element_ref: NodeRef<html::Div> = NodeRef::new();
+
+            #[cfg(target_arch = "wasm32")]
+            attach_click_listener(element_ref.clone(), on_click.clone());
+
             view! {
                 <div
+                    node_ref=element_ref
                     class=class_attr.clone()
                     attr:data-testid=move || data_testid.clone()
                     attr:data-cy=move || data_cy.clone()
-                    on:click=render_click(handler)
                 >
                     {content}
                 </div>
@@ -116,13 +160,17 @@ pub fn Delete(
         }
         // default "button"
         _ => {
-            let handler = on_click;
+            let element_ref: NodeRef<html::Button> = NodeRef::new();
+
+            #[cfg(target_arch = "wasm32")]
+            attach_click_listener(element_ref.clone(), on_click.clone());
+
             view! {
                 <button
+                    node_ref=element_ref
                     class=class_attr.clone()
                     attr:data-testid=move || data_testid.clone()
                     attr:data-cy=move || data_cy.clone()
-                    on:click=render_click(handler)
                 >
                     {content}
                 </button>
@@ -199,10 +247,7 @@ mod wasm_tests {
 
     #[wasm_bindgen_test]
     fn delete_no_test_attr_when_not_provided() {
-        let html = view! {
-            <Delete></Delete>
-        }
-        .to_html();
+        let html = view! { <Delete></Delete> }.to_html();
 
         assert!(
             !html.contains("data-testid") && !html.contains("data-cy"),
