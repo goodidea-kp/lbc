@@ -12,6 +12,11 @@ use crate::util::TestAttr;
 /// - `tag`: optional custom HTML tag name (defaults to "div")
 /// - `expanded`: when true, adds "is-expanded"
 /// - `children`: inner content (typically inputs/buttons)
+///
+/// NOTE (tachys 0.2.11):
+/// Some reactive attribute/property bindings can panic with "property removed early"
+/// during rebuilds. To avoid this, we compute attributes once using `get_untracked()`
+/// and render them as plain values.
 #[component]
 pub fn Control(
     /// Additional CSS classes to append to Bulma's "control".
@@ -36,30 +41,23 @@ pub fn Control(
     /// Child nodes rendered inside the control.
     children: Children,
 ) -> impl IntoView {
-    let class = {
-        let classes = classes.clone();
-        let expanded = expanded.clone();
-        move || {
-            let mut parts = vec!["control".to_string()];
+    let mut class_parts = vec!["control".to_string()];
 
-            let extra = classes.get();
-            if !extra.trim().is_empty() {
-                parts.push(extra);
-            }
+    let extra_classes = classes.get_untracked();
+    if !extra_classes.trim().is_empty() {
+        class_parts.push(extra_classes);
+    }
 
-            if expanded.get() {
-                parts.push("is-expanded".to_string());
-            }
+    if expanded.get_untracked() {
+        class_parts.push("is-expanded".to_string());
+    }
 
-            parts.join(" ")
-        }
-    };
+    let class = class_parts.join(" ");
 
-    let tag_name = move || {
-        tag.as_ref()
-            .map(|t| t.get())
-            .unwrap_or_else(|| "div".to_string())
-    };
+    let tag_name = tag
+        .as_ref()
+        .map(|tag| tag.get_untracked())
+        .unwrap_or_else(|| "div".to_string());
 
     let (data_testid, data_cy) = match &test_attr {
         Some(attr) if attr.key == "data-testid" => (Some(attr.value.clone()), None),
@@ -67,50 +65,47 @@ pub fn Control(
         _ => (None, None),
     };
 
-    {
-        let current = tag_name();
-        match current.as_str() {
-            "article" => view! {
-                <article
-                    class=class
-                    attr:data-testid=move || data_testid.clone()
-                    attr:data-cy=move || data_cy.clone()
-                >
-                    {children()}
-                </article>
-            }
-            .into_any(),
-            "label" => view! {
-                <label
-                    class=class
-                    attr:data-testid=move || data_testid.clone()
-                    attr:data-cy=move || data_cy.clone()
-                >
-                    {children()}
-                </label>
-            }
-            .into_any(),
-            "p" => view! {
-                <p
-                    class=class
-                    attr:data-testid=move || data_testid.clone()
-                    attr:data-cy=move || data_cy.clone()
-                >
-                    {children()}
-                </p>
-            }
-            .into_any(),
-            _ => view! {
-                <div
-                    class=class
-                    attr:data-testid=move || data_testid.clone()
-                    attr:data-cy=move || data_cy.clone()
-                >
-                    {children()}
-                </div>
-            }
-            .into_any(),
+    match tag_name.as_str() {
+        "article" => view! {
+            <article
+                class=class
+                attr:data-testid=data_testid
+                attr:data-cy=data_cy
+            >
+                {children()}
+            </article>
         }
+        .into_any(),
+        "label" => view! {
+            <label
+                class=class
+                attr:data-testid=data_testid
+                attr:data-cy=data_cy
+            >
+                {children()}
+            </label>
+        }
+        .into_any(),
+        "p" => view! {
+            <p
+                class=class
+                attr:data-testid=data_testid
+                attr:data-cy=data_cy
+            >
+                {children()}
+            </p>
+        }
+        .into_any(),
+        _ => view! {
+            <div
+                class=class
+                attr:data-testid=data_testid
+                attr:data-cy=data_cy
+            >
+                {children()}
+            </div>
+        }
+        .into_any(),
     }
 }
 
