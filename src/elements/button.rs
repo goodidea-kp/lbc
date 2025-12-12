@@ -1,7 +1,10 @@
 use leptos::children::Children;
 use leptos::ev::MouseEvent;
-use leptos::prelude::{ClassAttribute, CustomAttribute, ElementChild, Get, OnAttribute, Signal};
-use leptos::{IntoView, component, view};
+use leptos::html;
+use leptos::prelude::{
+    ClassAttribute, CustomAttribute, Effect, ElementChild, Get, IntoView, NodeRef, NodeRefAttribute,
+    Signal, component, view,
+};
 
 use crate::util::{Size, TestAttr};
 
@@ -96,17 +99,55 @@ pub fn Button(
         _ => (None, None),
     };
 
+    // Workaround for tachys 0.2.11 panic "callback removed before attaching":
+    // avoid `on:click` and attach the click listener manually on wasm32.
+    let button_ref: NodeRef<html::Button> = NodeRef::new();
+
+    #[cfg(target_arch = "wasm32")]
+    {
+        use leptos::wasm_bindgen::closure::Closure;
+        use leptos::wasm_bindgen::JsCast;
+        use leptos::web_sys::Event;
+
+        let button_ref_for_effect = button_ref.clone();
+        let on_click_for_effect = on_click_callback.clone();
+
+        Effect::new(move |_| {
+            let Some(button_element) = button_ref_for_effect.get() else {
+                return;
+            };
+
+            // If no callback was provided, don't attach a listener.
+            let Some(on_click_callback) = on_click_for_effect.clone() else {
+                return;
+            };
+
+            let click_closure: Closure<dyn FnMut(Event)> =
+                Closure::wrap(Box::new(move |event: Event| {
+                    // Convert the DOM event into Leptos' MouseEvent type.
+                    // If conversion fails, we just skip calling the callback.
+                    let Ok(mouse_event) = event.dyn_into::<MouseEvent>() else {
+                        return;
+                    };
+                    (on_click_callback)(mouse_event);
+                }));
+
+            button_element
+                .add_event_listener_with_callback("click", click_closure.as_ref().unchecked_ref())
+                .ok();
+
+            // Keep closure alive for the lifetime of the page/app.
+            click_closure.forget();
+        });
+    }
+
     view! {
         <button
+            node_ref=button_ref
             class=class
             disabled=move || disabled.get()
             attr:data-testid=move || data_testid.clone()
             attr:data-cy=move || data_cy.clone()
-            on:click=move |event| {
-                if let Some(cb) = on_click_callback.as_ref() {
-                    (cb)(event);
-                }
-            }
         >
             {children()}
         </button>
@@ -177,10 +218,7 @@ mod wasm_tests {
 
     #[wasm_bindgen_test]
     fn button_no_test_id_when_not_provided() {
-        let html = view! {
-            <Button>"Content"</Button>
-        }
-        .to_html();
+        let html = view! { <Button>"Content"</Button> }.to_html();
 
         assert!(
             !html.contains("data-testid") && !html.contains("data-cy"),
