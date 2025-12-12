@@ -87,19 +87,25 @@ pub fn Message(
                 return;
             };
 
+            // Clone the callback into the event handler so the Effect closure remains FnMut.
+            let on_close_for_click = on_close_for_effect.clone();
+            let closable_for_click = closable_for_effect.clone();
+            let is_closed_for_click = is_closed_for_effect.clone();
+            let set_is_closed_for_click = set_is_closed_for_effect.clone();
+
             let click_closure: Closure<dyn FnMut(Event)> =
                 Closure::wrap(Box::new(move |event: Event| {
                     event.prevent_default();
 
                     // If the close button isn't currently visible, ignore clicks.
-                    if !closable_for_effect.get_untracked() || is_closed_for_effect.get_untracked() {
+                    if !closable_for_click.get_untracked() || is_closed_for_click.get_untracked() {
                         return;
                     }
 
-                    if let Some(callback) = on_close_for_effect.as_ref() {
+                    if let Some(callback) = on_close_for_click.as_ref() {
                         callback();
                     } else {
-                        set_is_closed_for_effect.set(true);
+                        set_is_closed_for_click.set(true);
                     }
                 }));
 
