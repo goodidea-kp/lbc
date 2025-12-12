@@ -3,8 +3,8 @@ use std::rc::Rc;
 
 use leptos::html;
 use leptos::prelude::{
-    ClassAttribute, CustomAttribute, Effect, ElementChild, GetUntracked, IntoAny, IntoView, NodeRef,
-    NodeRefAttribute, Signal, component, view,
+    ClassAttribute, CustomAttribute, Effect, ElementChild, Get, GetUntracked, IntoAny, IntoView,
+    NodeRef, NodeRefAttribute, Signal, component, view,
 };
 
 #[cfg(target_arch = "wasm32")]
@@ -131,6 +131,7 @@ pub fn File(
     #[cfg(target_arch = "wasm32")]
     {
         use leptos::wasm_bindgen::closure::Closure;
+        use leptos::wasm_bindgen::JsCast;
         use leptos::web_sys::Event;
 
         let has_attached = Rc::new(Cell::new(false));
