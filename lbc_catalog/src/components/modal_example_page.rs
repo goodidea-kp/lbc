@@ -1,5 +1,3 @@
-use std::cell::Cell;
-use std::rc::Rc;
 use std::time::Duration;
 
 use lbc::prelude::{
@@ -7,10 +5,12 @@ use lbc::prelude::{
 };
 use leptos::context::provide_context;
 use leptos::html;
-use leptos::prelude::{
-    AddAnyAttr, ClassAttribute, Effect, ElementChild, Get, IntoAny, IntoView, NodeRef,
-    NodeRefAttribute, Set, component, set_timeout, signal, view,
-};
+use leptos::prelude::{Effect, IntoAny, IntoView, NodeRef, component, set_timeout, signal, view};
+
+#[cfg(target_arch = "wasm32")]
+use std::cell::Cell;
+#[cfg(target_arch = "wasm32")]
+use std::rc::Rc;
 
 #[component]
 pub fn ModalPage() -> impl IntoView {
@@ -184,3 +184,4 @@ pub fn ModalPage() -> impl IntoView {
             </Content>
         </Block>
     }
+}
