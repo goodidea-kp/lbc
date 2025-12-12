@@ -1,12 +1,16 @@
 use std::sync::Arc;
 
 use leptos::html;
+#[allow(unused_imports)]
 use leptos::prelude::Effect;
+#[allow(unused_imports)]
 use leptos::prelude::{
     Children, ClassAttribute, CustomAttribute, ElementChild, Get, GetUntracked, IntoView, NodeRef,
     NodeRefAttribute, Signal, component, view,
 };
+#[allow(unused_imports)]
 use std::cell::Cell;
+#[allow(unused_imports)]
 use std::rc::Rc;
 
 use crate::util::{Size, TestAttr};

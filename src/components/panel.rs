@@ -1,11 +1,13 @@
 use std::rc::Rc;
 
 use leptos::html;
+#[allow(unused_imports)]
 use leptos::prelude::Effect;
 use leptos::prelude::{
     Children, ClassAttribute, CustomAttribute, ElementChild, Get, IntoAny, IntoView, NodeRef,
     NodeRefAttribute, Signal, component, view,
 };
+#[allow(unused_imports)]
 use std::cell::Cell;
 
 use crate::util::TestAttr;
