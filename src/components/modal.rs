@@ -1,6 +1,10 @@
+use std::cell::Cell;
+use std::rc::Rc;
+
+use leptos::html;
 use leptos::prelude::{
-    AriaAttributes, Children, ClassAttribute, CustomAttribute, ElementChild, Get, GlobalAttributes,
-    IntoView, OnAttribute, Set, Signal, component, view,
+    AriaAttributes, Children, ClassAttribute, CustomAttribute, Effect, ElementChild, Get,
+    GlobalAttributes, IntoAny, IntoView, NodeRef, NodeRefAttribute, Set, Signal, component, view,
 };
 
 use crate::util::TestAttr;
@@ -36,6 +40,10 @@ fn base_class(extra: &str) -> String {
 /// - To close a modal via context, write "<id>-close" (e.g., "id1-close") into ModalCloserContext.
 ///
 /// https://bulma.io/documentation/components/modal/
+///
+/// NOTE (tachys 0.2.11):
+/// - Avoid `on:*` event bindings to prevent "callback removed before attaching" panics.
+///   We attach DOM listeners manually on wasm32.
 #[component]
 pub fn Modal(
     /// A unique ID for this modal used together with ModalCloserContext ("<id>-close").
@@ -63,24 +71,26 @@ pub fn Modal(
         "Modal id must match 'id[0-9]+' (e.g., id1, id99); got '{}'",
         id
     );
+
     let (is_active, set_is_active) = leptos::prelude::signal(false);
 
     // Optional closer context support
     let closer = leptos::prelude::use_context::<ModalCloserContext>();
 
     // Watch for external close requests
-    if let Some(closer_sig) = closer.clone() {
-        // clone the id so we don't move it into the effect closure
+    if let Some(closer_signal) = closer.clone() {
         let id_clone = id.clone();
-        leptos::prelude::Effect::new(move |_| {
-            let action = closer_sig.get();
-            if !action.is_empty() {
-                if let Some((target_id, op)) = action.split_once('-') {
-                    if target_id == id_clone && op == "close" {
-                        set_is_active.set(false);
-                        // reset context to avoid re-trigger
-                        closer_sig.set(String::new());
-                    }
+        Effect::new(move |_| {
+            let action = closer_signal.get();
+            if action.is_empty() {
+                return;
+            }
+
+            if let Some((target_id, op)) = action.split_once('-') {
+                if target_id == id_clone && op == "close" {
+                    set_is_active.set(false);
+                    // reset context to avoid re-trigger
+                    closer_signal.set(String::new());
                 }
             }
         });
@@ -97,29 +107,129 @@ pub fn Modal(
         }
     };
 
-    let open_click = move |_| set_is_active.set(true);
-    let close_click = move |_| set_is_active.set(false);
-
     let (data_testid, data_cy) = match &test_attr {
         Some(attr) if attr.key == "data-testid" => (Some(attr.value.clone()), None),
         Some(attr) if attr.key == "data-cy" => (None, Some(attr.value.clone())),
         _ => (None, None),
     };
 
+    // Workaround for tachys 0.2.11 panic "callback removed before attaching":
+    // avoid `on:click` and attach click listeners manually on wasm32.
+    let trigger_ref: NodeRef<html::Div> = NodeRef::new();
+    let background_ref: NodeRef<html::Div> = NodeRef::new();
+    let close_button_ref: NodeRef<html::Button> = NodeRef::new();
+
+    #[cfg(target_arch = "wasm32")]
+    {
+        use leptos::wasm_bindgen::closure::Closure;
+        use leptos::wasm_bindgen::JsCast;
+        use leptos::web_sys::Event;
+
+        let trigger_attached = Rc::new(Cell::new(false));
+        let background_attached = Rc::new(Cell::new(false));
+        let close_button_attached = Rc::new(Cell::new(false));
+
+        let trigger_ref_for_effect = trigger_ref.clone();
+        let background_ref_for_effect = background_ref.clone();
+        let close_button_ref_for_effect = close_button_ref.clone();
+
+        let set_is_active_for_effect = set_is_active.clone();
+        let is_active_for_effect = is_active.clone();
+
+        Effect::new(move |_| {
+            // Attach trigger click once.
+            if !trigger_attached.get() {
+                if let Some(trigger_element) = trigger_ref_for_effect.get() {
+                    let set_is_active_for_click = set_is_active_for_effect.clone();
+                    let click_closure: Closure<dyn FnMut(Event)> =
+                        Closure::wrap(Box::new(move |event: Event| {
+                            event.prevent_default();
+                            set_is_active_for_click.set(true);
+                        }));
+
+                    trigger_element
+                        .add_event_listener_with_callback(
+                            "click",
+                            click_closure.as_ref().unchecked_ref(),
+                        )
+                        .ok();
+
+                    trigger_attached.set(true);
+                    click_closure.forget();
+                }
+            }
+
+            // Attach background click once (closes modal).
+            if !background_attached.get() {
+                if let Some(background_element) = background_ref_for_effect.get() {
+                    let set_is_active_for_click = set_is_active_for_effect.clone();
+                    let click_closure: Closure<dyn FnMut(Event)> =
+                        Closure::wrap(Box::new(move |event: Event| {
+                            event.prevent_default();
+                            set_is_active_for_click.set(false);
+                        }));
+
+                    background_element
+                        .add_event_listener_with_callback(
+                            "click",
+                            click_closure.as_ref().unchecked_ref(),
+                        )
+                        .ok();
+
+                    background_attached.set(true);
+                    click_closure.forget();
+                }
+            }
+
+            // Attach close button click once (closes modal).
+            if !close_button_attached.get() {
+                if let Some(close_button_element) = close_button_ref_for_effect.get() {
+                    let set_is_active_for_click = set_is_active_for_effect.clone();
+                    let click_closure: Closure<dyn FnMut(Event)> =
+                        Closure::wrap(Box::new(move |event: Event| {
+                            event.prevent_default();
+                            set_is_active_for_click.set(false);
+                        }));
+
+                    close_button_element
+                        .add_event_listener_with_callback(
+                            "click",
+                            click_closure.as_ref().unchecked_ref(),
+                        )
+                        .ok();
+
+                    close_button_attached.set(true);
+                    click_closure.forget();
+                }
+            }
+
+            // Ensure the effect re-runs when active state changes (background/close button appear).
+            let _ = is_active_for_effect.get();
+        });
+    }
+
     view! {
         <>
-            <div on:click=open_click>{trigger()}</div>
+            <div node_ref=trigger_ref>{trigger()}</div>
+
             <div
                 id=id.clone()
                 class=move || class()
                 attr:data-testid=move || data_testid.clone()
                 attr:data-cy=move || data_cy.clone()
             >
-                <div class="modal-background" on:click=close_click></div>
+                <div node_ref=background_ref class="modal-background"></div>
+
                 <div class="modal-content">
                     {children()}
                 </div>
-                <button class="modal-close is-large" aria-label="close" on:click=close_click></button>
+
+                <button
+                    node_ref=close_button_ref
+                    class="modal-close is-large"
+                    aria-label="close"
+                    type="button"
+                ></button>
             </div>
         </>
     }
@@ -132,6 +242,10 @@ pub fn Modal(
 /// - To close a modal via context, write "<id>-close" (e.g., "id1-close") into ModalCloserContext.
 ///
 /// https://bulma.io/documentation/components/modal/
+///
+/// NOTE (tachys 0.2.11):
+/// - Avoid `on:*` event bindings to prevent "callback removed before attaching" panics.
+///   We attach DOM listeners manually on wasm32.
 #[component]
 pub fn ModalCard(
     /// A unique ID for this modal used together with ModalCloserContext ("<id>-close").
@@ -165,22 +279,24 @@ pub fn ModalCard(
         "Modal id must match 'id[0-9]+' (e.g., id1, id99); got '{}'",
         id
     );
+
     let (is_active, set_is_active) = leptos::prelude::signal(false);
 
     // Optional closer context support
     let closer = leptos::prelude::use_context::<ModalCloserContext>();
 
-    if let Some(closer_sig) = closer.clone() {
-        // clone the id so we don't move it into the effect closure
+    if let Some(closer_signal) = closer.clone() {
         let id_clone = id.clone();
-        leptos::prelude::Effect::new(move |_| {
-            let action = closer_sig.get();
-            if !action.is_empty() {
-                if let Some((target_id, op)) = action.split_once('-') {
-                    if target_id == id_clone && op == "close" {
-                        set_is_active.set(false);
-                        closer_sig.set(String::new());
-                    }
+        Effect::new(move |_| {
+            let action = closer_signal.get();
+            if action.is_empty() {
+                return;
+            }
+
+            if let Some((target_id, op)) = action.split_once('-') {
+                if target_id == id_clone && op == "close" {
+                    set_is_active.set(false);
+                    closer_signal.set(String::new());
                 }
             }
         });
@@ -197,38 +313,170 @@ pub fn ModalCard(
         }
     };
 
-    let open_click = move |_| set_is_active.set(true);
-    let close_click = move |_| set_is_active.set(false);
-
     let (data_testid, data_cy) = match &test_attr {
         Some(attr) if attr.key == "data-testid" => (Some(attr.value.clone()), None),
         Some(attr) if attr.key == "data-cy" => (None, Some(attr.value.clone())),
         _ => (None, None),
     };
 
+    // Workaround for tachys 0.2.11 panic "callback removed before attaching":
+    // avoid `on:click` and attach click listeners manually on wasm32.
+    let trigger_ref: NodeRef<html::Div> = NodeRef::new();
+    let background_ref: NodeRef<html::Div> = NodeRef::new();
+    let header_close_ref: NodeRef<html::Button> = NodeRef::new();
+    let corner_close_ref: NodeRef<html::Button> = NodeRef::new();
+
+    #[cfg(target_arch = "wasm32")]
+    {
+        use leptos::wasm_bindgen::closure::Closure;
+        use leptos::wasm_bindgen::JsCast;
+        use leptos::web_sys::Event;
+
+        let trigger_attached = Rc::new(Cell::new(false));
+        let background_attached = Rc::new(Cell::new(false));
+        let header_close_attached = Rc::new(Cell::new(false));
+        let corner_close_attached = Rc::new(Cell::new(false));
+
+        let trigger_ref_for_effect = trigger_ref.clone();
+        let background_ref_for_effect = background_ref.clone();
+        let header_close_ref_for_effect = header_close_ref.clone();
+        let corner_close_ref_for_effect = corner_close_ref.clone();
+
+        let set_is_active_for_effect = set_is_active.clone();
+        let is_active_for_effect = is_active.clone();
+
+        Effect::new(move |_| {
+            // Trigger click once.
+            if !trigger_attached.get() {
+                if let Some(trigger_element) = trigger_ref_for_effect.get() {
+                    let set_is_active_for_click = set_is_active_for_effect.clone();
+                    let click_closure: Closure<dyn FnMut(Event)> =
+                        Closure::wrap(Box::new(move |event: Event| {
+                            event.prevent_default();
+                            set_is_active_for_click.set(true);
+                        }));
+
+                    trigger_element
+                        .add_event_listener_with_callback(
+                            "click",
+                            click_closure.as_ref().unchecked_ref(),
+                        )
+                        .ok();
+
+                    trigger_attached.set(true);
+                    click_closure.forget();
+                }
+            }
+
+            // Background click once.
+            if !background_attached.get() {
+                if let Some(background_element) = background_ref_for_effect.get() {
+                    let set_is_active_for_click = set_is_active_for_effect.clone();
+                    let click_closure: Closure<dyn FnMut(Event)> =
+                        Closure::wrap(Box::new(move |event: Event| {
+                            event.prevent_default();
+                            set_is_active_for_click.set(false);
+                        }));
+
+                    background_element
+                        .add_event_listener_with_callback(
+                            "click",
+                            click_closure.as_ref().unchecked_ref(),
+                        )
+                        .ok();
+
+                    background_attached.set(true);
+                    click_closure.forget();
+                }
+            }
+
+            // Header close click once.
+            if !header_close_attached.get() {
+                if let Some(close_element) = header_close_ref_for_effect.get() {
+                    let set_is_active_for_click = set_is_active_for_effect.clone();
+                    let click_closure: Closure<dyn FnMut(Event)> =
+                        Closure::wrap(Box::new(move |event: Event| {
+                            event.prevent_default();
+                            set_is_active_for_click.set(false);
+                        }));
+
+                    close_element
+                        .add_event_listener_with_callback(
+                            "click",
+                            click_closure.as_ref().unchecked_ref(),
+                        )
+                        .ok();
+
+                    header_close_attached.set(true);
+                    click_closure.forget();
+                }
+            }
+
+            // Corner close click once.
+            if !corner_close_attached.get() {
+                if let Some(close_element) = corner_close_ref_for_effect.get() {
+                    let set_is_active_for_click = set_is_active_for_effect.clone();
+                    let click_closure: Closure<dyn FnMut(Event)> =
+                        Closure::wrap(Box::new(move |event: Event| {
+                            event.prevent_default();
+                            set_is_active_for_click.set(false);
+                        }));
+
+                    close_element
+                        .add_event_listener_with_callback(
+                            "click",
+                            click_closure.as_ref().unchecked_ref(),
+                        )
+                        .ok();
+
+                    corner_close_attached.set(true);
+                    click_closure.forget();
+                }
+            }
+
+            // Ensure the effect re-runs when active state changes (background/close buttons appear).
+            let _ = is_active_for_effect.get();
+        });
+    }
+
     view! {
         <>
-            <div on:click=open_click>{trigger()}</div>
+            <div node_ref=trigger_ref>{trigger()}</div>
+
             <div
                 id=id.clone()
                 class=move || class()
                 attr:data-testid=move || data_testid.clone()
                 attr:data-cy=move || data_cy.clone()
             >
-                <div class="modal-background" on:click=close_click></div>
+                <div node_ref=background_ref class="modal-background"></div>
+
                 <div class="modal-card">
                     <header class="modal-card-head">
                         <p class="modal-card-title">{title.clone()}</p>
-                        <button class="delete" aria-label="close" on:click=close_click></button>
+                        <button
+                            node_ref=header_close_ref
+                            class="delete"
+                            aria-label="close"
+                            type="button"
+                        ></button>
                     </header>
+
                     <section class="modal-card-body">
                         {body()}
                     </section>
+
                     <footer class="modal-card-foot">
                         {footer()}
                     </footer>
                 </div>
-                <button class="modal-close is-large" aria-label="close" on:click=close_click></button>
+
+                <button
+                    node_ref=corner_close_ref
+                    class="modal-close is-large"
+                    aria-label="close"
+                    type="button"
+                ></button>
             </div>
         </>
     }
