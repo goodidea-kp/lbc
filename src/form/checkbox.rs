@@ -116,7 +116,9 @@ pub fn Checkbox(
                     };
 
                     // Controlled component: compute next value from current signal.
-                    let next_value = !checked_for_effect.get();
+                    // Use `get_untracked()` to avoid reactive-graph warnings about reading
+                    // signals outside a tracking context.
+                    let next_value = !checked_for_effect.get_untracked();
                     (update_callback)(next_value);
                 }));
 
