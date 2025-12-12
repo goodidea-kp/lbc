@@ -12,11 +12,18 @@ Required static assets
 Notes
 - We attach the JS behavior on mount and detach on unmount.
 - SSR tests only verify the rendered HTML structure.
+
+tachys 0.2.11 notes
+- Avoid `on:*` event bindings to prevent "callback removed before attaching" panics.
+  We attach DOM listeners manually on wasm32.
 */
 
+use std::cell::Cell;
+use std::rc::Rc;
+
 use leptos::prelude::{
-    AriaAttributes, Children, ClassAttribute, CustomAttribute, ElementChild, Get, GlobalAttributes,
-    IntoView, OnAttribute, Signal, component, view,
+    AriaAttributes, Children, ClassAttribute, CustomAttribute, Effect, ElementChild, Get,
+    GlobalAttributes, IntoView, NodeRef, NodeRefAttribute, Signal, component, view,
 };
 
 #[cfg(target_arch = "wasm32")]
@@ -39,7 +46,7 @@ pub fn AccordionItem(
 
     /// Optional click handler invoked when header is clicked.
     #[prop(optional)]
-    on_toggle: Option<std::rc::Rc<dyn Fn()>>,
+    on_toggle: Option<Rc<dyn Fn()>>,
 
     /// Optional test attribute (renders as data-* attribute) on the root <article>.
     ///
@@ -62,20 +69,54 @@ pub fn AccordionItem(
         }
     };
 
-    let on_header_click = {
-        let on_toggle = on_toggle.clone();
-        move |_| {
-            if let Some(cb) = &on_toggle {
-                cb();
-            }
-        }
-    };
-
     let (data_testid, data_cy) = match &test_attr {
         Some(attr) if attr.key == "data-testid" => (Some(attr.value.clone()), None),
         Some(attr) if attr.key == "data-cy" => (None, Some(attr.value.clone())),
         _ => (None, None),
     };
+
+    // Workaround for tachys 0.2.11 panic "callback removed before attaching":
+    // avoid `on:click` and attach click listener manually on wasm32.
+    let toggle_button_ref: NodeRef<leptos::html::Button> = NodeRef::new();
+
+    #[cfg(target_arch = "wasm32")]
+    {
+        use leptos::wasm_bindgen::closure::Closure;
+        use leptos::wasm_bindgen::JsCast;
+        use leptos::web_sys::Event;
+
+        let has_attached = Rc::new(Cell::new(false));
+        let toggle_button_ref_for_effect = toggle_button_ref.clone();
+        let on_toggle_for_effect = on_toggle.clone();
+
+        Effect::new(move |_| {
+            if has_attached.get() {
+                return;
+            }
+
+            let Some(button_element) = toggle_button_ref_for_effect.get() else {
+                return;
+            };
+
+            let Some(on_toggle_callback) = on_toggle_for_effect.clone() else {
+                has_attached.set(true);
+                return;
+            };
+
+            let click_closure: Closure<dyn FnMut(Event)> =
+                Closure::wrap(Box::new(move |event: Event| {
+                    event.prevent_default();
+                    (on_toggle_callback)();
+                }));
+
+            button_element
+                .add_event_listener_with_callback("click", click_closure.as_ref().unchecked_ref())
+                .ok();
+
+            has_attached.set(true);
+            click_closure.forget();
+        });
+    }
 
     view! {
         <article
@@ -85,7 +126,12 @@ pub fn AccordionItem(
         >
             <div class="accordion-header">
                 <p>{title.get()}</p>
-                <button class="toggle" aria-label="toggle" on:click=on_header_click></button>
+                <button
+                    node_ref=toggle_button_ref
+                    class="toggle"
+                    aria-label="toggle"
+                    type="button"
+                ></button>
             </div>
             <div class="accordion-body">
                 <div class="accordion-content">
@@ -132,7 +178,7 @@ pub fn Accordions(
     #[cfg(target_arch = "wasm32")]
     {
         let id_for_js = id.clone();
-        leptos::prelude::Effect::new(move |_| {
+        Effect::new(move |_| {
             if let Some(element) = leptos::prelude::document().get_element_by_id(&id_for_js) {
                 setup_accordion(&element);
             }
