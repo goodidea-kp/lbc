@@ -1,15 +1,14 @@
 use leptos::html;
 use leptos::prelude::{
     ClassAttribute, CustomAttribute, Get, GetUntracked, IntoAny, IntoView, NodeRef,
-    NodeRefAttribute, OnAttribute, PropAttribute, Signal, component, event_target_value, view,
+    NodeRefAttribute, OnAttribute, Signal, component, event_target_value, view,
 };
-// use crate-level conditional logging macro
-// Bring conditional logging macro into scope
+
 use crate::lbc_log;
+use crate::util::{Size, TestAttr};
+
 use std::fmt;
 use std::rc::Rc;
-
-use crate::util::{Size, TestAttr};
 
 /// The 5 allowed types for an input component (Bulma-focused).
 /// https://bulma.io/documentation/form/input/
@@ -35,8 +34,8 @@ impl fmt::Display for InputType {
     }
 }
 
-fn size_class(sz: Size) -> &'static str {
-    match sz {
+fn size_class(size: Size) -> &'static str {
+    match size {
         Size::Small => "is-small",
         Size::Normal => "is-normal",
         Size::Medium => "is-medium",
@@ -122,8 +121,8 @@ pub fn Input(
             if !extra.trim().is_empty() {
                 parts.push(extra);
             }
-            if let Some(sz) = size {
-                parts.push(size_class(sz).to_string());
+            if let Some(size) = size {
+                parts.push(size_class(size).to_string());
             }
             if rounded.get() {
                 parts.push("is-rounded".to_string());
@@ -141,8 +140,8 @@ pub fn Input(
     // Text-like handler: forward the current target value to the parent via `update`
     let on_input_text = {
         let update = update.clone();
-        move |ev| {
-            let new_value = event_target_value(&ev);
+        move |event| {
+            let new_value = event_target_value(&event);
             lbc_log!(
                 "<Input> on:input (text) name='{}' -> '{}'",
                 name.get_untracked(),
@@ -156,15 +155,13 @@ pub fn Input(
     let on_input_number = {
         let update = update.clone();
         let input_ref = input_ref.clone();
-        move |ev| {
-            let new_value = event_target_value(&ev);
+        move |event| {
+            let new_value = event_target_value(&event);
             if let Some(input) = input_ref.get() {
                 input.set_custom_validity("");
                 let is_valid = input.check_validity();
                 if !new_value.trim().is_empty() && !is_valid {
-                    input.set_custom_validity(
-                        "Please enter a number with up to two decimal places.",
-                    );
+                    input.set_custom_validity("Please enter a number with up to two decimal places.");
                 }
                 lbc_log!(
                     "<Input> on:input (number) name='{}' -> '{}' | valid={}",
@@ -184,9 +181,7 @@ pub fn Input(
                 if input.value().is_empty() {
                     input.set_custom_validity("");
                 } else {
-                    input.set_custom_validity(
-                        "Please enter a number with up to two decimal places.",
-                    );
+                    input.set_custom_validity("Please enter a number with up to two decimal places.");
                 }
                 lbc_log!(
                     "<Input> on:invalid name='{}' current='{}'",
@@ -213,22 +208,18 @@ pub fn Input(
         value.get_untracked()
     );
 
+    // NOTE:
+    // We intentionally bind `value` as an attribute (not `prop:value`) to avoid
+    // tachys "property removed early" panics introduced/triggered by newer versions.
+    // This still behaves as a controlled input because we always re-render with the
+    // latest `value` and propagate edits via `on:input`.
     view! {
         {
             if matches!(input_type, InputType::Number) {
                 view! {
                     <input
                         name=name.get_untracked()
-                        // Use reactive property binding so changes from parent update the input
-                        prop:value=move || {
-                            let v = value.get();
-                            lbc_log!(
-                                "<Input> prop:value update (number) name='{}' -> '{}'",
-                                name.get_untracked(),
-                                v
-                            );
-                            v
-                        }
+                        value=move || value.get()
                         class=move || class()
                         type=input_type.to_string()
                         node_ref=input_ref
@@ -242,21 +233,13 @@ pub fn Input(
                         attr:data-testid=move || data_testid.clone()
                         attr:data-cy=move || data_cy.clone()
                     />
-                }.into_any()
+                }
+                .into_any()
             } else {
                 view! {
                     <input
                         name=name.get_untracked()
-                        // Use reactive property binding so changes from parent update the input
-                        prop:value=move || {
-                            let v = value.get();
-                            lbc_log!(
-                                "<Input> prop:value update (text) name='{}' -> '{}'",
-                                name.get_untracked(),
-                                v
-                            );
-                            v
-                        }
+                        value=move || value.get()
                         on:input=on_input_text
                         class=move || class()
                         type=input_type.to_string()
@@ -266,7 +249,8 @@ pub fn Input(
                         attr:data-testid=move || data_testid.clone()
                         attr:data-cy=move || data_cy.clone()
                     />
-                }.into_any()
+                }
+                .into_any()
             }
         }
     }
@@ -372,7 +356,7 @@ mod tests {
 #[cfg(all(test, target_arch = "wasm32"))]
 mod wasm_tests {
     use super::*;
-    use crate::util::{Size, TestAttr};
+    use crate::util::TestAttr;
     use leptos::prelude::*;
     use std::rc::Rc;
     use wasm_bindgen_test::*;
@@ -399,10 +383,7 @@ mod wasm_tests {
 
     #[wasm_bindgen_test]
     fn input_no_test_attr_when_not_provided() {
-        let html = view! {
-            <Input name="username" value="" update=noop() />
-        }
-        .to_html();
+        let html = view! { <Input name="username" value="" update=noop() /> }.to_html();
 
         assert!(
             !html.contains("data-testid") && !html.contains("data-cy"),
