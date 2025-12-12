@@ -7,9 +7,24 @@ use leptos::prelude::{
 use lbc::util::TestAttr;
 use std::sync::Arc;
 
+#[cfg(target_arch = "wasm32")]
+fn console_log(message: &str) {
+    use leptos::wasm_bindgen::JsValue;
+    use leptos::web_sys::console;
+
+    console::log_1(&JsValue::from_str(message));
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+fn console_log(message: &str) {
+    println!("{message}");
+}
+
 /// Example page showcasing the Input form component.
 #[component]
 pub fn FormInputPage() -> impl IntoView {
+    console_log("[FormInputPage] render start");
+
     let (text_value, set_text_value) = signal(String::new());
     let (number_value, set_number_value) = signal("0".to_string());
 
@@ -37,6 +52,7 @@ pub fn FormInputPage() -> impl IntoView {
                             value=text_value
                             placeholder="Your name"
                             update=Arc::new(move |value| {
+                                console_log(&format!("[FormInputPage] update(name) -> '{value}'"));
                                 lbc::lbc_log!("[Page] update(name) -> '{}'", value);
                                 set_text_value.set(value);
                             })
@@ -46,8 +62,10 @@ pub fn FormInputPage() -> impl IntoView {
                         <Button
                             size=Size::Small
                             on:click=move |_| {
+                                console_log("[FormInputPage] Clear button on:click handler invoked (start)");
                                 lbc::lbc_log!("[Page] Clear clicked for name");
-                                set_text_value.set(String::new())
+                                set_text_value.set(String::new());
+                                console_log("[FormInputPage] Clear button on:click handler invoked (end)");
                             }
                         >
                             "Clear"
@@ -65,6 +83,7 @@ pub fn FormInputPage() -> impl IntoView {
                             placeholder="Small"
                             size=Size::Small
                             update=Arc::new(move |value| {
+                                console_log(&format!("[FormInputPage] update(small) -> '{value}'"));
                                 lbc::lbc_log!("[Page] update(small) -> '{}'", value);
                                 set_small_value.set(value);
                             })
@@ -78,6 +97,7 @@ pub fn FormInputPage() -> impl IntoView {
                             placeholder="Normal"
                             size=Size::Normal
                             update=Arc::new(move |value| {
+                                console_log(&format!("[FormInputPage] update(normal) -> '{value}'"));
                                 lbc::lbc_log!("[Page] update(normal) -> '{}'", value);
                                 set_normal_value.set(value);
                             })
@@ -91,6 +111,7 @@ pub fn FormInputPage() -> impl IntoView {
                             placeholder="Medium"
                             size=Size::Medium
                             update=Arc::new(move |value| {
+                                console_log(&format!("[FormInputPage] update(medium) -> '{value}'"));
                                 lbc::lbc_log!("[Page] update(medium) -> '{}'", value);
                                 set_medium_value.set(value);
                             })
@@ -104,6 +125,7 @@ pub fn FormInputPage() -> impl IntoView {
                             placeholder="Large"
                             size=Size::Large
                             update=Arc::new(move |value| {
+                                console_log(&format!("[FormInputPage] update(large) -> '{value}'"));
                                 lbc::lbc_log!("[Page] update(large) -> '{}'", value);
                                 set_large_value.set(value);
                             })
@@ -117,6 +139,7 @@ pub fn FormInputPage() -> impl IntoView {
                             placeholder="Rounded"
                             rounded=true
                             update=Arc::new(move |value| {
+                                console_log(&format!("[FormInputPage] update(rounded) -> '{value}'"));
                                 lbc::lbc_log!("[Page] update(rounded) -> '{}'", value);
                                 set_rounded_value.set(value);
                             })
@@ -129,6 +152,7 @@ pub fn FormInputPage() -> impl IntoView {
                             value=readonly_value
                             readonly=true
                             update=Arc::new(move |value| {
+                                console_log(&format!("[FormInputPage] update(readonly) -> '{value}'"));
                                 lbc::lbc_log!("[Page] update(readonly) -> '{}'", value);
                                 set_readonly_value.set(value);
                             })
@@ -141,6 +165,7 @@ pub fn FormInputPage() -> impl IntoView {
                             value=disabled_value
                             disabled=true
                             update=Arc::new(move |value| {
+                                console_log(&format!("[FormInputPage] update(disabled) -> '{value}'"));
                                 lbc::lbc_log!("[Page] update(disabled) -> '{}'", value);
                                 set_disabled_value.set(value);
                             })
@@ -153,6 +178,7 @@ pub fn FormInputPage() -> impl IntoView {
                             value=static_value
                             r#static=true
                             update=Arc::new(move |value| {
+                                console_log(&format!("[FormInputPage] update(static) -> '{value}'"));
                                 lbc::lbc_log!("[Page] update(static) -> '{}'", value);
                                 set_static_value.set(value);
                             })
@@ -171,6 +197,7 @@ pub fn FormInputPage() -> impl IntoView {
                             step=1.0
                             placeholder="123.45"
                             update=Arc::new(move |value| {
+                                console_log(&format!("[FormInputPage] update(amount) -> '{value}'"));
                                 lbc::lbc_log!("[Page] update(amount) -> '{}'", value);
                                 set_number_value.set(value);
                             })
