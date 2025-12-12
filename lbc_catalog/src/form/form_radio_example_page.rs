@@ -16,8 +16,10 @@ pub fn FormRadioPage() -> impl IntoView {
     let update_c = update.clone();
 
     // Snapshot the current selected value without tracking to avoid reactive_graph warnings.
-    // Use Arc (not Rc) because some view children closures require Send.
-    let selected_value = Arc::new(selected.get_untracked());
+    // Use separate owned Strings to avoid `view!` moving a shared handle into closures.
+    let checked_value_a = selected.get_untracked();
+    let checked_value_b = selected.get_untracked();
+    let checked_value_c = selected.get_untracked();
 
     view! {
         <Block>
@@ -31,7 +33,7 @@ pub fn FormRadioPage() -> impl IntoView {
                         <Radio
                             name="group1"
                             value="a"
-                            checked_value=(*selected_value).clone()
+                            checked_value=checked_value_a
                             update=update_a
                         >
                             "Choice A"
@@ -41,7 +43,7 @@ pub fn FormRadioPage() -> impl IntoView {
                         <Radio
                             name="group1"
                             value="b"
-                            checked_value=(*selected_value).clone()
+                            checked_value=checked_value_b
                             update=update_b
                         >
                             "Choice B"
@@ -51,7 +53,7 @@ pub fn FormRadioPage() -> impl IntoView {
                         <Radio
                             name="group1"
                             value="c"
-                            checked_value=(*selected_value).clone()
+                            checked_value=checked_value_c
                             update=update_c
                         >
                             "Choice C"
