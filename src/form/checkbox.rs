@@ -16,7 +16,7 @@ use crate::util::TestAttr;
 /// - `update` is an optional callback invoked with the next value when the user clicks.
 ///
 /// NOTE (tachys 0.2.11):
-/// - Avoid `prop:checked` to prevent "property removed early" panics.
+/// - Avoid reactive property bindings for `checked` to prevent "property removed early" panics.
 /// - Avoid `on:*` event bindings to prevent "callback removed before attaching" panics.
 ///   We attach the click listener manually on wasm32.
 #[component]
@@ -67,6 +67,13 @@ pub fn Checkbox(
         Some(attr) if attr.key == "data-cy" => (None, Some(attr.value.clone())),
         _ => (None, None),
     };
+
+    // IMPORTANT:
+    // Do not bind `checked` reactively (even via `checked=move || checked.get()`), because
+    // tachys may treat it as a property binding and panic "property removed early".
+    // We set the initial checked state non-reactively and rely on the parent to re-render
+    // the component when `checked` changes.
+    let initial_checked = checked.get_untracked();
 
     // Workaround for tachys 0.2.11:
     // - avoid `on:click`
@@ -132,9 +139,8 @@ pub fn Checkbox(
                 node_ref=input_ref
                 type="checkbox"
                 name=name.clone()
-                // Avoid `prop:checked` to prevent tachys "property removed early" panic.
-                checked=move || checked.get()
-                disabled=disabled
+                checked=initial_checked
+                disabled=disabled.get_untracked()
             />
             {children()}
         </label>
