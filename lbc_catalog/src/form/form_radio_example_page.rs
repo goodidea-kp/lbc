@@ -1,5 +1,5 @@
 use lbc::prelude::{Block, Content, Control, Field, HeaderSize, Radio, Subtitle, Title};
-use leptos::prelude::{ClassAttribute, ElementChild, Get, IntoView, Set, component, signal, view};
+use leptos::prelude::{ClassAttribute, ElementChild, Get, GetUntracked, IntoView, Set, component, signal, view};
 use std::sync::Arc;
 
 /// Example page showcasing the Radio form component.
@@ -13,6 +13,9 @@ pub fn FormRadioPage() -> impl IntoView {
     let update_b = update.clone();
     let update_c = update.clone();
 
+    // Snapshot the current selected value without tracking to avoid reactive_graph warnings.
+    let selected_value = selected.get_untracked();
+
     view! {
         <Block>
             <Title size=HeaderSize::Is5>"Form: Radio"</Title>
@@ -22,17 +25,17 @@ pub fn FormRadioPage() -> impl IntoView {
 
                 <Field>
                     <Control>
-                        <Radio name="group1" value="a" checked_value=selected.get() update=update_a>
+                        <Radio name="group1" value="a" checked_value=selected_value.clone() update=update_a>
                             "Choice A"
                         </Radio>
                     </Control>
                     <Control>
-                        <Radio name="group1" value="b" checked_value=selected.get() update=update_b>
+                        <Radio name="group1" value="b" checked_value=selected_value.clone() update=update_b>
                             "Choice B"
                         </Radio>
                     </Control>
                     <Control>
-                        <Radio name="group1" value="c" checked_value=selected.get() update=update_c>
+                        <Radio name="group1" value="c" checked_value=selected_value.clone() update=update_c>
                             "Choice C"
                         </Radio>
                     </Control>
