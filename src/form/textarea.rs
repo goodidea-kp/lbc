@@ -6,11 +6,14 @@ use leptos::prelude::{
     IntoView, NodeRef, NodeRefAttribute, Signal, StyleAttribute, component, view,
 };
 
-use std::cell::Cell;
-use leptos::prelude::Effect;
-use std::rc::Rc;
 use crate::elements::icon::Icon;
 use crate::util::{Size, TestAttr};
+#[allow(unused_imports)]
+use leptos::prelude::Effect;
+#[allow(unused_imports)]
+use std::cell::Cell;
+#[allow(unused_imports)]
+use std::rc::Rc;
 
 fn size_class(size: Size) -> &'static str {
     match size {

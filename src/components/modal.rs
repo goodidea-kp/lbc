@@ -1,10 +1,12 @@
 use leptos::html;
-use std::cell::Cell;
-use std::rc::Rc;
 use leptos::prelude::{
     AriaAttributes, Children, ClassAttribute, CustomAttribute, Effect, ElementChild, Get,
     GlobalAttributes, IntoView, NodeRef, NodeRefAttribute, Set, Signal, component, view,
 };
+#[allow(unused_imports)]
+use std::cell::Cell;
+#[allow(unused_imports)]
+use std::rc::Rc;
 
 use crate::util::TestAttr;
 

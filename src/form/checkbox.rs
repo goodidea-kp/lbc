@@ -1,10 +1,12 @@
 use std::sync::Arc;
 
+use crate::util::TestAttr;
 use leptos::html;
 use leptos::prelude::*;
+#[allow(unused_imports)]
 use std::cell::Cell;
+#[allow(unused_imports)]
 use std::rc::Rc;
-use crate::util::TestAttr;
 
 /// The 2-state checkbox in its native Bulma format.
 ///
