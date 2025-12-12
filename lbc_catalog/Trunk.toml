@@ -1,0 +1,5 @@
+[build]
+# Make the output directory explicit to avoid staging path issues.
+dist = "dist"
+target = "wasm32-unknown-unknown"
+public_url = "/"
