@@ -5,7 +5,10 @@ use lbc::prelude::{
 };
 use leptos::context::provide_context;
 use leptos::html;
-use leptos::prelude::{Effect, IntoAny, IntoView, NodeRef, component, set_timeout, signal, view};
+use leptos::prelude::{
+    ClassAttribute, Effect, ElementChild, Get, IntoAny, IntoView, NodeRef, Set, component,
+    set_timeout, signal, view,
+};
 
 #[cfg(target_arch = "wasm32")]
 use std::cell::Cell;
