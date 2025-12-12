@@ -61,6 +61,7 @@ pub fn DeletePage() -> impl IntoView {
     #[cfg(target_arch = "wasm32")]
     {
         use leptos::wasm_bindgen::closure::Closure;
+        use leptos::wasm_bindgen::JsCast;
         use leptos::web_sys::Event;
 
         // Continue button
@@ -73,11 +74,12 @@ pub fn DeletePage() -> impl IntoView {
                 return;
             };
 
-            let click_closure: Closure<dyn FnMut(Event)> = Closure::wrap(Box::new(move |_event: Event| {
-                console_log("[DeletePage] Continue clicked");
-                set_user_choice_for_effect.set(Some(true));
-                set_is_confirming_for_effect.set(false);
-            }));
+            let click_closure: Closure<dyn FnMut(Event)> =
+                Closure::wrap(Box::new(move |_event: Event| {
+                    console_log("[DeletePage] Continue clicked");
+                    set_user_choice_for_effect.set(Some(true));
+                    set_is_confirming_for_effect.set(false);
+                }));
 
             button_element
                 .add_event_listener_with_callback("click", click_closure.as_ref().unchecked_ref())
@@ -96,11 +98,12 @@ pub fn DeletePage() -> impl IntoView {
                 return;
             };
 
-            let click_closure: Closure<dyn FnMut(Event)> = Closure::wrap(Box::new(move |_event: Event| {
-                console_log("[DeletePage] Cancel clicked");
-                set_user_choice_for_effect.set(Some(false));
-                set_is_confirming_for_effect.set(false);
-            }));
+            let click_closure: Closure<dyn FnMut(Event)> =
+                Closure::wrap(Box::new(move |_event: Event| {
+                    console_log("[DeletePage] Cancel clicked");
+                    set_user_choice_for_effect.set(Some(false));
+                    set_is_confirming_for_effect.set(false);
+                }));
 
             button_element
                 .add_event_listener_with_callback("click", click_closure.as_ref().unchecked_ref())
