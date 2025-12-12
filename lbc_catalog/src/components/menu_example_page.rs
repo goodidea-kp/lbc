@@ -4,8 +4,8 @@ use std::rc::Rc;
 use lbc::prelude::{Block, Content, HeaderSize, Menu, MenuLabel, MenuList, Title};
 use leptos::html;
 use leptos::prelude::{
-    ClassAttribute, Effect, ElementChild, Get, IntoAny, IntoView, NodeRef, NodeRefAttribute, Set,
-    component, signal, view,
+    ClassAttribute, Effect, ElementChild, Get, GetUntracked, IntoAny, IntoView, NodeRef,
+    NodeRefAttribute, Set, component, signal, view,
 };
 
 #[component]
