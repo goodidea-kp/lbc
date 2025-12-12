@@ -1,7 +1,16 @@
 use leptos::children::Children;
 use leptos::ev::MouseEvent;
-use leptos::prelude::{ClassAttribute, CustomAttribute, ElementChild, Get, OnAttribute, Signal};
-use leptos::{IntoView, component, view};
+use leptos::html;
+#[allow(unused_imports)]
+use leptos::prelude::Effect;
+use leptos::prelude::{
+    ClassAttribute, CustomAttribute, ElementChild, Get, GetUntracked, IntoView, NodeRef,
+    NodeRefAttribute, Signal, component, view,
+};
+#[allow(unused_imports)]
+use std::cell::Cell;
+#[allow(unused_imports)]
+use std::rc::Rc;
 
 use crate::util::{Size, TestAttr};
 
@@ -56,39 +65,40 @@ pub fn Button(
     test_attr: Option<TestAttr>,
     children: Children,
 ) -> impl IntoView {
-    let on_click_callback = on_click.clone();
+    // Compute attributes once to avoid tachys reactive property/event handle lifetimes.
+    let mut class_parts: Vec<&str> = vec!["button"];
 
-    let class = move || {
-        let mut class_parts: Vec<&str> = vec!["button"];
-        if let Some(color_value) = color {
-            class_parts.push(color_value.bulma());
+    if let Some(color_value) = color {
+        class_parts.push(color_value.bulma());
+    }
+    if let Some(size_value) = size {
+        let size_class = size_value.bulma();
+        if !size_class.is_empty() {
+            class_parts.push(size_class);
         }
-        if let Some(size_value) = size {
-            let size_class = size_value.bulma();
-            if !size_class.is_empty() {
-                class_parts.push(size_class);
-            }
+    }
+    if outlined {
+        class_parts.push("is-outlined");
+    }
+    if inverted {
+        class_parts.push("is-inverted");
+    }
+    if light {
+        class_parts.push("is-light");
+    }
+    if loading.get_untracked() {
+        class_parts.push("is-loading");
+    }
+
+    let mut class = class_parts.join(" ");
+    if let Some(class_signal) = &classes {
+        let extra_classes = class_signal.get_untracked();
+        if !extra_classes.trim().is_empty() {
+            class = format!("{class} {extra_classes}");
         }
-        if outlined {
-            class_parts.push("is-outlined");
-        }
-        if inverted {
-            class_parts.push("is-inverted");
-        }
-        if light {
-            class_parts.push("is-light");
-        }
-        if loading.get() {
-            class_parts.push("is-loading");
-        }
-        if let Some(class_signal) = &classes {
-            let extra_classes = class_signal.get();
-            if !extra_classes.is_empty() {
-                return format!("{} {}", class_parts.join(" "), extra_classes);
-            }
-        }
-        class_parts.join(" ")
-    };
+    }
+
+    let is_disabled = disabled.get_untracked();
 
     let (data_testid, data_cy) = match &test_attr {
         Some(attr) if attr.key == "data-testid" => (Some(attr.value.clone()), None),
@@ -96,17 +106,63 @@ pub fn Button(
         _ => (None, None),
     };
 
+    // Workaround for tachys 0.2.11 panic "callback removed before attaching":
+    // avoid `on:click` and attach the click listener manually on wasm32.
+    let button_ref: NodeRef<html::Button> = NodeRef::new();
+
+    #[cfg(target_arch = "wasm32")]
+    {
+        use leptos::wasm_bindgen::JsCast;
+        use leptos::wasm_bindgen::closure::Closure;
+        use leptos::web_sys::Event;
+
+        let has_attached = Rc::new(Cell::new(false));
+        let button_ref_for_effect = button_ref.clone();
+        let on_click_for_effect = on_click.clone();
+
+        Effect::new(move |_| {
+            if has_attached.get() {
+                return;
+            }
+
+            let Some(button_element) = button_ref_for_effect.get() else {
+                return;
+            };
+
+            // If no callback was provided, don't attach a listener.
+            let Some(on_click_callback) = on_click_for_effect.clone() else {
+                has_attached.set(true);
+                return;
+            };
+
+            let click_closure: Closure<dyn FnMut(Event)> =
+                Closure::wrap(Box::new(move |event: Event| {
+                    // Convert the DOM event into Leptos' MouseEvent type.
+                    // If conversion fails, we just skip calling the callback.
+                    let Ok(mouse_event) = event.dyn_into::<MouseEvent>() else {
+                        return;
+                    };
+                    (on_click_callback)(mouse_event);
+                }));
+
+            button_element
+                .add_event_listener_with_callback("click", click_closure.as_ref().unchecked_ref())
+                .ok();
+
+            has_attached.set(true);
+
+            // Keep closure alive for the lifetime of the page/app.
+            click_closure.forget();
+        });
+    }
+
     view! {
         <button
+            node_ref=button_ref
             class=class
-            disabled=move || disabled.get()
-            attr:data-testid=move || data_testid.clone()
-            attr:data-cy=move || data_cy.clone()
-            on:click=move |event| {
-                if let Some(cb) = on_click_callback.as_ref() {
-                    (cb)(event);
-                }
-            }
+            disabled=is_disabled
+            attr:data-testid=data_testid
+            attr:data-cy=data_cy
         >
             {children()}
         </button>
@@ -177,10 +233,7 @@ mod wasm_tests {
 
     #[wasm_bindgen_test]
     fn button_no_test_id_when_not_provided() {
-        let html = view! {
-            <Button>"Content"</Button>
-        }
-        .to_html();
+        let html = view! { <Button>"Content"</Button> }.to_html();
 
         assert!(
             !html.contains("data-testid") && !html.contains("data-cy"),

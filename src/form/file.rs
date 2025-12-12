@@ -1,7 +1,14 @@
+use leptos::html;
+#[allow(unused_imports)]
+use leptos::prelude::Effect;
 use leptos::prelude::{
-    ClassAttribute, CustomAttribute, ElementChild, Get, IntoAny, IntoView, OnAttribute, Signal,
-    component, view,
+    ClassAttribute, CustomAttribute, ElementChild, Get, GetUntracked, IntoAny, IntoView, NodeRef,
+    NodeRefAttribute, Signal, component, view,
 };
+#[allow(unused_imports)]
+use std::cell::Cell;
+#[allow(unused_imports)]
+use std::rc::Rc;
 
 #[cfg(target_arch = "wasm32")]
 type LbcSysFile = ();
@@ -17,6 +24,13 @@ use crate::util::{Size, TestAttr};
 /// Controlled component:
 /// - `files` is the current value (supports static Vec<File> or reactive signal).
 /// - `update` is a required callback invoked with the selected files on change.
+///
+/// NOTE (tachys 0.2.11):
+/// - Avoid `on:*` event bindings to prevent "callback removed before attaching" panics.
+///   We attach the change listener manually on wasm32.
+/// - Avoid reactive attribute/property bindings (class/attrs/multiple/labels) which can
+///   also trigger tachys lifecycle panics. We compute these once using `get_untracked()`.
+/// - We keep the component compiling on non-wasm targets by using a placeholder file type.
 #[component]
 pub fn File(
     /// The `name` attribute for this form element.
@@ -71,77 +85,41 @@ pub fn File(
     #[prop(optional, into)]
     test_attr: Option<TestAttr>,
 ) -> impl IntoView {
-    let has_name_for_class = has_name.clone();
-    let class = move || {
-        let mut parts = vec!["file".to_string()];
+    // Compute attributes once to avoid tachys reactive property/event handle lifetimes.
+    let mut class_parts = vec!["file".to_string()];
 
-        let extra = classes.get();
-        if !extra.trim().is_empty() {
-            parts.push(extra);
-        }
-        if has_name_for_class.is_some() {
-            parts.push("has-name".to_string());
-        }
-        if right.get() {
-            parts.push("is-right".to_string());
-        }
-        if fullwidth.get() {
-            parts.push("is-fullwidth".to_string());
-        }
-        if boxed.get() {
-            parts.push("is-boxed".to_string());
-        }
-        if let Some(size) = size {
-            match size {
-                Size::Small => parts.push("is-small".to_string()),
-                Size::Normal => {}
-                Size::Medium => parts.push("is-medium".to_string()),
-                Size::Large => parts.push("is-large".to_string()),
-            }
-        }
+    let extra_classes = classes.get_untracked();
+    if !extra_classes.trim().is_empty() {
+        class_parts.push(extra_classes);
+    }
 
-        parts.join(" ")
-    };
+    let has_name_text = has_name.as_ref().map(|signal| signal.get_untracked());
+    if has_name_text.is_some() {
+        class_parts.push("has-name".to_string());
+    }
 
-    let filenames_view = {
-        #[cfg(target_arch = "wasm32")]
-        {
-            let has_name = has_name.clone();
-            move || {
-                if let Some(placeholder_signal) = has_name.as_ref() {
-                    let placeholder = placeholder_signal.get();
-                    view! { <span class="file-name">{placeholder}</span> }.into_any()
-                } else {
-                    view! { <></> }.into_any()
-                }
-            }
-        }
-        #[cfg(not(target_arch = "wasm32"))]
-        {
-            let has_name = has_name.clone();
-            move || {
-                // In non-wasm targets we can't inspect File objects; only render placeholder if provided.
-                if let Some(placeholder_signal) = has_name.as_ref() {
-                    let placeholder = placeholder_signal.get();
-                    view! { <span class="file-name">{placeholder}</span> }.into_any()
-                } else {
-                    view! { <></> }.into_any()
-                }
-            }
-        }
-    };
+    if right.get_untracked() {
+        class_parts.push("is-right".to_string());
+    }
+    if fullwidth.get_untracked() {
+        class_parts.push("is-fullwidth".to_string());
+    }
+    if boxed.get_untracked() {
+        class_parts.push("is-boxed".to_string());
+    }
 
-    let icon_view = || view! { <span class="file-icon"></span> }.into_any();
-
-    #[cfg(target_arch = "wasm32")]
-    let on_change = {
-        move |_ev: leptos::ev::Event| {
-            // File APIs are not available via leptos::web_sys re-export in this build.
-            // No-op placeholder to keep the component compiling under wasm32 without extra deps.
+    if let Some(size) = size {
+        match size {
+            Size::Small => class_parts.push("is-small".to_string()),
+            Size::Normal => {}
+            Size::Medium => class_parts.push("is-medium".to_string()),
+            Size::Large => class_parts.push("is-large".to_string()),
         }
-    };
-    #[cfg(not(target_arch = "wasm32"))]
-    let on_change = |_ev: leptos::ev::Event| { /* no-op on non-wasm targets */ };
+    }
+
+    let class = class_parts.join(" ");
+    let selector_label_text = selector_label.get_untracked();
+    let is_multiple = multiple.get_untracked();
 
     let (data_testid, data_cy) = match &test_attr {
         Some(attr) if attr.key == "data-testid" => (Some(attr.value.clone()), None),
@@ -149,27 +127,76 @@ pub fn File(
         _ => (None, None),
     };
 
+    // Workaround for tachys 0.2.11 panic "callback removed before attaching":
+    // avoid `on:change` and attach the change listener manually on wasm32.
+    let input_ref: NodeRef<html::Input> = NodeRef::new();
+
+    #[cfg(target_arch = "wasm32")]
+    {
+        use leptos::wasm_bindgen::JsCast;
+        use leptos::wasm_bindgen::closure::Closure;
+        use leptos::web_sys::Event;
+
+        let has_attached = Rc::new(Cell::new(false));
+        let input_ref_for_effect = input_ref.clone();
+        let update_for_effect = _update.clone();
+
+        Effect::new(move |_| {
+            if has_attached.get() {
+                return;
+            }
+
+            let Some(input_element) = input_ref_for_effect.get() else {
+                return;
+            };
+
+            // Clone inside the effect so the effect closure remains `FnMut` (not `FnOnce`).
+            let update_for_change = update_for_effect.clone();
+
+            let change_closure: Closure<dyn FnMut(Event)> =
+                Closure::wrap(Box::new(move |_event: Event| {
+                    // Placeholder behavior: we don't currently extract real File objects.
+                    // We still call update with an empty list to keep the controlled contract.
+                    (update_for_change)(Vec::<LbcSysFile>::new());
+                }));
+
+            input_element
+                .add_event_listener_with_callback("change", change_closure.as_ref().unchecked_ref())
+                .ok();
+
+            has_attached.set(true);
+            change_closure.forget();
+        });
+    }
+
     view! {
         <div
             class=class
-            attr:data-testid=move || data_testid.clone()
-            attr:data-cy=move || data_cy.clone()
+            attr:data-testid=data_testid
+            attr:data-cy=data_cy
         >
             <label class="file-label">
                 <input
+                    node_ref=input_ref
                     type="file"
                     class="file-input"
                     name=name.clone()
-                    multiple=move || multiple.get()
-                    on:change=on_change
+                    multiple=is_multiple
                 />
                 <span class="file-cta">
-                    {icon_view()}
+                    <span class="file-icon"></span>
                     <span class="file-label">
-                        { move || selector_label.get() }
+                        {selector_label_text}
                     </span>
                 </span>
-                {filenames_view()}
+
+                {
+                    if let Some(file_name_text) = has_name_text {
+                        view! { <span class="file-name">{file_name_text}</span> }.into_any()
+                    } else {
+                        view! { <></> }.into_any()
+                    }
+                }
             </label>
         </div>
     }

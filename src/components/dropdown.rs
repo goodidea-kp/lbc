@@ -1,9 +1,15 @@
-use crate::elements::button::Button;
 use crate::util::TestAttr;
+use leptos::html;
+#[allow(unused_imports)]
+use leptos::prelude::Effect;
 use leptos::prelude::{
-    AddAnyAttr, Children, ClassAttribute, CustomAttribute, ElementChild, Get, GlobalAttributes,
-    IntoAny, IntoView, OnAttribute, Set, Signal, StyleAttribute, component, view,
+    Children, ClassAttribute, CustomAttribute, ElementChild, Get, GetUntracked, GlobalAttributes,
+    IntoAny, IntoView, NodeRef, NodeRefAttribute, Set, Signal, StyleAttribute, component, view,
 };
+#[allow(unused_imports)]
+use std::cell::Cell;
+#[allow(unused_imports)]
+use std::rc::Rc;
 
 /// A Bulma dropdown menu with a trigger button.
 /// https://bulma.io/documentation/components/dropdown/
@@ -55,18 +61,88 @@ pub fn Dropdown(
         }
     };
 
-    let open_click = move |_| {
-        if !hoverable.get() {
-            set_is_active.set(true);
-        }
-    };
-    let close_click = move |_| set_is_active.set(false);
-
     let (data_testid, data_cy) = match &test_attr {
         Some(attr) if attr.key == "data-testid" => (Some(attr.value.clone()), None),
         Some(attr) if attr.key == "data-cy" => (None, Some(attr.value.clone())),
         _ => (None, None),
     };
+
+    // Workaround for tachys 0.2.11 panic "callback removed before attaching":
+    // avoid `on:click` and attach click listeners manually on wasm32.
+    let trigger_button_ref: NodeRef<html::Button> = NodeRef::new();
+    let overlay_ref: NodeRef<html::Div> = NodeRef::new();
+
+    #[cfg(target_arch = "wasm32")]
+    {
+        use leptos::wasm_bindgen::JsCast;
+        use leptos::wasm_bindgen::closure::Closure;
+        use leptos::web_sys::Event;
+
+        let trigger_attached = Rc::new(Cell::new(false));
+        let overlay_attached = Rc::new(Cell::new(false));
+
+        let trigger_button_ref_for_effect = trigger_button_ref.clone();
+        let overlay_ref_for_effect = overlay_ref.clone();
+
+        let hoverable_for_effect = hoverable.clone();
+        let is_active_for_effect = is_active.clone();
+        let set_is_active_for_effect = set_is_active.clone();
+
+        Effect::new(move |_| {
+            // Attach trigger click once.
+            if !trigger_attached.get() {
+                if let Some(button_element) = trigger_button_ref_for_effect.get() {
+                    let hoverable_for_click = hoverable_for_effect.clone();
+                    let set_is_active_for_click = set_is_active_for_effect.clone();
+
+                    let click_closure: Closure<dyn FnMut(Event)> =
+                        Closure::wrap(Box::new(move |event: Event| {
+                            event.prevent_default();
+                            if !hoverable_for_click.get_untracked() {
+                                set_is_active_for_click.set(true);
+                            }
+                        }));
+
+                    button_element
+                        .add_event_listener_with_callback(
+                            "click",
+                            click_closure.as_ref().unchecked_ref(),
+                        )
+                        .ok();
+
+                    trigger_attached.set(true);
+                    click_closure.forget();
+                }
+            }
+
+            // Attach overlay click once (closes dropdown).
+            if !overlay_attached.get() {
+                if let Some(overlay_element) = overlay_ref_for_effect.get() {
+                    let set_is_active_for_click = set_is_active_for_effect.clone();
+
+                    let click_closure: Closure<dyn FnMut(Event)> =
+                        Closure::wrap(Box::new(move |event: Event| {
+                            event.prevent_default();
+                            set_is_active_for_click.set(false);
+                        }));
+
+                    overlay_element
+                        .add_event_listener_with_callback(
+                            "click",
+                            click_closure.as_ref().unchecked_ref(),
+                        )
+                        .ok();
+
+                    overlay_attached.set(true);
+                    click_closure.forget();
+                }
+            }
+
+            // If the dropdown is not active, the overlay isn't rendered, so `overlay_ref.get()`
+            // will be None. That's fine; the effect will run again when it appears.
+            let _ = is_active_for_effect.get();
+        });
+    }
 
     view! {
         <div
@@ -77,17 +153,32 @@ pub fn Dropdown(
             {move || if is_active.get() && !hoverable.get() {
                 // overlay to close when clicking outside
                 view! {
-                    <div on:click=close_click
-                         style="z-index:10;background-color:rgba(0,0,0,0);position:fixed;top:0;bottom:0;left:0;right:0;"></div>
+                    <div
+                        node_ref=overlay_ref
+                        style="z-index:10;background-color:rgba(0,0,0,0);position:fixed;top:0;bottom:0;left:0;right:0;"
+                    ></div>
                 }.into_any()
             } else {
                 view! { <></> }.into_any()
             }}
+
             <div class="dropdown-trigger">
-                <Button classes=button_classes.get() on:click=open_click>
+                <button
+                    node_ref=trigger_button_ref
+                    class=move || {
+                        let extra = button_classes.get();
+                        if extra.trim().is_empty() {
+                            "button".to_string()
+                        } else {
+                            format!("button {}", extra)
+                        }
+                    }
+                    type="button"
+                >
                     {button()}
-                </Button>
+                </button>
             </div>
+
             <div class="dropdown-menu" role="menu" style="position: relative; z-index: 20;">
                 <div class="dropdown-content">
                     {children()}
@@ -154,7 +245,6 @@ mod tests {
 #[cfg(all(test, target_arch = "wasm32"))]
 mod wasm_tests {
     use super::*;
-    use crate::elements::button::ButtonColor;
     use crate::util::TestAttr;
     use leptos::prelude::*;
     use wasm_bindgen_test::*;

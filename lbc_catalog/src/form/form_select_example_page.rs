@@ -1,7 +1,9 @@
 use lbc::prelude::{
     Block, Content, Control, Field, HeaderSize, MultiSelect, Select, Subtitle, Title,
 };
-use leptos::prelude::{ClassAttribute, ElementChild, Get, IntoView, Set, component, signal, view};
+use leptos::prelude::{
+    ClassAttribute, ElementChild, Get, GetUntracked, IntoView, Set, component, signal, view,
+};
 use std::sync::Arc;
 
 /// Example page showcasing the Select and MultiSelect form components.
@@ -15,6 +17,10 @@ pub fn FormSelectPage() -> impl IntoView {
     let (selected_list, set_selected_list) = signal(vec!["a".to_string(), "c".to_string()]);
     let update_multi = Arc::new(move |v: Vec<String>| set_selected_list.set(v));
 
+    // Snapshot values for passing into props (avoid reading signals in non-tracking context).
+    let selected_value = selected.get_untracked();
+    let selected_list_value = selected_list.get_untracked();
+
     view! {
         <Block>
             <Title size=HeaderSize::Is5>"Form: Select"</Title>
@@ -23,7 +29,7 @@ pub fn FormSelectPage() -> impl IntoView {
                 <Subtitle size=HeaderSize::Is6>"Basic Select"</Subtitle>
                 <Field label="Favorite letter" help="Choose one option">
                     <Control>
-                        <Select name="letters" value=selected.get() update=update_select.clone()>
+                        <Select name="letters" value=selected_value update=update_select.clone()>
                             <option value="a">"A"</option>
                             <option value="b">"B"</option>
                             <option value="c">"C"</option>
@@ -35,7 +41,12 @@ pub fn FormSelectPage() -> impl IntoView {
                 <Subtitle size=HeaderSize::Is6>"Multi Select"</Subtitle>
                 <Field label="Pick several" help="You can select multiple options">
                     <Control>
-                        <MultiSelect name="letters-multi" value=selected_list.get() list_size=6 update=update_multi.clone()>
+                        <MultiSelect
+                            name="letters-multi"
+                            value=selected_list_value
+                            list_size=6
+                            update=update_multi.clone()
+                        >
                             <option value="a">"Alpha"</option>
                             <option value="b">"Bravo"</option>
                             <option value="c">"Charlie"</option>

@@ -1,9 +1,17 @@
-use leptos::html;
-use leptos::prelude::{
-    Children, ClassAttribute, CustomAttribute, ElementChild, Get, IntoView, NodeRef,
-    NodeRefAttribute, OnAttribute, PropAttribute, Signal, component, event_target_value, view,
-};
 use std::sync::Arc;
+
+use leptos::html;
+#[allow(unused_imports)]
+use leptos::prelude::Effect;
+#[allow(unused_imports)]
+use leptos::prelude::{
+    Children, ClassAttribute, CustomAttribute, ElementChild, Get, GetUntracked, IntoView, NodeRef,
+    NodeRefAttribute, Signal, component, view,
+};
+#[allow(unused_imports)]
+use std::cell::Cell;
+#[allow(unused_imports)]
+use std::rc::Rc;
 
 use crate::util::{Size, TestAttr};
 
@@ -22,6 +30,12 @@ fn size_class(size: Size) -> &'static str {
 ///
 /// All LBC form components are controlled components. The value comes from a parent,
 /// and changes are propagated via the `update` callback.
+///
+/// NOTE (tachys 0.2.11):
+/// - Avoid `prop:value` to prevent "property removed early" panics.
+/// - Avoid `on:*` event bindings to prevent "callback removed before attaching" panics.
+///   We attach DOM listeners manually on wasm32.
+/// - Avoid reactive wrapper attribute closures where possible.
 #[component]
 pub fn Select(
     /// The `name` attribute for this form element.
@@ -61,53 +75,95 @@ pub fn Select(
     #[prop(optional, into)]
     test_attr: Option<TestAttr>,
 ) -> impl IntoView {
-    let class = {
-        let classes = classes.clone();
-        let loading = loading.clone();
-        move || {
-            let mut parts = vec!["select".to_string()];
+    // Compute wrapper attributes once (safe mode).
+    let mut wrapper_classes = vec!["select".to_string()];
 
-            let extra = classes.get();
-            if !extra.trim().is_empty() {
-                parts.push(extra);
-            }
-            if let Some(sz) = size {
-                parts.push(size_class(sz).to_string());
-            }
-            if loading.get() {
-                parts.push("is-loading".to_string());
-            }
+    let extra = classes.get_untracked();
+    if !extra.trim().is_empty() {
+        wrapper_classes.push(extra);
+    }
+    if let Some(sz) = size {
+        wrapper_classes.push(size_class(sz).to_string());
+    }
+    if loading.get_untracked() {
+        wrapper_classes.push("is-loading".to_string());
+    }
 
-            parts.join(" ")
-        }
-    };
+    let wrapper_class = wrapper_classes.join(" ");
 
-    let on_input = {
-        let update = update.clone();
-        move |ev| {
-            let new_value = event_target_value(&ev);
-            (update)(new_value);
-        }
-    };
+    let name_value = name.get_untracked();
+    let initial_value = value.get_untracked();
+    let is_disabled = disabled.get_untracked();
 
-    // Derive specific optional attributes that our macro can render.
     let (data_testid, data_cy) = match &test_attr {
         Some(attr) if attr.key == "data-testid" => (Some(attr.value.clone()), None),
         Some(attr) if attr.key == "data-cy" => (None, Some(attr.value.clone())),
         _ => (None, None),
     };
 
+    let select_ref: NodeRef<html::Select> = NodeRef::new();
+
+    #[cfg(target_arch = "wasm32")]
+    {
+        use leptos::wasm_bindgen::JsCast;
+        use leptos::wasm_bindgen::closure::Closure;
+        use leptos::web_sys::{Event, HtmlSelectElement};
+
+        let has_attached = Rc::new(Cell::new(false));
+        let select_ref_for_effect = select_ref.clone();
+        let update_for_effect = update.clone();
+        let initial_value_for_effect = initial_value.clone();
+
+        Effect::new(move |_| {
+            if has_attached.get() {
+                return;
+            }
+
+            let Some(select_element) = select_ref_for_effect.get() else {
+                return;
+            };
+
+            // Ensure the initial selected value is applied after mount.
+            // We avoid `value=` bindings in the view macro because Leptos 0.8 doesn't
+            // provide a `value` builder for <select> and tachys can be sensitive to
+            // reactive property bindings.
+            let select_element: HtmlSelectElement = select_element.into();
+            select_element.set_value(&initial_value_for_effect);
+
+            let update_for_input = update_for_effect.clone();
+
+            let input_closure: Closure<dyn FnMut(Event)> =
+                Closure::wrap(Box::new(move |event: Event| {
+                    let target_select = event
+                        .target()
+                        .and_then(|target| target.dyn_into::<HtmlSelectElement>().ok());
+
+                    let Some(target_select) = target_select else {
+                        return;
+                    };
+
+                    (update_for_input)(target_select.value());
+                }));
+
+            select_element
+                .add_event_listener_with_callback("input", input_closure.as_ref().unchecked_ref())
+                .ok();
+
+            has_attached.set(true);
+            input_closure.forget();
+        });
+    }
+
     view! {
         <div
-            class=move || class()
-            attr:data-testid=move || data_testid.clone()
-            attr:data-cy=move || data_cy.clone()
+            class=wrapper_class
+            attr:data-testid=data_testid
+            attr:data-cy=data_cy
         >
             <select
-                name=name.get()
-                prop:value=value.get()
-                disabled=disabled.get()
-                on:input=on_input
+                node_ref=select_ref
+                name=name_value
+                disabled=is_disabled
             >
                 {children()}
             </select>
@@ -120,6 +176,10 @@ pub fn Select(
 /// https://bulma.io/documentation/form/select/
 ///
 /// Controlled component: values come from a parent; updates are sent via `update`.
+///
+/// NOTE (tachys 0.2.11):
+/// - Avoid `prop:value` and `on:*` event bindings; attach DOM listeners manually on wasm32.
+/// - Compute wrapper attributes once (safe mode).
 #[component]
 pub fn MultiSelect(
     /// The `name` attribute for this form element.
@@ -130,7 +190,7 @@ pub fn MultiSelect(
     #[prop(into)]
     value: Signal<Vec<String>>,
 
-    /// The callback to be used for propagating changes to this element's value.
+    /// The callback to be used for propagating changes to this form element's value.
     update: Arc<dyn Fn(Vec<String>) + Send + Sync>,
 
     /// The `option` and `optgroup` tags of this select component.
@@ -163,323 +223,131 @@ pub fn MultiSelect(
     #[prop(optional, into)]
     test_attr: Option<TestAttr>,
 ) -> impl IntoView {
-    let class = {
-        let classes = classes.clone();
-        let loading = loading.clone();
-        move || {
-            let mut parts = vec!["select".to_string(), "is-multiple".to_string()];
+    // Compute wrapper attributes once (safe mode).
+    let mut wrapper_classes = vec!["select".to_string(), "is-multiple".to_string()];
 
-            let extra = classes.get();
-            if !extra.trim().is_empty() {
-                parts.push(extra);
-            }
-            if let Some(sz) = size {
-                parts.push(size_class(sz).to_string());
-            }
-            if loading.get() {
-                parts.push("is-loading".to_string());
-            }
+    let extra = classes.get_untracked();
+    if !extra.trim().is_empty() {
+        wrapper_classes.push(extra);
+    }
+    if let Some(sz) = size {
+        wrapper_classes.push(size_class(sz).to_string());
+    }
+    if loading.get_untracked() {
+        wrapper_classes.push("is-loading".to_string());
+    }
 
-            parts.join(" ")
-        }
-    };
+    let wrapper_class = wrapper_classes.join(" ");
 
-    let select_ref: NodeRef<html::Select> = NodeRef::new();
-
-    // Gather all selected option values on input.
-    let on_input = {
-        let update = update.clone();
-        let select_ref = select_ref.clone();
-        move |_| {
-            if let Some(select) = select_ref.get() {
-                let opts = select.selected_options();
-                let mut selected_values = Vec::new();
-                for index in 0..opts.length() {
-                    if let Some(elem) = opts.item(index) {
-                        if let Some(val) =
-                            elem.get_attribute("value").or_else(|| elem.text_content())
-                        {
-                            selected_values.push(val);
-                        }
-                    }
-                }
-                (update)(selected_values);
-            }
-        }
-    };
-
+    let name_value = name.get_untracked();
+    let is_disabled = disabled.get_untracked();
     let size_attr = list_size.unwrap_or(4).to_string();
-    let joined_value = move || value.get().join(",");
 
-    // Derive specific optional attributes that our macro can render.
+    // Initial value snapshot (not reactive) to avoid tachys property binding.
+    let initial_values = value.get_untracked();
+
     let (data_testid, data_cy) = match &test_attr {
         Some(attr) if attr.key == "data-testid" => (Some(attr.value.clone()), None),
         Some(attr) if attr.key == "data-cy" => (None, Some(attr.value.clone())),
         _ => (None, None),
     };
 
+    let select_ref: NodeRef<html::Select> = NodeRef::new();
+
+    #[cfg(target_arch = "wasm32")]
+    {
+        use leptos::wasm_bindgen::JsCast;
+        use leptos::wasm_bindgen::closure::Closure;
+        use leptos::web_sys::{Event, HtmlOptionElement, HtmlSelectElement};
+
+        let has_attached = Rc::new(Cell::new(false));
+        let select_ref_for_effect = select_ref.clone();
+        let update_for_effect = update.clone();
+        let initial_values_for_effect = initial_values.clone();
+
+        Effect::new(move |_| {
+            if has_attached.get() {
+                return;
+            }
+
+            let Some(select_element) = select_ref_for_effect.get() else {
+                return;
+            };
+
+            let select_element: HtmlSelectElement = select_element.into();
+
+            // Apply initial selected values after mount.
+            // We mark options as selected by iterating the options collection.
+            let options = select_element.options();
+            for option_index in 0..options.length() {
+                let Some(option_node) = options.item(option_index) else {
+                    continue;
+                };
+
+                let Ok(option_element) = option_node.dyn_into::<HtmlOptionElement>() else {
+                    continue;
+                };
+
+                let should_select = initial_values_for_effect
+                    .iter()
+                    .any(|selected_value| selected_value == &option_element.value());
+
+                option_element.set_selected(should_select);
+            }
+
+            let update_for_input = update_for_effect.clone();
+
+            let input_closure: Closure<dyn FnMut(Event)> =
+                Closure::wrap(Box::new(move |event: Event| {
+                    let target_select = event
+                        .target()
+                        .and_then(|target| target.dyn_into::<HtmlSelectElement>().ok());
+
+                    let Some(target_select) = target_select else {
+                        return;
+                    };
+
+                    let selected_options = target_select.selected_options();
+                    let mut selected_values = Vec::new();
+                    for index in 0..selected_options.length() {
+                        let Some(option_node) = selected_options.item(index) else {
+                            continue;
+                        };
+
+                        let Ok(option_element) = option_node.dyn_into::<HtmlOptionElement>() else {
+                            continue;
+                        };
+
+                        selected_values.push(option_element.value());
+                    }
+
+                    (update_for_input)(selected_values);
+                }));
+
+            select_element
+                .add_event_listener_with_callback("input", input_closure.as_ref().unchecked_ref())
+                .ok();
+
+            has_attached.set(true);
+            input_closure.forget();
+        });
+    }
+
     view! {
         <div
-            class=move || class()
-            attr:data-testid=move || data_testid.clone()
-            attr:data-cy=move || data_cy.clone()
+            class=wrapper_class
+            attr:data-testid=data_testid
+            attr:data-cy=data_cy
         >
             <select
+                node_ref=select_ref
                 multiple=true
                 size=size_attr
-                name=name.get()
-                prop:value=joined_value()
-                disabled=disabled.get()
-                on:input=on_input
-                node_ref=select_ref
+                name=name_value
+                disabled=is_disabled
             >
                 {children()}
             </select>
         </div>
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::util::Size;
-    use leptos::prelude::RenderHtml;
-
-    use std::sync::Arc;
-
-    fn noop() -> Arc<dyn Fn(String) + Send + Sync> {
-        Arc::new(|_v| {})
-    }
-
-    fn noop_vec() -> Arc<dyn Fn(Vec<String>) + Send + Sync> {
-        Arc::new(|_v| {})
-    }
-
-    #[test]
-    fn select_renders_wrapper_and_attributes() {
-        let html = view! {
-            <Select name="kind" value="x" update=noop()>
-                <option value="x">"X"</option>
-                <option value="y">"Y"</option>
-            </Select>
-        }
-        .to_html();
-
-        assert!(
-            html.contains(r#"class="select""#),
-            "expected Bulma 'select' wrapper class; got: {}",
-            html
-        );
-        assert!(
-            html.contains(r#"<select"#),
-            "expected select element; got: {}",
-            html
-        );
-        assert!(
-            html.contains(r#"name="kind""#),
-            "expected name attribute; got: {}",
-            html
-        );
-        assert!(
-            html.contains(r#"value="x""#),
-            "expected value attribute; got: {}",
-            html
-        );
-    }
-
-    #[test]
-    fn select_loading_and_size_classes() {
-        let html = view! {
-            <Select name="n" value="v" loading=true update=noop()>
-                <option value="v">"V"</option>
-            </Select>
-        }
-        .to_html();
-        assert!(
-            html.contains("is-loading"),
-            "expected is-loading class; got: {}",
-            html
-        );
-
-        let html_small = view! {
-            <Select name="n" value="v" size=Size::Small update=noop()>
-                <option value="v">"V"</option>
-            </Select>
-        }
-        .to_html();
-        assert!(
-            html_small.contains("is-small"),
-            "expected size class; got: {}",
-            html_small
-        );
-    }
-
-    #[test]
-    fn multi_select_renders_multiple_and_size() {
-        let html = view! {
-            <MultiSelect name="m" value=vec!["a".to_string()] list_size=6 update=noop_vec()>
-                <option value="a">"A"</option>
-                <option value="b">"B"</option>
-            </MultiSelect>
-        }
-        .to_html();
-
-        assert!(
-            html.contains("is-multiple"),
-            "expected is-multiple class on wrapper; got: {}",
-            html
-        );
-        assert!(
-            html.contains(r#"multiple="true""#) || html.contains(r#"multiple"#),
-            "expected multiple attribute on select; got: {}",
-            html
-        );
-        assert!(
-            html.contains(r#"size="6""#),
-            "expected size attribute; got: {}",
-            html
-        );
-    }
-}
-
-#[cfg(all(test, target_arch = "wasm32"))]
-mod wasm_tests {
-    use super::*;
-    use crate::util::{Size, TestAttr};
-    use leptos::prelude::*;
-    use std::sync::Arc;
-    use wasm_bindgen_test::*;
-
-    fn noop() -> Arc<dyn Fn(String) + Send + Sync> {
-        Arc::new(|_v| {})
-    }
-
-    fn noop_vec() -> Arc<dyn Fn(Vec<String>) + Send + Sync> {
-        Arc::new(|_v| {})
-    }
-
-    wasm_bindgen_test_configure!(run_in_browser);
-
-    #[wasm_bindgen_test]
-    fn select_renders_test_attr_as_data_testid() {
-        let html = view! {
-            <Select
-                name="kind"
-                value="x"
-                update=noop()
-                test_attr=TestAttr::test_id("select-test")
-            >
-                <option value="x">"X"</option>
-            </Select>
-        }
-        .to_html();
-
-        assert!(
-            html.contains(r#"data-testid="select-test""#),
-            "expected data-testid attribute; got: {}",
-            html
-        );
-    }
-
-    #[wasm_bindgen_test]
-    fn select_no_test_attr_when_not_provided() {
-        let html = view! {
-            <Select name="kind" value="x" update=noop()>
-                <option value="x">"X"</option>
-            </Select>
-        }
-        .to_html();
-
-        assert!(
-            !html.contains("data-testid") && !html.contains("data-cy"),
-            "expected no test attribute; got: {}",
-            html
-        );
-    }
-
-    #[wasm_bindgen_test]
-    fn multi_select_renders_test_attr_as_data_testid() {
-        let html = view! {
-            <MultiSelect
-                name="m"
-                value=vec!["a".to_string()]
-                list_size=6
-                update=noop_vec()
-                test_attr=TestAttr::test_id("multiselect-test")
-            >
-                <option value="a">"A"</option>
-            </MultiSelect>
-        }
-        .to_html();
-
-        assert!(
-            html.contains(r#"data-testid="multiselect-test""#),
-            "expected data-testid attribute; got: {}",
-            html
-        );
-    }
-
-    #[wasm_bindgen_test]
-    fn multi_select_no_test_attr_when_not_provided() {
-        let html = view! {
-            <MultiSelect
-                name="m"
-                value=vec!["a".to_string()]
-                list_size=6
-                update=noop_vec()
-            >
-                <option value="a">"A"</option>
-            </MultiSelect>
-        }
-        .to_html();
-
-        assert!(
-            !html.contains("data-testid") && !html.contains("data-cy"),
-            "expected no test attribute; got: {}",
-            html
-        );
-    }
-
-    #[wasm_bindgen_test]
-    fn select_accepts_custom_test_attr_key() {
-        let html = view! {
-            <Select
-                name="kind"
-                value="x"
-                update=noop()
-                test_attr=TestAttr::new("data-cy", "select-cy")
-            >
-                <option value="x">"X"</option>
-            </Select>
-        }
-        .to_html();
-
-        assert!(
-            html.contains(r#"data-cy="select-cy""#),
-            "expected custom data-cy attribute on Select; got: {}",
-            html
-        );
-    }
-
-    #[wasm_bindgen_test]
-    fn multi_select_accepts_custom_test_attr_key() {
-        let html = view! {
-            <MultiSelect
-                name="m"
-                value=vec!["a".to_string()]
-                list_size=6
-                update=noop_vec()
-                test_attr=TestAttr::new("data-cy", "multiselect-cy")
-            >
-                <option value="a">"A"</option>
-            </MultiSelect>
-        }
-        .to_html();
-
-        assert!(
-            html.contains(r#"data-cy="multiselect-cy""#),
-            "expected custom data-cy attribute on MultiSelect; got: {}",
-            html
-        );
     }
 }

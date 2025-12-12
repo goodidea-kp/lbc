@@ -1,11 +1,19 @@
-use leptos::prelude::{
-    ClassAttribute, CustomAttribute, ElementChild, Get, GlobalAttributes, IntoAny, IntoView,
-    OnAttribute, PropAttribute, Signal, StyleAttribute, component, event_target_value, view,
-};
 use std::sync::Arc;
+
+use leptos::html;
+use leptos::prelude::{
+    ClassAttribute, CustomAttribute, ElementChild, Get, GetUntracked, GlobalAttributes, IntoAny,
+    IntoView, NodeRef, NodeRefAttribute, Signal, StyleAttribute, component, view,
+};
 
 use crate::elements::icon::Icon;
 use crate::util::{Size, TestAttr};
+#[allow(unused_imports)]
+use leptos::prelude::Effect;
+#[allow(unused_imports)]
+use std::cell::Cell;
+#[allow(unused_imports)]
+use std::rc::Rc;
 
 fn size_class(size: Size) -> &'static str {
     match size {
@@ -21,6 +29,12 @@ fn size_class(size: Size) -> &'static str {
 /// https://bulma.io/documentation/form/textarea/
 ///
 /// Controlled component: the value comes from a parent, changes are propagated via `update`.
+///
+/// NOTE (tachys 0.2.11):
+/// - Avoid `prop:value` to prevent "property removed early" panics.
+/// - Avoid `on:*` event bindings to prevent "callback removed before attaching" panics.
+///   We attach DOM listeners manually on wasm32.
+/// - We intentionally leak JS closures via `forget()` to avoid `on_cleanup` Send+Sync bounds.
 #[component]
 pub fn TextArea(
     /// The `name` attribute for this form element.
@@ -119,6 +133,69 @@ pub fn TextArea(
         _ => (None, None),
     };
 
+    // Compute stable values once to avoid reactive property bindings that can panic in tachys.
+    let name_value = name.get_untracked();
+    let placeholder_value = placeholder.get_untracked();
+    let is_disabled = disabled.get_untracked();
+    let is_readonly = readonly.get_untracked();
+    let rows_value = rows.unwrap_or(0).to_string();
+
+    // Snapshot initial value once; we will apply it on mount via DOM API.
+    // This avoids using `value=` in the view macro (not supported for <textarea> in Leptos 0.8).
+    let initial_value = value.get_untracked();
+
+    // Workaround for tachys 0.2.11:
+    // avoid `on:input` and attach the input listener manually on wasm32.
+    let textarea_ref: NodeRef<html::Textarea> = NodeRef::new();
+
+    #[cfg(target_arch = "wasm32")]
+    {
+        use leptos::wasm_bindgen::JsCast;
+        use leptos::wasm_bindgen::closure::Closure;
+        use leptos::web_sys::{Event, HtmlTextAreaElement};
+
+        let has_attached = Rc::new(Cell::new(false));
+        let textarea_ref_for_effect = textarea_ref.clone();
+        let update_for_effect = update.clone();
+        let initial_value_for_effect = initial_value.clone();
+
+        Effect::new(move |_| {
+            if has_attached.get() {
+                return;
+            }
+
+            let Some(textarea_element) = textarea_ref_for_effect.get() else {
+                return;
+            };
+
+            let textarea_element: HtmlTextAreaElement = textarea_element.into();
+
+            // Apply initial value after mount.
+            textarea_element.set_value(&initial_value_for_effect);
+
+            let update_for_input = update_for_effect.clone();
+            let input_closure: Closure<dyn FnMut(Event)> =
+                Closure::wrap(Box::new(move |event: Event| {
+                    let target_textarea = event
+                        .target()
+                        .and_then(|target| target.dyn_into::<HtmlTextAreaElement>().ok());
+
+                    let Some(target_textarea) = target_textarea else {
+                        return;
+                    };
+
+                    (update_for_input)(target_textarea.value());
+                }));
+
+            textarea_element
+                .add_event_listener_with_callback("input", input_closure.as_ref().unchecked_ref())
+                .ok();
+
+            has_attached.set(true);
+            input_closure.forget();
+        });
+    }
+
     // Render an optional "GenAI ribbon" icon overlay if requested.
     move || {
         // Clone the attribute values into locals each render so inner closures can move/clone them
@@ -126,7 +203,6 @@ pub fn TextArea(
         let data_cy = data_cy_opt.clone();
 
         if is_genai.get() {
-            let update_ai = update.clone();
             view! {
                 <div
                     id="context"
@@ -138,39 +214,34 @@ pub fn TextArea(
                         <i class="fa-brands fa-openai"></i>
                     </Icon>
                     <textarea
-                        name=name.get()
-                        prop:value=value.get()
-                        on:input=move |ev| {
-                            let new_value = event_target_value(&ev);
-                            (update_ai)(new_value);
-                        }
+                        node_ref=textarea_ref
+                        name=name_value.clone()
                         class=move || class()
-                        placeholder=placeholder.get()
-                        disabled=disabled.get()
-                        readonly=readonly.get()
-                        rows=rows.unwrap_or(0).to_string()
-                    />
+                        placeholder=placeholder_value.clone()
+                        disabled=is_disabled
+                        readonly=is_readonly
+                        rows=rows_value.clone()
+                    >
+                        {initial_value.clone()}
+                    </textarea>
                 </div>
             }
             .into_any()
         } else {
-            let update_plain = update.clone();
             view! {
                 <textarea
-                    name=name.get()
-                    prop:value=value.get()
-                    on:input=move |ev| {
-                        let new_value = event_target_value(&ev);
-                        (update_plain)(new_value);
-                    }
+                    node_ref=textarea_ref
+                    name=name_value.clone()
                     class=move || class()
-                    placeholder=placeholder.get()
-                    disabled=disabled.get()
-                    readonly=readonly.get()
-                    rows=rows.unwrap_or(0).to_string()
+                    placeholder=placeholder_value.clone()
+                    disabled=is_disabled
+                    readonly=is_readonly
+                    rows=rows_value.clone()
                     attr:data-testid=move || data_testid.clone()
                     attr:data-cy=move || data_cy.clone()
-                />
+                >
+                    {initial_value.clone()}
+                </textarea>
             }
             .into_any()
         }
@@ -272,10 +343,7 @@ mod tests {
 
     #[test]
     fn textarea_genai_ribbon() {
-        let html = view! {
-            <TextArea name="g" value="" is_genai=true update=noop() />
-        }
-        .to_html();
+        let html = view! { <TextArea name="g" value="" is_genai=true update=noop() /> }.to_html();
         assert!(
             html.contains("ribbon"),
             "expected ribbon icon when is_genai; got: {}",
@@ -314,10 +382,7 @@ mod wasm_tests {
 
     #[wasm_bindgen_test]
     fn textarea_no_test_attr_when_not_provided() {
-        let html = view! {
-            <TextArea name="notes" value="" update=noop() />
-        }
-        .to_html();
+        let html = view! { <TextArea name="notes" value="" update=noop() /> }.to_html();
 
         assert!(
             !html.contains("data-testid") && !html.contains("data-cy"),

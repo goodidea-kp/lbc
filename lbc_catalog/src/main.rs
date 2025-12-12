@@ -1,7 +1,7 @@
 use leptos::prelude::ElementChild;
-use leptos::prelude::{AddAnyAttr, ClassAttribute, IntoView, component, mount_to_body, view};
+use leptos::prelude::{ClassAttribute, IntoView, component, mount_to_body, view};
 use leptos_router::{
-    components::{A, Route, Router, Routes},
+    components::{Route, Router, Routes},
     path,
 };
 
@@ -125,65 +125,65 @@ fn Nav() -> impl IntoView {
     view! {
         <div class="block">
             <div class="buttons are-small">
-                <A attr:class="button is-light" href="/">"Home"</A>
+                <a class="button is-light" href="/">"Home"</a>
             </div>
 
             <h4 class="title is-6">"Elements"</h4>
             <div class="buttons are-small">
-                <A attr:class="button is-link is-light" href="/elements/button">"Button"</A>
-                <A attr:class="button is-info is-light" href="/elements/tag">"Tag"</A>
-                <A attr:class="button is-danger is-light" href="/elements/colors">"Colors"</A>
-                <A attr:class="button is-dark is-light" href="/elements/sizes">"Sizes"</A>
-                <A attr:class="button is-success is-light" href="/elements/block">"Block"</A>
-                <A attr:class="button is-success is-light" href="/elements/box">"Box"</A>
-                <A attr:class="button is-success is-light" href="/elements/content">"Content"</A>
-                <A attr:class="button is-danger is-light" href="/elements/delete">"Delete"</A>
-                <A attr:class="button is-link is-light" href="/elements/icon">"Icon"</A>
-                <A attr:class="button is-info is-light" href="/elements/notification">"Notification"</A>
-                <A attr:class="button is-primary is-light" href="/elements/progress">"Progress"</A>
-                <A attr:class="button is-warning is-light" href="/elements/title">"Title"</A>
-                <A attr:class="button is-success is-light" href="/elements/table">"Table"</A>
+                <a class="button is-link is-light" href="/elements/button">"Button"</a>
+                <a class="button is-info is-light" href="/elements/tag">"Tag"</a>
+                <a class="button is-danger is-light" href="/elements/colors">"Colors"</a>
+                <a class="button is-dark is-light" href="/elements/sizes">"Sizes"</a>
+                <a class="button is-success is-light" href="/elements/block">"Block"</a>
+                <a class="button is-success is-light" href="/elements/box">"Box"</a>
+                <a class="button is-success is-light" href="/elements/content">"Content"</a>
+                <a class="button is-danger is-light" href="/elements/delete">"Delete"</a>
+                <a class="button is-link is-light" href="/elements/icon">"Icon"</a>
+                <a class="button is-info is-light" href="/elements/notification">"Notification"</a>
+                <a class="button is-primary is-light" href="/elements/progress">"Progress"</a>
+                <a class="button is-warning is-light" href="/elements/title">"Title"</a>
+                <a class="button is-success is-light" href="/elements/table">"Table"</a>
             </div>
 
             <h4 class="title is-6">"Form"</h4>
             <div class="buttons are-small">
-                <A attr:class="button is-link is-light" href="/form/checkbox">"Checkbox"</A>
-                <A attr:class="button is-link is-light" href="/form/field">"Field"</A>
-                <A attr:class="button is-link is-light" href="/form/control">"Control"</A>
-                <A attr:class="button is-link is-light" href="/form/file">"File"</A>
-                <A attr:class="button is-link is-light" href="/form/input">"Input"</A>
-                <A attr:class="button is-link is-light" href="/form/radio">"Radio"</A>
-                <A attr:class="button is-link is-light" href="/form/select">"Select"</A>
-                <A attr:class="button is-link is-light" href="/form/textarea">"TextArea"</A>
-                <A attr:class="button is-link is-light" href="/form/autocomplete">"AutoComplete"</A>
+                <a class="button is-link is-light" href="/form/checkbox">"Checkbox"</a>
+                <a class="button is-link is-light" href="/form/field">"Field"</a>
+                <a class="button is-link is-light" href="/form/control">"Control"</a>
+                <a class="button is-link is-light" href="/form/file">"File"</a>
+                <a class="button is-link is-light" href="/form/input">"Input"</a>
+                <a class="button is-link is-light" href="/form/radio">"Radio"</a>
+                <a class="button is-link is-light" href="/form/select">"Select"</a>
+                <a class="button is-link is-light" href="/form/textarea">"TextArea"</a>
+                <a class="button is-link is-light" href="/form/autocomplete">"AutoComplete"</a>
             </div>
 
             <h4 class="title is-6">"Components"</h4>
             <div class="buttons are-small">
-                <A attr:class="button is-link is-light" href="/components/menu">"Menu"</A>
-                <A attr:class="button is-link is-light" href="/components/dropdown">"Dropdown"</A>
-                <A attr:class="button is-link is-light" href="/components/card">"Card"</A>
-                <A attr:class="button is-link is-light" href="/components/calendar">"Calendar"</A>
-                <A attr:class="button is-link is-light" href="/components/breadcrumb">"Breadcrumb"</A>
-                <A attr:class="button is-link is-light" href="/components/accordion">"Accordion"</A>
-                <A attr:class="button is-link is-light" href="/components/tabs">"Tabs"</A>
-                <A attr:class="button is-link is-light" href="/components/panel">"Panel"</A>
-                <A attr:class="button is-link is-light" href="/components/pagination">"Pagination"</A>
-                <A attr:class="button is-link is-light" href="/components/navbar">"Navbar"</A>
-                <A attr:class="button is-link is-light" href="/components/modal">"Modal"</A>
-                <A attr:class="button is-link is-light" href="/components/message">"Message"</A>
+                <a class="button is-link is-light" href="/components/menu">"Menu"</a>
+                <a class="button is-link is-light" href="/components/dropdown">"Dropdown"</a>
+                <a class="button is-link is-light" href="/components/card">"Card"</a>
+                <a class="button is-link is-light" href="/components/calendar">"Calendar"</a>
+                <a class="button is-link is-light" href="/components/breadcrumb">"Breadcrumb"</a>
+                <a class="button is-link is-light" href="/components/accordion">"Accordion"</a>
+                <a class="button is-link is-light" href="/components/tabs">"Tabs"</a>
+                <a class="button is-link is-light" href="/components/panel">"Panel"</a>
+                <a class="button is-link is-light" href="/components/pagination">"Pagination"</a>
+                <a class="button is-link is-light" href="/components/navbar">"Navbar"</a>
+                <a class="button is-link is-light" href="/components/modal">"Modal"</a>
+                <a class="button is-link is-light" href="/components/message">"Message"</a>
             </div>
 
             <h4 class="title is-6">"Layout"</h4>
             <div class="buttons are-small">
-                <A attr:class="button is-warning is-light" href="/layout/columns">"Columns"</A>
-                <A attr:class="button is-primary is-light" href="/layout/container">"Container"</A>
-                <A attr:class="button is-black is-light" href="/layout/section">"Section"</A>
-                <A attr:class="button is-link is-light" href="/layout/hero">"Hero"</A>
-                <A attr:class="button is-success is-light" href="/layout/level">"Level"</A>
-                <A attr:class="button is-warning is-light" href="/layout/tile">"Tile"</A>
-                <A attr:class="button is-info is-light" href="/layout/media">"Media"</A>
-                <A attr:class="button is-black is-light" href="/layout/footer">"Footer"</A>
+                <a class="button is-warning is-light" href="/layout/columns">"Columns"</a>
+                <a class="button is-primary is-light" href="/layout/container">"Container"</a>
+                <a class="button is-black is-light" href="/layout/section">"Section"</a>
+                <a class="button is-link is-light" href="/layout/hero">"Hero"</a>
+                <a class="button is-success is-light" href="/layout/level">"Level"</a>
+                <a class="button is-warning is-light" href="/layout/tile">"Tile"</a>
+                <a class="button is-info is-light" href="/layout/media">"Media"</a>
+                <a class="button is-black is-light" href="/layout/footer">"Footer"</a>
             </div>
         </div>
     }
@@ -196,15 +196,73 @@ fn HomePage() -> impl IntoView {
             <h2 class="subtitle">"Primitives"</h2>
             <p>"Choose a component page from the navigation above."</p>
             <div class="buttons are-small mt-2">
-                <A attr:class="button is-link is-light" href="/components/menu">"Go to Menu example"</A>
+                <a class="button is-link is-light" href="/components/menu">"Go to Menu example"</a>
             </div>
         </>
     }
 }
 
+#[cfg(target_arch = "wasm32")]
+fn install_panic_logging() {
+    use std::panic;
+
+    use js_sys::{Function, Reflect};
+    use leptos::wasm_bindgen::JsValue;
+    use leptos::web_sys::console;
+
+    panic::set_hook(Box::new(move |panic_info| {
+        let location = panic_info
+            .location()
+            .map(|loc| format!("{}:{}:{}", loc.file(), loc.line(), loc.column()))
+            .unwrap_or_else(|| "<unknown>".to_string());
+
+        let payload = if let Some(message) = panic_info.payload().downcast_ref::<&str>() {
+            (*message).to_string()
+        } else if let Some(message) = panic_info.payload().downcast_ref::<String>() {
+            message.clone()
+        } else {
+            "<non-string panic payload>".to_string()
+        };
+
+        console::error_1(&JsValue::from_str("=== Rust panic captured ==="));
+        console::error_1(&JsValue::from_str(&format!("Message: {payload}")));
+        console::error_1(&JsValue::from_str(&format!("Location: {location}")));
+
+        // Capture a JS stack without going through wasm-bindgen shims for Error::new.
+        // Equivalent JS: `new Error().stack`
+        let stack_function = Function::new_no_args("return (new Error()).stack;");
+        let stack_value = stack_function.call0(&JsValue::NULL).ok();
+        if let Some(stack_value) = stack_value {
+            if let Some(stack) = stack_value.as_string() {
+                if !stack.trim().is_empty() {
+                    console::error_1(&JsValue::from_str("JS stack:"));
+                    console::error_1(&JsValue::from_str(&stack));
+                }
+            }
+        }
+
+        // Also try to log the current location.href for context.
+        let href_value = Reflect::get(
+            &leptos::web_sys::window().unwrap().location(),
+            &JsValue::from_str("href"),
+        )
+        .ok();
+        if let Some(href_value) = href_value {
+            if let Some(href) = href_value.as_string() {
+                console::error_1(&JsValue::from_str(&format!("URL: {href}")));
+            }
+        }
+
+        console::error_1(&JsValue::from_str("=========================="));
+    }));
+}
+
 fn main() {
     #[cfg(target_arch = "wasm32")]
-    console_error_panic_hook::set_once();
+    {
+        console_error_panic_hook::set_once();
+        install_panic_logging();
+    }
 
     mount_to_body(App);
 }

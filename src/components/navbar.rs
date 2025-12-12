@@ -1,8 +1,16 @@
+use std::rc::Rc;
+
+use leptos::html;
+#[allow(unused_imports)]
+use leptos::prelude::Effect;
+#[allow(unused_imports)]
 use leptos::prelude::{
     AriaAttributes, Children, ClassAttribute, CustomAttribute, ElementChild, Get, GetUntracked,
-    GlobalAttributes, IntoAny, IntoView, OnAttribute, Set, Signal, StyleAttribute, component, view,
+    GlobalAttributes, IntoAny, IntoView, NodeRef, NodeRefAttribute, Set, Signal, StyleAttribute,
+    component, view,
 };
-use std::rc::Rc;
+#[allow(unused_imports)]
+use std::cell::Cell;
 
 use crate::util::TestAttr;
 
@@ -35,6 +43,10 @@ impl NavbarFixed {
 /// - brand: left-side brand content; burger appended if `navburger=true`
 /// - start: left part of the menu on desktop
 /// - end: right part of the menu on desktop
+///
+/// NOTE (tachys 0.2.11):
+/// - Avoid `on:*` event bindings to prevent "callback removed before attaching" panics.
+///   We attach DOM listeners manually on wasm32.
 #[component]
 pub fn Navbar(
     /// Extra classes for the root "navbar".
@@ -121,6 +133,74 @@ pub fn Navbar(
         _ => (None, None),
     };
 
+    // Workaround for tachys 0.2.11 panic "callback removed before attaching":
+    // avoid `on:click` and attach click listener manually on wasm32.
+    let burger_ref: NodeRef<html::A> = NodeRef::new();
+
+    #[cfg(target_arch = "wasm32")]
+    {
+        use leptos::wasm_bindgen::JsCast;
+        use leptos::wasm_bindgen::closure::Closure;
+        use leptos::web_sys::Event;
+
+        let has_attached = Rc::new(Cell::new(false));
+        let burger_ref_for_effect = burger_ref.clone();
+
+        Effect::new(move |_| {
+            if has_attached.get() {
+                return;
+            }
+
+            let Some(burger_element) = burger_ref_for_effect.get() else {
+                return;
+            };
+
+            let click_closure: Closure<dyn FnMut(Event)> =
+                Closure::wrap(Box::new(move |event: Event| {
+                    event.prevent_default();
+                    is_menu_open.set(!is_menu_open.get_untracked());
+                }));
+
+            burger_element
+                .add_event_listener_with_callback("click", click_closure.as_ref().unchecked_ref())
+                .ok();
+
+            has_attached.set(true);
+            click_closure.forget();
+        });
+    }
+
+    let burger_node = move || {
+        if !navburger.get() {
+            return view! { <></> }.into_any();
+        }
+
+        let burger_class = move || {
+            if is_menu_open.get() {
+                "navbar-burger is-active"
+            } else {
+                "navbar-burger"
+            }
+        };
+
+        view! {
+            <a
+                node_ref=burger_ref
+                class=burger_class
+                role="button"
+                aria-label="menu"
+                aria-expanded=move || if is_menu_open.get() { "true" } else { "false" }
+                href="#"
+            >
+                <span aria-hidden="true"></span>
+                <span aria-hidden="true"></span>
+                <span aria-hidden="true"></span>
+                <span aria-hidden="true"></span>
+            </a>
+        }
+        .into_any()
+    };
+
     view! {
         <nav
             class=move || class()
@@ -135,20 +215,7 @@ pub fn Navbar(
                         <div class="container">
                             <div class="navbar-brand">
                                 {brand_view.unwrap_or_else(|| view! { <></> }.into_any())}
-                                {move || if navburger.get() {
-                                    let burger_class = move || if is_menu_open.get() { "navbar-burger is-active" } else { "navbar-burger" };
-                                    view! {
-                                        <a class=burger_class role="button" aria-label="menu" aria-expanded=move || if is_menu_open.get() { "true" } else { "false" }
-                                           on:click=move |_| is_menu_open.set(!is_menu_open.get())>
-                                            <span aria-hidden="true"></span>
-                                            <span aria-hidden="true"></span>
-                                            <span aria-hidden="true"></span>
-                                            <span aria-hidden="true"></span>
-                                        </a>
-                                    }.into_any()
-                                } else {
-                                    view! { <></> }.into_any()
-                                }}
+                                {burger_node()}
                             </div>
                             <div class=move || if is_menu_open.get() { "navbar-menu is-active" } else { "navbar-menu" }>
                                 <div class="navbar-start">
@@ -159,26 +226,14 @@ pub fn Navbar(
                                 </div>
                             </div>
                         </div>
-                    }.into_any()
+                    }
+                    .into_any()
                 } else {
                     view! {
                         <>
                             <div class="navbar-brand">
                                 {brand_view.unwrap_or_else(|| view! { <></> }.into_any())}
-                                {move || if navburger.get() {
-                                    let burger_class = move || if is_menu_open.get() { "navbar-burger is-active" } else { "navbar-burger" };
-                                    view! {
-                                        <a class=burger_class role="button" aria-label="menu" aria-expanded=move || if is_menu_open.get() { "true" } else { "false" }
-                                           on:click=move |_| is_menu_open.set(!is_menu_open.get())>
-                                            <span aria-hidden="true"></span>
-                                            <span aria-hidden="true"></span>
-                                            <span aria-hidden="true"></span>
-                                            <span aria-hidden="true"></span>
-                                        </a>
-                                    }.into_any()
-                                } else {
-                                    view! { <></> }.into_any()
-                                }}
+                                {burger_node()}
                             </div>
                             <div class=move || if is_menu_open.get() { "navbar-menu is-active" } else { "navbar-menu" }>
                                 <div class="navbar-start">
@@ -189,7 +244,8 @@ pub fn Navbar(
                                 </div>
                             </div>
                         </>
-                    }.into_any()
+                    }
+                    .into_any()
                 }
             }
         </nav>
@@ -205,6 +261,10 @@ pub enum NavbarItemTag {
 
 /// A single element of the navbar.
 /// https://bulma.io/documentation/components/navbar/
+///
+/// NOTE (tachys 0.2.11):
+/// - Avoid `on:*` event bindings to prevent "callback removed before attaching" panics.
+///   We attach DOM listeners manually on wasm32.
 #[component]
 pub fn NavbarItem(
     /// Child content of the navbar item.
@@ -281,30 +341,104 @@ pub fn NavbarItem(
 
     let tag = tag.unwrap_or(NavbarItemTag::Div);
 
-    let click_cb = {
-        let on_click = on_click.clone();
-        move |_| {
-            if let Some(cb) = &on_click {
-                cb();
-            }
-        }
-    };
-
     let (data_testid, data_cy) = match &test_attr {
         Some(attr) if attr.key == "data-testid" => (Some(attr.value.clone()), None),
         Some(attr) if attr.key == "data-cy" => (None, Some(attr.value.clone())),
         _ => (None, None),
     };
 
+    let anchor_ref: NodeRef<html::A> = NodeRef::new();
+    let div_ref: NodeRef<html::Div> = NodeRef::new();
+
+    #[cfg(target_arch = "wasm32")]
+    {
+        use leptos::wasm_bindgen::JsCast;
+        use leptos::wasm_bindgen::closure::Closure;
+        use leptos::web_sys::Event;
+
+        let has_attached = Rc::new(Cell::new(false));
+        let on_click_for_effect = on_click.clone();
+
+        match tag {
+            NavbarItemTag::A => {
+                let anchor_ref_for_effect = anchor_ref.clone();
+                Effect::new(move |_| {
+                    if has_attached.get() {
+                        return;
+                    }
+
+                    let Some(anchor_element) = anchor_ref_for_effect.get() else {
+                        return;
+                    };
+
+                    let Some(callback) = on_click_for_effect.clone() else {
+                        has_attached.set(true);
+                        return;
+                    };
+
+                    let click_closure: Closure<dyn FnMut(Event)> =
+                        Closure::wrap(Box::new(move |event: Event| {
+                            event.prevent_default();
+                            callback();
+                        }));
+
+                    anchor_element
+                        .add_event_listener_with_callback(
+                            "click",
+                            click_closure.as_ref().unchecked_ref(),
+                        )
+                        .ok();
+
+                    has_attached.set(true);
+                    click_closure.forget();
+                });
+            }
+            NavbarItemTag::Div => {
+                let div_ref_for_effect = div_ref.clone();
+                Effect::new(move |_| {
+                    if has_attached.get() {
+                        return;
+                    }
+
+                    let Some(div_element) = div_ref_for_effect.get() else {
+                        return;
+                    };
+
+                    let Some(callback) = on_click_for_effect.clone() else {
+                        has_attached.set(true);
+                        return;
+                    };
+
+                    let click_closure: Closure<dyn FnMut(Event)> =
+                        Closure::wrap(Box::new(move |event: Event| {
+                            event.prevent_default();
+                            callback();
+                        }));
+
+                    div_element
+                        .add_event_listener_with_callback(
+                            "click",
+                            click_closure.as_ref().unchecked_ref(),
+                        )
+                        .ok();
+
+                    has_attached.set(true);
+                    click_closure.forget();
+                });
+            }
+        }
+    }
+
     match tag {
         NavbarItemTag::A => view! {
-            <a class=move || class()
-               href=href.get()
-               rel=rel.get()
-               target=target.get()
-               on:click=click_cb.clone()
-               attr:data-testid=move || data_testid.clone()
-               attr:data-cy=move || data_cy.clone()
+            <a
+                node_ref=anchor_ref
+                class=move || class()
+                href=href.get()
+                rel=rel.get()
+                target=target.get()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
             >
                 {children()}
             </a>
@@ -312,8 +446,8 @@ pub fn NavbarItem(
         .into_any(),
         NavbarItemTag::Div => view! {
             <div
+                node_ref=div_ref
                 class=move || class()
-                on:click=click_cb.clone()
                 attr:data-testid=move || data_testid.clone()
                 attr:data-cy=move || data_cy.clone()
             >
@@ -366,6 +500,10 @@ pub fn NavbarDivider(
 }
 
 /// A navbar dropdown menu: "navbar-item has-dropdown" parent + "navbar-dropdown".
+///
+/// NOTE (tachys 0.2.11):
+/// - Avoid `on:*` event bindings to prevent "callback removed before attaching" panics.
+///   We attach DOM listeners manually on wasm32.
 #[component]
 pub fn NavbarDropdown(
     /// Content of the dropdown (NavbarItem and NavbarDivider).
@@ -456,22 +594,85 @@ pub fn NavbarDropdown(
         }
     };
 
-    let open_click = move |_| {
-        if !hoverable.get() {
-            set_is_active.set(true);
-        }
-    };
-    let close_click = move |_| {
-        if !hoverable.get() {
-            set_is_active.set(false);
-        }
-    };
-
     let (data_testid, data_cy) = match &test_attr {
         Some(attr) if attr.key == "data-testid" => (Some(attr.value.clone()), None),
         Some(attr) if attr.key == "data-cy" => (None, Some(attr.value.clone())),
         _ => (None, None),
     };
+
+    let trigger_ref: NodeRef<html::A> = NodeRef::new();
+    let overlay_ref: NodeRef<html::Div> = NodeRef::new();
+
+    #[cfg(target_arch = "wasm32")]
+    {
+        use leptos::wasm_bindgen::JsCast;
+        use leptos::wasm_bindgen::closure::Closure;
+        use leptos::web_sys::Event;
+
+        let trigger_attached = Rc::new(Cell::new(false));
+        let overlay_attached = Rc::new(Cell::new(false));
+
+        let trigger_ref_for_effect = trigger_ref.clone();
+        let overlay_ref_for_effect = overlay_ref.clone();
+
+        let hoverable_for_effect = hoverable.clone();
+        let is_active_for_effect = is_active.clone();
+        let set_is_active_for_effect = set_is_active.clone();
+
+        Effect::new(move |_| {
+            // Attach trigger click once.
+            if !trigger_attached.get() {
+                if let Some(trigger_element) = trigger_ref_for_effect.get() {
+                    let hoverable_for_click = hoverable_for_effect.clone();
+                    let set_is_active_for_click = set_is_active_for_effect.clone();
+
+                    let click_closure: Closure<dyn FnMut(Event)> =
+                        Closure::wrap(Box::new(move |event: Event| {
+                            event.prevent_default();
+                            if !hoverable_for_click.get_untracked() {
+                                set_is_active_for_click.set(true);
+                            }
+                        }));
+
+                    trigger_element
+                        .add_event_listener_with_callback(
+                            "click",
+                            click_closure.as_ref().unchecked_ref(),
+                        )
+                        .ok();
+
+                    trigger_attached.set(true);
+                    click_closure.forget();
+                }
+            }
+
+            // Attach overlay click once (closes dropdown).
+            if !overlay_attached.get() {
+                if let Some(overlay_element) = overlay_ref_for_effect.get() {
+                    let set_is_active_for_click = set_is_active_for_effect.clone();
+
+                    let click_closure: Closure<dyn FnMut(Event)> =
+                        Closure::wrap(Box::new(move |event: Event| {
+                            event.prevent_default();
+                            set_is_active_for_click.set(false);
+                        }));
+
+                    overlay_element
+                        .add_event_listener_with_callback(
+                            "click",
+                            click_closure.as_ref().unchecked_ref(),
+                        )
+                        .ok();
+
+                    overlay_attached.set(true);
+                    click_closure.forget();
+                }
+            }
+
+            // Ensure the effect re-runs when active state changes (overlay appears/disappears).
+            let _ = is_active_for_effect.get();
+        });
+    }
 
     view! {
         <div
@@ -480,15 +681,24 @@ pub fn NavbarDropdown(
             attr:data-cy=move || data_cy.clone()
         >
             {move || if is_active.get() && !hoverable.get() {
-                // overlay to close when clicking outside
                 view! {
-                    <div on:click=close_click
-                         style="z-index:10;background-color:rgba(0,0,0,0);position:fixed;top:0;bottom:0;left:0;right:0;"></div>
+                    <div
+                        node_ref=overlay_ref
+                        style="z-index:10;background-color:rgba(0,0,0,0);position:fixed;top:0;bottom:0;left:0;right:0;"
+                    ></div>
                 }.into_any()
             } else {
                 view! { <></> }.into_any()
             }}
-            <a class=move || link_class() on:click=open_click>{navlink()}</a>
+
+            <a
+                node_ref=trigger_ref
+                class=move || link_class()
+                href="#"
+            >
+                {navlink()}
+            </a>
+
             <div class=move || dropdown_class()>
                 {children()}
             </div>

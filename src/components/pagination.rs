@@ -1,7 +1,14 @@
+use leptos::html;
+#[allow(unused_imports)]
+use leptos::prelude::Effect;
 use leptos::prelude::{
     AriaAttributes, Children, ClassAttribute, CustomAttribute, ElementChild, Get, GlobalAttributes,
-    IntoView, OnAttribute, Signal, component, view,
+    IntoView, NodeRef, NodeRefAttribute, Signal, component, view,
 };
+#[allow(unused_imports)]
+use std::cell::Cell;
+#[allow(unused_imports)]
+use std::rc::Rc;
 
 use crate::util::{Size, TestAttr};
 
@@ -110,29 +117,81 @@ pub fn Pagination(
         }
     };
 
-    let prev_click = {
-        let on_previous = on_previous.clone();
-        move |_| {
-            if let Some(cb) = &on_previous {
-                cb();
-            }
-        }
-    };
-    let next_click = {
-        let on_next = on_next.clone();
-        move |_| {
-            if let Some(cb) = &on_next {
-                cb();
-            }
-        }
-    };
-
     // Derive specific optional attributes that our macro can render.
     let (data_testid, data_cy) = match &test_attr {
         Some(ta) if ta.key == "data-testid" => (Some(ta.value.clone()), None),
         Some(ta) if ta.key == "data-cy" => (None, Some(ta.value.clone())),
         _ => (None, None),
     };
+
+    // Workaround for tachys 0.2.11 panic "callback removed before attaching":
+    // avoid `on:click` and attach click listeners manually on wasm32.
+    let previous_ref: NodeRef<html::A> = NodeRef::new();
+    let next_ref: NodeRef<html::A> = NodeRef::new();
+
+    #[cfg(target_arch = "wasm32")]
+    {
+        use leptos::wasm_bindgen::JsCast;
+        use leptos::wasm_bindgen::closure::Closure;
+        use leptos::web_sys::Event;
+
+        let previous_attached = Rc::new(Cell::new(false));
+        let next_attached = Rc::new(Cell::new(false));
+
+        let previous_ref_for_effect = previous_ref.clone();
+        let next_ref_for_effect = next_ref.clone();
+
+        let on_previous_for_effect = on_previous.clone();
+        let on_next_for_effect = on_next.clone();
+
+        Effect::new(move |_| {
+            if !previous_attached.get() {
+                if let Some(previous_element) = previous_ref_for_effect.get() {
+                    if let Some(callback) = on_previous_for_effect.clone() {
+                        let click_closure: Closure<dyn FnMut(Event)> =
+                            Closure::wrap(Box::new(move |event: Event| {
+                                event.prevent_default();
+                                callback();
+                            }));
+
+                        previous_element
+                            .add_event_listener_with_callback(
+                                "click",
+                                click_closure.as_ref().unchecked_ref(),
+                            )
+                            .ok();
+
+                        click_closure.forget();
+                    }
+
+                    previous_attached.set(true);
+                }
+            }
+
+            if !next_attached.get() {
+                if let Some(next_element) = next_ref_for_effect.get() {
+                    if let Some(callback) = on_next_for_effect.clone() {
+                        let click_closure: Closure<dyn FnMut(Event)> =
+                            Closure::wrap(Box::new(move |event: Event| {
+                                event.prevent_default();
+                                callback();
+                            }));
+
+                        next_element
+                            .add_event_listener_with_callback(
+                                "click",
+                                click_closure.as_ref().unchecked_ref(),
+                            )
+                            .ok();
+
+                        click_closure.forget();
+                    }
+
+                    next_attached.set(true);
+                }
+            }
+        });
+    }
 
     view! {
         <nav
@@ -143,8 +202,20 @@ pub fn Pagination(
             attr:data-testid=move || data_testid.clone()
             attr:data-cy=move || data_cy.clone()
         >
-            <a class="pagination-previous" on:click=prev_click>{previous_label.get()}</a>
-            <a class="pagination-next" on:click=next_click>{next_label.get()}</a>
+            <a
+                node_ref=previous_ref
+                class="pagination-previous"
+                href="#"
+            >
+                {previous_label.get()}
+            </a>
+            <a
+                node_ref=next_ref
+                class="pagination-next"
+                href="#"
+            >
+                {next_label.get()}
+            </a>
             <ul class="pagination-list">
                 {children()}
             </ul>
@@ -192,15 +263,6 @@ pub fn PaginationItem(
         }
     };
 
-    let click = {
-        let on_click = on_click.clone();
-        move |_| {
-            if let Some(cb) = &on_click {
-                cb();
-            }
-        }
-    };
-
     // Derive specific optional attributes that our macro can render.
     let (data_testid, data_cy) = match &test_attr {
         Some(ta) if ta.key == "data-testid" => (Some(ta.value.clone()), None),
@@ -208,11 +270,55 @@ pub fn PaginationItem(
         _ => (None, None),
     };
 
+    // Workaround for tachys 0.2.11 panic "callback removed before attaching":
+    // avoid `on:click` and attach click listener manually on wasm32.
+    let item_ref: NodeRef<html::A> = NodeRef::new();
+
+    #[cfg(target_arch = "wasm32")]
+    {
+        use leptos::wasm_bindgen::JsCast;
+        use leptos::wasm_bindgen::closure::Closure;
+        use leptos::web_sys::Event;
+
+        let has_attached = Rc::new(Cell::new(false));
+        let item_ref_for_effect = item_ref.clone();
+        let on_click_for_effect = on_click.clone();
+
+        Effect::new(move |_| {
+            if has_attached.get() {
+                return;
+            }
+
+            let Some(anchor_element) = item_ref_for_effect.get() else {
+                return;
+            };
+
+            let Some(callback) = on_click_for_effect.clone() else {
+                has_attached.set(true);
+                return;
+            };
+
+            let click_closure: Closure<dyn FnMut(Event)> =
+                Closure::wrap(Box::new(move |event: Event| {
+                    event.prevent_default();
+                    callback();
+                }));
+
+            anchor_element
+                .add_event_listener_with_callback("click", click_closure.as_ref().unchecked_ref())
+                .ok();
+
+            has_attached.set(true);
+            click_closure.forget();
+        });
+    }
+
     view! {
         <a
+            node_ref=item_ref
             class=move || class()
             aria-label=label.get()
-            on:click=click
+            href="#"
             attr:data-testid=move || data_testid.clone()
             attr:data-cy=move || data_cy.clone()
         >

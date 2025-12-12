@@ -1,15 +1,15 @@
 use leptos::html;
+use leptos::prelude::Effect;
 use leptos::prelude::{
     ClassAttribute, CustomAttribute, Get, GetUntracked, IntoAny, IntoView, NodeRef,
-    NodeRefAttribute, OnAttribute, PropAttribute, Signal, component, event_target_value, view,
+    NodeRefAttribute, Signal, component, view,
 };
-// use crate-level conditional logging macro
-// Bring conditional logging macro into scope
-use crate::lbc_log;
-use std::fmt;
-use std::rc::Rc;
 
+use crate::lbc_log;
 use crate::util::{Size, TestAttr};
+
+use std::fmt;
+use std::sync::Arc;
 
 /// The 5 allowed types for an input component (Bulma-focused).
 /// https://bulma.io/documentation/form/input/
@@ -35,8 +35,8 @@ impl fmt::Display for InputType {
     }
 }
 
-fn size_class(sz: Size) -> &'static str {
-    match sz {
+fn size_class(size: Size) -> &'static str {
+    match size {
         Size::Small => "is-small",
         Size::Normal => "is-normal",
         Size::Medium => "is-medium",
@@ -47,6 +47,17 @@ fn size_class(sz: Size) -> &'static str {
 /// A text input element following Bulma styles.
 /// All LBC form components are controlled: the value is provided by a parent,
 /// and changes are propagated through the `update` callback.
+///
+/// NOTE ABOUT EVENT HANDLING (tachys 0.2.11):
+/// We intentionally avoid `on:*` event bindings here because tachys can panic
+/// with "callback removed before attaching" during route transitions/rebuilds.
+/// Instead, on wasm32 we attach DOM listeners manually after mount.
+///
+/// NOTE ABOUT CLEANUP:
+/// `on_cleanup` requires `Send + Sync`, but `web_sys`/`wasm_bindgen::Closure` are not
+/// `Send`/`Sync`. To keep builds working on wasm32, we intentionally leak the JS
+/// closures via `forget()` after attaching. This avoids the Send/Sync bound and
+/// prevents the tachys panic path.
 #[component]
 pub fn Input(
     /// The `name` attribute for this form element.
@@ -58,7 +69,7 @@ pub fn Input(
     value: Signal<String>,
 
     /// The callback used to propagate changes to the parent.
-    update: Rc<dyn Fn(String)>,
+    update: Arc<dyn Fn(String) + Send + Sync + 'static>,
 
     /// Extra classes to apply to the input.
     #[prop(optional, into)]
@@ -108,7 +119,12 @@ pub fn Input(
     test_attr: Option<TestAttr>,
 ) -> impl IntoView {
     let input_type = r#type.unwrap_or(InputType::Text);
+
+    // We always use a NodeRef so we can attach DOM listeners on wasm32.
     let input_ref: NodeRef<html::Input> = NodeRef::new();
+
+    // Avoid capturing reactive signals in event handlers; keep a plain String for logs/attrs.
+    let name_for_logs = name.get_untracked();
 
     let class = {
         let classes = classes.clone();
@@ -122,8 +138,8 @@ pub fn Input(
             if !extra.trim().is_empty() {
                 parts.push(extra);
             }
-            if let Some(sz) = size {
-                parts.push(size_class(sz).to_string());
+            if let Some(size) = size {
+                parts.push(size_class(size).to_string());
             }
             if rounded.get() {
                 parts.push("is-rounded".to_string());
@@ -138,65 +154,6 @@ pub fn Input(
         }
     };
 
-    // Text-like handler: forward the current target value to the parent via `update`
-    let on_input_text = {
-        let update = update.clone();
-        move |ev| {
-            let new_value = event_target_value(&ev);
-            lbc_log!(
-                "<Input> on:input (text) name='{}' -> '{}'",
-                name.get_untracked(),
-                new_value
-            );
-            (update)(new_value);
-        }
-    };
-
-    // Number handler: ensure validity message mirrors Yew behavior, then forward value
-    let on_input_number = {
-        let update = update.clone();
-        let input_ref = input_ref.clone();
-        move |ev| {
-            let new_value = event_target_value(&ev);
-            if let Some(input) = input_ref.get() {
-                input.set_custom_validity("");
-                let is_valid = input.check_validity();
-                if !new_value.trim().is_empty() && !is_valid {
-                    input.set_custom_validity(
-                        "Please enter a number with up to two decimal places.",
-                    );
-                }
-                lbc_log!(
-                    "<Input> on:input (number) name='{}' -> '{}' | valid={}",
-                    name.get_untracked(),
-                    new_value,
-                    is_valid
-                );
-            }
-            (update)(new_value);
-        }
-    };
-
-    let on_invalid = {
-        let input_ref = input_ref.clone();
-        move |_| {
-            if let Some(input) = input_ref.get() {
-                if input.value().is_empty() {
-                    input.set_custom_validity("");
-                } else {
-                    input.set_custom_validity(
-                        "Please enter a number with up to two decimal places.",
-                    );
-                }
-                lbc_log!(
-                    "<Input> on:invalid name='{}' current='{}'",
-                    name.get_untracked(),
-                    input.value()
-                );
-            }
-        }
-    };
-
     let numeric_step = step.unwrap_or(1.0).to_string();
 
     let (data_testid, data_cy) = match &test_attr {
@@ -205,35 +162,139 @@ pub fn Input(
         _ => (None, None),
     };
 
-    // Render-time debug logging
     lbc_log!(
         "<Input> render name='{}' type='{}' initial='{}'",
-        name.get_untracked(),
+        name_for_logs,
         input_type,
         value.get_untracked()
     );
 
+    // Attach DOM listeners manually on wasm32 to avoid tachys event attachment panics.
+    #[cfg(target_arch = "wasm32")]
+    {
+        use leptos::wasm_bindgen::JsCast;
+        use leptos::wasm_bindgen::closure::Closure;
+        use leptos::web_sys::{Event, HtmlInputElement};
+
+        let update_for_effect = Arc::clone(&update);
+        let input_ref_for_effect = input_ref.clone();
+        let name_for_logs_for_effect = name_for_logs.clone();
+        let input_type_for_effect = input_type;
+
+        Effect::new(move |_| {
+            let Some(input_element) = input_ref_for_effect.get() else {
+                // Not mounted yet; nothing to attach.
+                return;
+            };
+
+            let input_element: HtmlInputElement = input_element.into();
+
+            // "input" listener
+            let update_for_input = Arc::clone(&update_for_effect);
+            let name_for_logs_for_input = name_for_logs_for_effect.clone();
+            let input_closure: Closure<dyn FnMut(Event)> =
+                Closure::wrap(Box::new(move |event: Event| {
+                    let target_input = event
+                        .target()
+                        .and_then(|target| target.dyn_into::<HtmlInputElement>().ok());
+
+                    let Some(target_input) = target_input else {
+                        return;
+                    };
+
+                    let new_value: String = target_input.value();
+
+                    if matches!(input_type_for_effect, InputType::Number) {
+                        target_input.set_custom_validity("");
+                        let is_valid = target_input.check_validity();
+                        if !new_value.trim().is_empty() && !is_valid {
+                            target_input.set_custom_validity(
+                                "Please enter a number with up to two decimal places.",
+                            );
+                        }
+                        lbc_log!(
+                            "<Input> DOM input (number) name='{}' -> '{}' | valid={}",
+                            name_for_logs_for_input,
+                            new_value,
+                            is_valid
+                        );
+                    } else {
+                        lbc_log!(
+                            "<Input> DOM input (text) name='{}' -> '{}'",
+                            name_for_logs_for_input,
+                            new_value
+                        );
+                    }
+
+                    (update_for_input)(new_value);
+                }));
+
+            input_element
+                .add_event_listener_with_callback("input", input_closure.as_ref().unchecked_ref())
+                .ok();
+
+            // "invalid" listener (only meaningful for number input)
+            let invalid_closure: Option<Closure<dyn FnMut(Event)>> =
+                if matches!(input_type_for_effect, InputType::Number) {
+                    let name_for_logs_for_invalid = name_for_logs_for_effect.clone();
+                    Some(Closure::wrap(Box::new(move |event: Event| {
+                        let target_input = event
+                            .target()
+                            .and_then(|target| target.dyn_into::<HtmlInputElement>().ok());
+
+                        let Some(target_input) = target_input else {
+                            return;
+                        };
+
+                        if target_input.value().is_empty() {
+                            target_input.set_custom_validity("");
+                        } else {
+                            target_input.set_custom_validity(
+                                "Please enter a number with up to two decimal places.",
+                            );
+                        }
+
+                        lbc_log!(
+                            "<Input> DOM invalid name='{}' current='{}'",
+                            name_for_logs_for_invalid,
+                            target_input.value()
+                        );
+                    })))
+                } else {
+                    None
+                };
+
+            if let Some(invalid_closure) = invalid_closure.as_ref() {
+                input_element
+                    .add_event_listener_with_callback(
+                        "invalid",
+                        invalid_closure.as_ref().unchecked_ref(),
+                    )
+                    .ok();
+            }
+
+            // Keep closures alive for the lifetime of the page/app.
+            // This avoids `on_cleanup`'s Send+Sync requirement (JS values are not Send/Sync).
+            input_closure.forget();
+            if let Some(invalid_closure) = invalid_closure {
+                invalid_closure.forget();
+            }
+        });
+    }
+
+    // NOTE:
+    // We intentionally bind `value` as an attribute (not `prop:value`) to avoid
+    // tachys "property removed early" panics introduced/triggered by newer versions.
     view! {
         {
             if matches!(input_type, InputType::Number) {
                 view! {
                     <input
-                        name=name.get_untracked()
-                        // Use reactive property binding so changes from parent update the input
-                        prop:value=move || {
-                            let v = value.get();
-                            lbc_log!(
-                                "<Input> prop:value update (number) name='{}' -> '{}'",
-                                name.get_untracked(),
-                                v
-                            );
-                            v
-                        }
+                        name=name_for_logs.clone()
+                        value=move || value.get()
                         class=move || class()
                         type=input_type.to_string()
                         node_ref=input_ref
-                        on:input=on_input_number
-                        on:invalid=on_invalid
                         placeholder=placeholder.get_untracked()
                         disabled=disabled.get_untracked()
                         readonly=readonly.get_untracked()
@@ -242,31 +303,24 @@ pub fn Input(
                         attr:data-testid=move || data_testid.clone()
                         attr:data-cy=move || data_cy.clone()
                     />
-                }.into_any()
+                }
+                .into_any()
             } else {
                 view! {
                     <input
-                        name=name.get_untracked()
-                        // Use reactive property binding so changes from parent update the input
-                        prop:value=move || {
-                            let v = value.get();
-                            lbc_log!(
-                                "<Input> prop:value update (text) name='{}' -> '{}'",
-                                name.get_untracked(),
-                                v
-                            );
-                            v
-                        }
-                        on:input=on_input_text
+                        name=name_for_logs.clone()
+                        value=move || value.get()
                         class=move || class()
                         type=input_type.to_string()
+                        node_ref=input_ref
                         placeholder=placeholder.get_untracked()
                         disabled=disabled.get_untracked()
                         readonly=readonly.get_untracked()
                         attr:data-testid=move || data_testid.clone()
                         attr:data-cy=move || data_cy.clone()
                     />
-                }.into_any()
+                }
+                .into_any()
             }
         }
     }
@@ -277,10 +331,10 @@ mod tests {
     use super::*;
     use leptos::prelude::RenderHtml;
 
-    use std::rc::Rc;
+    use std::sync::Arc;
 
-    fn noop() -> Rc<dyn Fn(String)> {
-        Rc::new(|_value: String| {})
+    fn noop() -> Arc<dyn Fn(String) + Send + Sync + 'static> {
+        Arc::new(|_value: String| {})
     }
 
     #[test]
@@ -372,13 +426,13 @@ mod tests {
 #[cfg(all(test, target_arch = "wasm32"))]
 mod wasm_tests {
     use super::*;
-    use crate::util::{Size, TestAttr};
+    use crate::util::TestAttr;
     use leptos::prelude::*;
-    use std::rc::Rc;
+    use std::sync::Arc;
     use wasm_bindgen_test::*;
 
-    fn noop() -> Rc<dyn Fn(String)> {
-        Rc::new(|_value: String| {})
+    fn noop() -> Arc<dyn Fn(String) + Send + Sync + 'static> {
+        Arc::new(|_value: String| {})
     }
 
     wasm_bindgen_test_configure!(run_in_browser);
@@ -399,10 +453,7 @@ mod wasm_tests {
 
     #[wasm_bindgen_test]
     fn input_no_test_attr_when_not_provided() {
-        let html = view! {
-            <Input name="username" value="" update=noop() />
-        }
-        .to_html();
+        let html = view! { <Input name="username" value="" update=noop() /> }.to_html();
 
         assert!(
             !html.contains("data-testid") && !html.contains("data-cy"),
