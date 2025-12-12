@@ -107,6 +107,7 @@ pub fn Select(
         let has_attached = Rc::new(Cell::new(false));
         let select_ref_for_effect = select_ref.clone();
         let update_for_effect = update.clone();
+        let initial_value_for_effect = initial_value.clone();
 
         Effect::new(move |_| {
             if has_attached.get() {
@@ -116,6 +117,13 @@ pub fn Select(
             let Some(select_element) = select_ref_for_effect.get() else {
                 return;
             };
+
+            // Ensure the initial selected value is applied after mount.
+            // We avoid `value=` bindings in the view macro because Leptos 0.8 doesn't
+            // provide a `value` builder for <select> and tachys can be sensitive to
+            // reactive property bindings.
+            let select_element: HtmlSelectElement = select_element.into();
+            select_element.set_value(&initial_value_for_effect);
 
             let update_for_input = update_for_effect.clone();
 
@@ -150,7 +158,6 @@ pub fn Select(
             <select
                 node_ref=select_ref
                 name=name_value
-                value=initial_value
                 disabled=is_disabled
             >
                 {children()}
@@ -178,7 +185,7 @@ pub fn MultiSelect(
     #[prop(into)]
     value: Signal<Vec<String>>,
 
-    /// The callback to be used for propagating changes to this element's value.
+    /// The callback to be used for propagating changes to this form element's value.
     update: Arc<dyn Fn(Vec<String>) + Send + Sync>,
 
     /// The `option` and `optgroup` tags of this select component.
@@ -246,11 +253,12 @@ pub fn MultiSelect(
     {
         use leptos::wasm_bindgen::closure::Closure;
         use leptos::wasm_bindgen::JsCast;
-        use leptos::web_sys::{Event, HtmlSelectElement};
+        use leptos::web_sys::{Event, HtmlOptionElement, HtmlSelectElement};
 
         let has_attached = Rc::new(Cell::new(false));
         let select_ref_for_effect = select_ref.clone();
         let update_for_effect = update.clone();
+        let initial_values_for_effect = initial_values.clone();
 
         Effect::new(move |_| {
             if has_attached.get() {
@@ -260,6 +268,27 @@ pub fn MultiSelect(
             let Some(select_element) = select_ref_for_effect.get() else {
                 return;
             };
+
+            let select_element: HtmlSelectElement = select_element.into();
+
+            // Apply initial selected values after mount.
+            // We mark options as selected by iterating the options collection.
+            let options = select_element.options();
+            for option_index in 0..options.length() {
+                let Some(option_node) = options.item(option_index) else {
+                    continue;
+                };
+
+                let Ok(option_element) = option_node.dyn_into::<HtmlOptionElement>() else {
+                    continue;
+                };
+
+                let should_select = initial_values_for_effect
+                    .iter()
+                    .any(|selected_value| selected_value == &option_element.value());
+
+                option_element.set_selected(should_select);
+            }
 
             let update_for_input = update_for_effect.clone();
 
@@ -276,9 +305,15 @@ pub fn MultiSelect(
                     let selected_options = target_select.selected_options();
                     let mut selected_values = Vec::new();
                     for index in 0..selected_options.length() {
-                        if let Some(option) = selected_options.item(index) {
-                            selected_values.push(option.value());
-                        }
+                        let Some(option_node) = selected_options.item(index) else {
+                            continue;
+                        };
+
+                        let Ok(option_element) = option_node.dyn_into::<HtmlOptionElement>() else {
+                            continue;
+                        };
+
+                        selected_values.push(option_element.value());
                     }
 
                     (update_for_input)(selected_values);
@@ -306,7 +341,6 @@ pub fn MultiSelect(
                 name=name_value
                 disabled=is_disabled
             >
-                // Mark initial selected options without reactive bindings.
                 {children()}
             </select>
         </div>
