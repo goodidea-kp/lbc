@@ -6,8 +6,8 @@ use lbc::prelude::{
 use leptos::context::provide_context;
 use leptos::html;
 use leptos::prelude::{
-    ClassAttribute, Effect, ElementChild, Get, IntoAny, IntoView, NodeRef, Set, component,
-    set_timeout, signal, view,
+    ClassAttribute, Effect, ElementChild, Get, IntoAny, IntoView, NodeRef, NodeRefAttribute, Set,
+    component, set_timeout, signal, view,
 };
 
 #[cfg(target_arch = "wasm32")]
