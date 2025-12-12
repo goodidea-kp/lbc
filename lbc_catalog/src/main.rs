@@ -206,7 +206,7 @@ fn HomePage() -> impl IntoView {
 fn install_panic_logging() {
     use std::panic;
 
-    use js_sys::{Error, Reflect};
+    use js_sys::{Function, Reflect};
     use leptos::wasm_bindgen::JsValue;
     use leptos::web_sys::console;
 
@@ -228,14 +228,28 @@ fn install_panic_logging() {
         console::error_1(&JsValue::from_str(&format!("Message: {payload}")));
         console::error_1(&JsValue::from_str(&format!("Location: {location}")));
 
-        let js_error = Error::new("panic stack capture");
-        let stack_value = Reflect::get(&js_error, &JsValue::from_str("stack")).ok();
+        // Capture a JS stack without going through wasm-bindgen shims for Error::new.
+        // Equivalent JS: `new Error().stack`
+        let stack_function = Function::new_no_args("return (new Error()).stack;");
+        let stack_value = stack_function.call0(&JsValue::NULL).ok();
         if let Some(stack_value) = stack_value {
             if let Some(stack) = stack_value.as_string() {
                 if !stack.trim().is_empty() {
                     console::error_1(&JsValue::from_str("JS stack:"));
                     console::error_1(&JsValue::from_str(&stack));
                 }
+            }
+        }
+
+        // Also try to log the current location.href for context.
+        let href_value = Reflect::get(
+            &leptos::web_sys::window().unwrap().location(),
+            &JsValue::from_str("href"),
+        )
+        .ok();
+        if let Some(href_value) = href_value {
+            if let Some(href) = href_value.as_string() {
+                console::error_1(&JsValue::from_str(&format!("URL: {href}")));
             }
         }
 
