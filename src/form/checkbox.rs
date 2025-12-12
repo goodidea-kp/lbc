@@ -1,5 +1,8 @@
+use std::cell::Cell;
+use std::rc::Rc;
 use std::sync::Arc;
 
+use leptos::html;
 use leptos::prelude::*;
 
 use crate::util::TestAttr;
@@ -11,6 +14,11 @@ use crate::util::TestAttr;
 /// Controlled component:
 /// - `checked` is the current value (supports static bool or reactive signal).
 /// - `update` is an optional callback invoked with the next value when the user clicks.
+///
+/// NOTE (tachys 0.2.11):
+/// - Avoid `prop:checked` to prevent "property removed early" panics.
+/// - Avoid `on:*` event bindings to prevent "callback removed before attaching" panics.
+///   We attach the click listener manually on wasm32.
 #[component]
 pub fn Checkbox(
     /// The `name` attribute for this form element.
@@ -54,22 +62,65 @@ pub fn Checkbox(
         }
     };
 
-    let on_click = {
-        let checked = checked.clone();
-        let update = update.clone();
-        move |_| {
-            if let Some(handler) = update.as_ref() {
-                let next = !checked.get();
-                (handler)(next);
-            }
-        }
-    };
-
     let (data_testid, data_cy) = match &test_attr {
         Some(attr) if attr.key == "data-testid" => (Some(attr.value.clone()), None),
         Some(attr) if attr.key == "data-cy" => (None, Some(attr.value.clone())),
         _ => (None, None),
     };
+
+    // Workaround for tachys 0.2.11:
+    // - avoid `on:click`
+    // - attach click listener manually on wasm32
+    let input_ref: NodeRef<html::Input> = NodeRef::new();
+
+    #[cfg(target_arch = "wasm32")]
+    {
+        use leptos::wasm_bindgen::closure::Closure;
+        use leptos::wasm_bindgen::JsCast;
+        use leptos::web_sys::{Event, HtmlInputElement};
+
+        let has_attached = Rc::new(Cell::new(false));
+        let input_ref_for_effect = input_ref.clone();
+        let checked_for_effect = checked.clone();
+        let update_for_effect = update.clone();
+
+        Effect::new(move |_| {
+            if has_attached.get() {
+                return;
+            }
+
+            let Some(input_element) = input_ref_for_effect.get() else {
+                return;
+            };
+
+            let Some(update_callback) = update_for_effect.clone() else {
+                has_attached.set(true);
+                return;
+            };
+
+            let click_closure: Closure<dyn FnMut(Event)> =
+                Closure::wrap(Box::new(move |event: Event| {
+                    let target_input = event
+                        .target()
+                        .and_then(|target| target.dyn_into::<HtmlInputElement>().ok());
+
+                    let Some(_target_input) = target_input else {
+                        return;
+                    };
+
+                    // Controlled component: compute next value from current signal.
+                    let next_value = !checked_for_effect.get();
+                    (update_callback)(next_value);
+                }));
+
+            input_element
+                .add_event_listener_with_callback("click", click_closure.as_ref().unchecked_ref())
+                .ok();
+
+            has_attached.set(true);
+            click_closure.forget();
+        });
+    }
 
     view! {
         <label
@@ -78,10 +129,11 @@ pub fn Checkbox(
             attr:data-cy=move || data_cy.clone()
         >
             <input
+                node_ref=input_ref
                 type="checkbox"
                 name=name.clone()
-                prop:checked=checked
-                on:click=on_click
+                // Avoid `prop:checked` to prevent tachys "property removed early" panic.
+                checked=move || checked.get()
                 disabled=disabled
             />
             {children()}
