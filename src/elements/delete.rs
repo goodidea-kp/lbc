@@ -10,6 +10,8 @@ use leptos::prelude::{
     AnyView, Children, ClassAttribute, CustomAttribute, Effect, ElementChild, Get, IntoAny,
     IntoView, NodeRef, NodeRefAttribute, Signal, component, view,
 };
+use std::cell::Cell;
+use std::rc::Rc;
 use std::sync::Arc;
 
 use crate::util::TestAttr;
@@ -66,25 +68,40 @@ pub fn Delete(
 
     // Workaround for tachys 0.2.11 panic "callback removed before attaching":
     // avoid `on:click` and attach the click listener manually on wasm32.
+    //
+    // IMPORTANT:
+    // `Effect::new` can run multiple times; re-attaching listeners during rebuilds can
+    // still trip tachys lifecycle edge cases. We guard to attach only once.
     #[cfg(target_arch = "wasm32")]
-    fn attach_click_listener<E: JsCast + Clone + 'static>(
+    fn attach_click_listener_once<E: Clone + 'static>(
         element_ref: NodeRef<E>,
         on_click: Option<Arc<dyn Fn(MouseEvent) + Send + Sync>>,
-    ) {
+    ) where
+        E: Into<leptos::web_sys::EventTarget>,
+    {
         use leptos::wasm_bindgen::closure::Closure;
         use leptos::wasm_bindgen::JsCast;
         use leptos::web_sys::Event;
 
+        let has_attached = Rc::new(Cell::new(false));
         let on_click_for_effect = on_click.clone();
 
         Effect::new(move |_| {
+            if has_attached.get() {
+                return;
+            }
+
             let Some(element) = element_ref.get() else {
                 return;
             };
 
             let Some(on_click_callback) = on_click_for_effect.clone() else {
+                // No callback: nothing to attach, but mark as attached to avoid re-running.
+                has_attached.set(true);
                 return;
             };
+
+            let event_target: leptos::web_sys::EventTarget = element.into();
 
             let click_closure: Closure<dyn FnMut(Event)> =
                 Closure::wrap(Box::new(move |event: Event| {
@@ -94,11 +111,12 @@ pub fn Delete(
                     (on_click_callback)(mouse_event);
                 }));
 
-            element
+            event_target
                 .add_event_listener_with_callback("click", click_closure.as_ref().unchecked_ref())
                 .ok();
 
-            // Keep closure alive for the lifetime of the page/app.
+            // Mark attached and keep closure alive for the lifetime of the page/app.
+            has_attached.set(true);
             click_closure.forget();
         });
     }
@@ -108,7 +126,7 @@ pub fn Delete(
             let element_ref: NodeRef<html::A> = NodeRef::new();
 
             #[cfg(target_arch = "wasm32")]
-            attach_click_listener(element_ref.clone(), on_click.clone());
+            attach_click_listener_once(element_ref.clone(), on_click.clone());
 
             view! {
                 <a
@@ -126,7 +144,7 @@ pub fn Delete(
             let element_ref: NodeRef<html::Span> = NodeRef::new();
 
             #[cfg(target_arch = "wasm32")]
-            attach_click_listener(element_ref.clone(), on_click.clone());
+            attach_click_listener_once(element_ref.clone(), on_click.clone());
 
             view! {
                 <span
@@ -144,7 +162,7 @@ pub fn Delete(
             let element_ref: NodeRef<html::Div> = NodeRef::new();
 
             #[cfg(target_arch = "wasm32")]
-            attach_click_listener(element_ref.clone(), on_click.clone());
+            attach_click_listener_once(element_ref.clone(), on_click.clone());
 
             view! {
                 <div
@@ -163,7 +181,7 @@ pub fn Delete(
             let element_ref: NodeRef<html::Button> = NodeRef::new();
 
             #[cfg(target_arch = "wasm32")]
-            attach_click_listener(element_ref.clone(), on_click.clone());
+            attach_click_listener_once(element_ref.clone(), on_click.clone());
 
             view! {
                 <button
