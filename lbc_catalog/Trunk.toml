@@ -1,4 +1,2 @@
 [build]
-# Make the output directory explicit to avoid staging path issues.
-dist = "dist"
 public_url = "/"
