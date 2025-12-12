@@ -17,39 +17,7 @@ use std::sync::Arc;
 use crate::util::TestAttr;
 
 #[cfg(target_arch = "wasm32")]
-fn console_log(message: &str) {
-    use leptos::wasm_bindgen::JsValue;
-    use leptos::web_sys::console;
-
-    console::log_1(&JsValue::from_str(message));
-}
-
-#[cfg(not(target_arch = "wasm32"))]
-fn console_log(message: &str) {
-    println!("{message}");
-}
-
-#[cfg(target_arch = "wasm32")]
-fn next_instance_id() -> u32 {
-    thread_local! {
-        static NEXT_ID: Cell<u32> = Cell::new(1);
-    }
-
-    NEXT_ID.with(|cell| {
-        let id = cell.get();
-        cell.set(id.saturating_add(1));
-        id
-    })
-}
-
-#[cfg(not(target_arch = "wasm32"))]
-fn next_instance_id() -> u32 {
-    0
-}
-
-#[cfg(target_arch = "wasm32")]
 fn attach_click_listener_once_for_button(
-    instance_id: u32,
     element_ref: NodeRef<html::Button>,
     on_click: Option<Arc<dyn Fn(MouseEvent) + Send + Sync>>,
 ) {
@@ -61,34 +29,15 @@ fn attach_click_listener_once_for_button(
     let on_click_for_effect = on_click.clone();
 
     Effect::new(move |_| {
-        console_log(&format!(
-            "[Delete#{instance_id}] effect(button) tick has_attached={} has_on_click={}",
-            has_attached.get(),
-            on_click_for_effect.is_some()
-        ));
-
         if has_attached.get() {
-            console_log(&format!(
-                "[Delete#{instance_id}] effect(button): already attached, skipping"
-            ));
             return;
         }
 
         let Some(element) = element_ref.get() else {
-            console_log(&format!(
-                "[Delete#{instance_id}] effect(button): element_ref.get() -> None (not mounted yet)"
-            ));
             return;
         };
 
-        console_log(&format!(
-            "[Delete#{instance_id}] effect(button): element_ref.get() -> Some(element)"
-        ));
-
         let Some(on_click_callback) = on_click_for_effect.clone() else {
-            console_log(&format!(
-                "[Delete#{instance_id}] effect(button): no on_click callback; marking attached"
-            ));
             has_attached.set(true);
             return;
         };
@@ -96,48 +45,24 @@ fn attach_click_listener_once_for_button(
         let event_target: EventTarget = element.unchecked_into::<EventTarget>();
 
         let click_closure: Closure<dyn FnMut(Event)> = Closure::wrap(Box::new(move |event: Event| {
-            console_log(&format!("[Delete#{instance_id}] DOM click handler fired (button)"));
-
             let Ok(mouse_event) = event.dyn_into::<MouseEvent>() else {
-                console_log(&format!(
-                    "[Delete#{instance_id}] DOM click handler: failed to dyn_into::<MouseEvent>() (button)"
-                ));
                 return;
             };
 
             (on_click_callback)(mouse_event);
         }));
 
-        console_log(&format!(
-            "[Delete#{instance_id}] effect(button): attaching DOM click listener"
-        ));
-
-        let attach_result = event_target.add_event_listener_with_callback(
-            "click",
-            click_closure.as_ref().unchecked_ref(),
-        );
-
-        match attach_result {
-            Ok(()) => console_log(&format!(
-                "[Delete#{instance_id}] effect(button): add_event_listener_with_callback OK"
-            )),
-            Err(error) => console_log(&format!(
-                "[Delete#{instance_id}] effect(button): add_event_listener_with_callback ERR: {:?}",
-                error
-            )),
-        }
+        event_target
+            .add_event_listener_with_callback("click", click_closure.as_ref().unchecked_ref())
+            .ok();
 
         has_attached.set(true);
-        console_log(&format!(
-            "[Delete#{instance_id}] effect(button): marked attached; leaking closure via forget()"
-        ));
         click_closure.forget();
     });
 }
 
 #[cfg(target_arch = "wasm32")]
 fn attach_click_listener_once_for_anchor(
-    instance_id: u32,
     element_ref: NodeRef<html::A>,
     on_click: Option<Arc<dyn Fn(MouseEvent) + Send + Sync>>,
 ) {
@@ -149,34 +74,15 @@ fn attach_click_listener_once_for_anchor(
     let on_click_for_effect = on_click.clone();
 
     Effect::new(move |_| {
-        console_log(&format!(
-            "[Delete#{instance_id}] effect(a) tick has_attached={} has_on_click={}",
-            has_attached.get(),
-            on_click_for_effect.is_some()
-        ));
-
         if has_attached.get() {
-            console_log(&format!(
-                "[Delete#{instance_id}] effect(a): already attached, skipping"
-            ));
             return;
         }
 
         let Some(element) = element_ref.get() else {
-            console_log(&format!(
-                "[Delete#{instance_id}] effect(a): element_ref.get() -> None (not mounted yet)"
-            ));
             return;
         };
 
-        console_log(&format!(
-            "[Delete#{instance_id}] effect(a): element_ref.get() -> Some(element)"
-        ));
-
         let Some(on_click_callback) = on_click_for_effect.clone() else {
-            console_log(&format!(
-                "[Delete#{instance_id}] effect(a): no on_click callback; marking attached"
-            ));
             has_attached.set(true);
             return;
         };
@@ -184,48 +90,24 @@ fn attach_click_listener_once_for_anchor(
         let event_target: EventTarget = element.unchecked_into::<EventTarget>();
 
         let click_closure: Closure<dyn FnMut(Event)> = Closure::wrap(Box::new(move |event: Event| {
-            console_log(&format!("[Delete#{instance_id}] DOM click handler fired (a)"));
-
             let Ok(mouse_event) = event.dyn_into::<MouseEvent>() else {
-                console_log(&format!(
-                    "[Delete#{instance_id}] DOM click handler: failed to dyn_into::<MouseEvent>() (a)"
-                ));
                 return;
             };
 
             (on_click_callback)(mouse_event);
         }));
 
-        console_log(&format!(
-            "[Delete#{instance_id}] effect(a): attaching DOM click listener"
-        ));
-
-        let attach_result = event_target.add_event_listener_with_callback(
-            "click",
-            click_closure.as_ref().unchecked_ref(),
-        );
-
-        match attach_result {
-            Ok(()) => console_log(&format!(
-                "[Delete#{instance_id}] effect(a): add_event_listener_with_callback OK"
-            )),
-            Err(error) => console_log(&format!(
-                "[Delete#{instance_id}] effect(a): add_event_listener_with_callback ERR: {:?}",
-                error
-            )),
-        }
+        event_target
+            .add_event_listener_with_callback("click", click_closure.as_ref().unchecked_ref())
+            .ok();
 
         has_attached.set(true);
-        console_log(&format!(
-            "[Delete#{instance_id}] effect(a): marked attached; leaking closure via forget()"
-        ));
         click_closure.forget();
     });
 }
 
 #[cfg(target_arch = "wasm32")]
 fn attach_click_listener_once_for_span(
-    instance_id: u32,
     element_ref: NodeRef<html::Span>,
     on_click: Option<Arc<dyn Fn(MouseEvent) + Send + Sync>>,
 ) {
@@ -237,34 +119,15 @@ fn attach_click_listener_once_for_span(
     let on_click_for_effect = on_click.clone();
 
     Effect::new(move |_| {
-        console_log(&format!(
-            "[Delete#{instance_id}] effect(span) tick has_attached={} has_on_click={}",
-            has_attached.get(),
-            on_click_for_effect.is_some()
-        ));
-
         if has_attached.get() {
-            console_log(&format!(
-                "[Delete#{instance_id}] effect(span): already attached, skipping"
-            ));
             return;
         }
 
         let Some(element) = element_ref.get() else {
-            console_log(&format!(
-                "[Delete#{instance_id}] effect(span): element_ref.get() -> None (not mounted yet)"
-            ));
             return;
         };
 
-        console_log(&format!(
-            "[Delete#{instance_id}] effect(span): element_ref.get() -> Some(element)"
-        ));
-
         let Some(on_click_callback) = on_click_for_effect.clone() else {
-            console_log(&format!(
-                "[Delete#{instance_id}] effect(span): no on_click callback; marking attached"
-            ));
             has_attached.set(true);
             return;
         };
@@ -272,48 +135,24 @@ fn attach_click_listener_once_for_span(
         let event_target: EventTarget = element.unchecked_into::<EventTarget>();
 
         let click_closure: Closure<dyn FnMut(Event)> = Closure::wrap(Box::new(move |event: Event| {
-            console_log(&format!("[Delete#{instance_id}] DOM click handler fired (span)"));
-
             let Ok(mouse_event) = event.dyn_into::<MouseEvent>() else {
-                console_log(&format!(
-                    "[Delete#{instance_id}] DOM click handler: failed to dyn_into::<MouseEvent>() (span)"
-                ));
                 return;
             };
 
             (on_click_callback)(mouse_event);
         }));
 
-        console_log(&format!(
-            "[Delete#{instance_id}] effect(span): attaching DOM click listener"
-        ));
-
-        let attach_result = event_target.add_event_listener_with_callback(
-            "click",
-            click_closure.as_ref().unchecked_ref(),
-        );
-
-        match attach_result {
-            Ok(()) => console_log(&format!(
-                "[Delete#{instance_id}] effect(span): add_event_listener_with_callback OK"
-            )),
-            Err(error) => console_log(&format!(
-                "[Delete#{instance_id}] effect(span): add_event_listener_with_callback ERR: {:?}",
-                error
-            )),
-        }
+        event_target
+            .add_event_listener_with_callback("click", click_closure.as_ref().unchecked_ref())
+            .ok();
 
         has_attached.set(true);
-        console_log(&format!(
-            "[Delete#{instance_id}] effect(span): marked attached; leaking closure via forget()"
-        ));
         click_closure.forget();
     });
 }
 
 #[cfg(target_arch = "wasm32")]
 fn attach_click_listener_once_for_div(
-    instance_id: u32,
     element_ref: NodeRef<html::Div>,
     on_click: Option<Arc<dyn Fn(MouseEvent) + Send + Sync>>,
 ) {
@@ -325,34 +164,15 @@ fn attach_click_listener_once_for_div(
     let on_click_for_effect = on_click.clone();
 
     Effect::new(move |_| {
-        console_log(&format!(
-            "[Delete#{instance_id}] effect(div) tick has_attached={} has_on_click={}",
-            has_attached.get(),
-            on_click_for_effect.is_some()
-        ));
-
         if has_attached.get() {
-            console_log(&format!(
-                "[Delete#{instance_id}] effect(div): already attached, skipping"
-            ));
             return;
         }
 
         let Some(element) = element_ref.get() else {
-            console_log(&format!(
-                "[Delete#{instance_id}] effect(div): element_ref.get() -> None (not mounted yet)"
-            ));
             return;
         };
 
-        console_log(&format!(
-            "[Delete#{instance_id}] effect(div): element_ref.get() -> Some(element)"
-        ));
-
         let Some(on_click_callback) = on_click_for_effect.clone() else {
-            console_log(&format!(
-                "[Delete#{instance_id}] effect(div): no on_click callback; marking attached"
-            ));
             has_attached.set(true);
             return;
         };
@@ -360,41 +180,18 @@ fn attach_click_listener_once_for_div(
         let event_target: EventTarget = element.unchecked_into::<EventTarget>();
 
         let click_closure: Closure<dyn FnMut(Event)> = Closure::wrap(Box::new(move |event: Event| {
-            console_log(&format!("[Delete#{instance_id}] DOM click handler fired (div)"));
-
             let Ok(mouse_event) = event.dyn_into::<MouseEvent>() else {
-                console_log(&format!(
-                    "[Delete#{instance_id}] DOM click handler: failed to dyn_into::<MouseEvent>() (div)"
-                ));
                 return;
             };
 
             (on_click_callback)(mouse_event);
         }));
 
-        console_log(&format!(
-            "[Delete#{instance_id}] effect(div): attaching DOM click listener"
-        ));
-
-        let attach_result = event_target.add_event_listener_with_callback(
-            "click",
-            click_closure.as_ref().unchecked_ref(),
-        );
-
-        match attach_result {
-            Ok(()) => console_log(&format!(
-                "[Delete#{instance_id}] effect(div): add_event_listener_with_callback OK"
-            )),
-            Err(error) => console_log(&format!(
-                "[Delete#{instance_id}] effect(div): add_event_listener_with_callback ERR: {:?}",
-                error
-            )),
-        }
+        event_target
+            .add_event_listener_with_callback("click", click_closure.as_ref().unchecked_ref())
+            .ok();
 
         has_attached.set(true);
-        console_log(&format!(
-            "[Delete#{instance_id}] effect(div): marked attached; leaking closure via forget()"
-        ));
         click_closure.forget();
     });
 }
@@ -421,8 +218,6 @@ pub fn Delete(
     #[prop(optional, into)]
     test_attr: Option<TestAttr>,
 ) -> AnyView {
-    let instance_id = next_instance_id();
-
     // Build class attribute: "delete [extra classes]"
     let mut class_attr = String::from("delete");
 
@@ -438,12 +233,6 @@ pub fn Delete(
         .as_ref()
         .map(|tag| tag.get().to_lowercase())
         .unwrap_or_else(|| "button".to_string());
-
-    console_log(&format!(
-        "[Delete#{instance_id}] render start tag='{tag_name}' class='{class_attr}' has_on_click={} has_test_attr={}",
-        on_click.is_some(),
-        test_attr.is_some()
-    ));
 
     // Render children only if provided; otherwise render nothing.
     let content = match children {
@@ -462,7 +251,7 @@ pub fn Delete(
             let element_ref: NodeRef<html::A> = NodeRef::new();
 
             #[cfg(target_arch = "wasm32")]
-            attach_click_listener_once_for_anchor(instance_id, element_ref.clone(), on_click.clone());
+            attach_click_listener_once_for_anchor(element_ref.clone(), on_click.clone());
 
             view! {
                 <a
@@ -480,7 +269,7 @@ pub fn Delete(
             let element_ref: NodeRef<html::Span> = NodeRef::new();
 
             #[cfg(target_arch = "wasm32")]
-            attach_click_listener_once_for_span(instance_id, element_ref.clone(), on_click.clone());
+            attach_click_listener_once_for_span(element_ref.clone(), on_click.clone());
 
             view! {
                 <span
@@ -498,7 +287,7 @@ pub fn Delete(
             let element_ref: NodeRef<html::Div> = NodeRef::new();
 
             #[cfg(target_arch = "wasm32")]
-            attach_click_listener_once_for_div(instance_id, element_ref.clone(), on_click.clone());
+            attach_click_listener_once_for_div(element_ref.clone(), on_click.clone());
 
             view! {
                 <div
@@ -517,7 +306,7 @@ pub fn Delete(
             let element_ref: NodeRef<html::Button> = NodeRef::new();
 
             #[cfg(target_arch = "wasm32")]
-            attach_click_listener_once_for_button(instance_id, element_ref.clone(), on_click.clone());
+            attach_click_listener_once_for_button(element_ref.clone(), on_click.clone());
 
             view! {
                 <button

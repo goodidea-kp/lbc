@@ -14,19 +14,6 @@ use leptos::prelude::{
 use std::sync::Arc;
 use std::time::Duration;
 
-#[cfg(target_arch = "wasm32")]
-fn console_log(message: &str) {
-    use leptos::wasm_bindgen::JsValue;
-    use leptos::web_sys::console;
-
-    console::log_1(&JsValue::from_str(message));
-}
-
-#[cfg(not(target_arch = "wasm32"))]
-fn console_log(message: &str) {
-    println!("{message}");
-}
-
 #[component]
 pub fn DeletePage() -> impl IntoView {
     let (is_confirming, set_is_confirming) = signal(false);
@@ -36,21 +23,13 @@ pub fn DeletePage() -> impl IntoView {
     let prompt_text = "configration to continue for Delete";
 
     let delete_click = Arc::new(move |_| {
-        console_log("[DeletePage] Delete (button) clicked -> show confirmation");
         set_is_confirming.set(true);
         set_user_choice.set(None);
     });
 
     let anchor_delete_click = Arc::new(move |_| {
-        console_log("[DeletePage] Delete (anchor) clicked -> show toast");
         set_show_toast.set(true);
-        set_timeout(
-            move || {
-                console_log("[DeletePage] toast timeout -> hide toast");
-                set_show_toast.set(false);
-            },
-            Duration::from_secs(2),
-        );
+        set_timeout(move || set_show_toast.set(false), Duration::from_secs(2));
     });
 
     // Workaround for tachys 0.2.11 panic "callback removed before attaching":
@@ -76,7 +55,6 @@ pub fn DeletePage() -> impl IntoView {
 
             let click_closure: Closure<dyn FnMut(Event)> =
                 Closure::wrap(Box::new(move |_event: Event| {
-                    console_log("[DeletePage] Continue clicked");
                     set_user_choice_for_effect.set(Some(true));
                     set_is_confirming_for_effect.set(false);
                 }));
@@ -100,7 +78,6 @@ pub fn DeletePage() -> impl IntoView {
 
             let click_closure: Closure<dyn FnMut(Event)> =
                 Closure::wrap(Box::new(move |_event: Event| {
-                    console_log("[DeletePage] Cancel clicked");
                     set_user_choice_for_effect.set(Some(false));
                     set_is_confirming_for_effect.set(false);
                 }));
