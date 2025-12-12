@@ -1,7 +1,7 @@
 use leptos::html;
 use leptos::prelude::{
-    ClassAttribute, CustomAttribute, Get, GetUntracked, IntoAny, IntoView, NodeRef,
-    NodeRefAttribute, Signal, component, view,
+    ClassAttribute, CustomAttribute, Effect, Get, GetUntracked, IntoAny, IntoView, NodeRef,
+    NodeRefAttribute, Signal, component, on_cleanup, view,
 };
 
 use crate::lbc_log;
@@ -165,17 +165,16 @@ pub fn Input(
     // Attach DOM listeners manually on wasm32 to avoid tachys event attachment panics.
     #[cfg(target_arch = "wasm32")]
     {
-        use leptos::prelude::use_effect;
-        use wasm_bindgen::closure::Closure;
-        use wasm_bindgen::JsCast;
-        use web_sys::{Event, HtmlInputElement};
+        use leptos::wasm_bindgen::closure::Closure;
+        use leptos::wasm_bindgen::JsCast;
+        use leptos::web_sys::{Event, HtmlInputElement};
 
         let update_for_effect = Arc::clone(&update);
         let input_ref_for_effect = input_ref.clone();
         let name_for_logs_for_effect = name_for_logs.clone();
         let input_type_for_effect = input_type;
 
-        use_effect(move || {
+        Effect::new(move |_| {
             let Some(input_element) = input_ref_for_effect.get() else {
                 // Not mounted yet; nothing to attach.
                 return;
@@ -186,40 +185,42 @@ pub fn Input(
             // "input" listener
             let update_for_input = Arc::clone(&update_for_effect);
             let name_for_logs_for_input = name_for_logs_for_effect.clone();
-            let input_closure: Closure<dyn FnMut(Event)> = Closure::wrap(Box::new(move |event: Event| {
-                let target = event
-                    .target()
-                    .and_then(|t| t.dyn_into::<HtmlInputElement>().ok());
+            let input_closure: Closure<dyn FnMut(Event)> =
+                Closure::wrap(Box::new(move |event: Event| {
+                    let target_input = event
+                        .target()
+                        .and_then(|target| target.dyn_into::<HtmlInputElement>().ok());
 
-                let Some(target_input) = target else {
-                    return;
-                };
+                    let Some(target_input) = target_input else {
+                        return;
+                    };
 
-                let new_value = target_input.value();
+                    let new_value: String = target_input.value();
 
-                if matches!(input_type_for_effect, InputType::Number) {
-                    target_input.set_custom_validity("");
-                    let is_valid = target_input.check_validity();
-                    if !new_value.trim().is_empty() && !is_valid {
-                        target_input
-                            .set_custom_validity("Please enter a number with up to two decimal places.");
+                    if matches!(input_type_for_effect, InputType::Number) {
+                        target_input.set_custom_validity("");
+                        let is_valid = target_input.check_validity();
+                        if !new_value.trim().is_empty() && !is_valid {
+                            target_input.set_custom_validity(
+                                "Please enter a number with up to two decimal places.",
+                            );
+                        }
+                        lbc_log!(
+                            "<Input> DOM input (number) name='{}' -> '{}' | valid={}",
+                            name_for_logs_for_input,
+                            new_value,
+                            is_valid
+                        );
+                    } else {
+                        lbc_log!(
+                            "<Input> DOM input (text) name='{}' -> '{}'",
+                            name_for_logs_for_input,
+                            new_value
+                        );
                     }
-                    lbc_log!(
-                        "<Input> DOM input (number) name='{}' -> '{}' | valid={}",
-                        name_for_logs_for_input,
-                        new_value,
-                        is_valid
-                    );
-                } else {
-                    lbc_log!(
-                        "<Input> DOM input (text) name='{}' -> '{}'",
-                        name_for_logs_for_input,
-                        new_value
-                    );
-                }
 
-                (update_for_input)(new_value);
-            }));
+                    (update_for_input)(new_value);
+                }));
 
             input_element
                 .add_event_listener_with_callback("input", input_closure.as_ref().unchecked_ref())
@@ -230,19 +231,20 @@ pub fn Input(
                 if matches!(input_type_for_effect, InputType::Number) {
                     let name_for_logs_for_invalid = name_for_logs_for_effect.clone();
                     Some(Closure::wrap(Box::new(move |event: Event| {
-                        let target = event
+                        let target_input = event
                             .target()
-                            .and_then(|t| t.dyn_into::<HtmlInputElement>().ok());
+                            .and_then(|target| target.dyn_into::<HtmlInputElement>().ok());
 
-                        let Some(target_input) = target else {
+                        let Some(target_input) = target_input else {
                             return;
                         };
 
                         if target_input.value().is_empty() {
                             target_input.set_custom_validity("");
                         } else {
-                            target_input
-                                .set_custom_validity("Please enter a number with up to two decimal places.");
+                            target_input.set_custom_validity(
+                                "Please enter a number with up to two decimal places.",
+                            );
                         }
 
                         lbc_log!(
@@ -264,8 +266,7 @@ pub fn Input(
                     .ok();
             }
 
-            // Cleanup: remove listeners and drop closures.
-            move || {
+            on_cleanup(move || {
                 input_element
                     .remove_event_listener_with_callback(
                         "input",
@@ -284,7 +285,7 @@ pub fn Input(
 
                 drop(invalid_closure);
                 drop(input_closure);
-            }
+            });
         });
     }
 
