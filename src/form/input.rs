@@ -8,7 +8,7 @@ use crate::lbc_log;
 use crate::util::{Size, TestAttr};
 
 use std::fmt;
-use std::rc::Rc;
+use std::sync::Arc;
 
 /// The 5 allowed types for an input component (Bulma-focused).
 /// https://bulma.io/documentation/form/input/
@@ -57,7 +57,7 @@ pub fn Input(
     value: Signal<String>,
 
     /// The callback used to propagate changes to the parent.
-    update: Rc<dyn Fn(String)>,
+    update: Arc<dyn Fn(String) + Send + Sync + 'static>,
 
     /// Extra classes to apply to the input.
     #[prop(optional, into)]
@@ -139,7 +139,7 @@ pub fn Input(
 
     // Text-like handler: forward the current target value to the parent via `update`
     let on_input_text = {
-        let update = update.clone();
+        let update = Arc::clone(&update);
         move |event| {
             let new_value = event_target_value(&event);
             lbc_log!(
@@ -153,7 +153,7 @@ pub fn Input(
 
     // Number handler: ensure validity message mirrors Yew behavior, then forward value
     let on_input_number = {
-        let update = update.clone();
+        let update = Arc::clone(&update);
         let input_ref = input_ref.clone();
         move |event| {
             let new_value = event_target_value(&event);
@@ -261,10 +261,10 @@ mod tests {
     use super::*;
     use leptos::prelude::RenderHtml;
 
-    use std::rc::Rc;
+    use std::sync::Arc;
 
-    fn noop() -> Rc<dyn Fn(String)> {
-        Rc::new(|_value: String| {})
+    fn noop() -> Arc<dyn Fn(String) + Send + Sync + 'static> {
+        Arc::new(|_value: String| {})
     }
 
     #[test]
@@ -358,11 +358,11 @@ mod wasm_tests {
     use super::*;
     use crate::util::TestAttr;
     use leptos::prelude::*;
-    use std::rc::Rc;
+    use std::sync::Arc;
     use wasm_bindgen_test::*;
 
-    fn noop() -> Rc<dyn Fn(String)> {
-        Rc::new(|_value: String| {})
+    fn noop() -> Arc<dyn Fn(String) + Send + Sync + 'static> {
+        Arc::new(|_value: String| {})
     }
 
     wasm_bindgen_test_configure!(run_in_browser);

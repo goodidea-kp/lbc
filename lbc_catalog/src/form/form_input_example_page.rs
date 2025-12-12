@@ -1,9 +1,11 @@
 use lbc::prelude::{
     Block, Button, Content, Control, Field, HeaderSize, Input, InputType, Size, Subtitle, Title,
 };
-use leptos::prelude::{AddAnyAttr, ClassAttribute, ElementChild, Get, IntoView, Set, component, signal, view};
-use std::rc::Rc;
-use lbc::util::{TestAttr};
+use leptos::prelude::{
+    AddAnyAttr, ClassAttribute, ElementChild, Get, IntoView, Set, component, signal, view,
+};
+use lbc::util::TestAttr;
+use std::sync::Arc;
 
 /// Example page showcasing the Input form component.
 #[component]
@@ -30,15 +32,24 @@ pub fn FormInputPage() -> impl IntoView {
                 <Field label="Your name" help="Type something here">
                     <Control>
                         <Input
-                            test_attr = TestAttr::new("input","input")
+                            test_attr=TestAttr::new("input","input")
                             name="name"
                             value=text_value
                             placeholder="Your name"
-                            update=Rc::new(move |v| { lbc::lbc_log!("[Page] update(name) -> '{}'", v); set_text_value.set(v) })
+                            update=Arc::new(move |value| {
+                                lbc::lbc_log!("[Page] update(name) -> '{}'", value);
+                                set_text_value.set(value);
+                            })
                         />
                     </Control>
                     <Control>
-                        <Button size=Size::Small on:click=move |_| { lbc::lbc_log!("[Page] Clear clicked for name"); set_text_value.set(String::new()) }>
+                        <Button
+                            size=Size::Small
+                            on:click=move |_| {
+                                lbc::lbc_log!("[Page] Clear clicked for name");
+                                set_text_value.set(String::new())
+                            }
+                        >
                             "Clear"
                         </Button>
                     </Control>
@@ -53,7 +64,10 @@ pub fn FormInputPage() -> impl IntoView {
                             value=small_value
                             placeholder="Small"
                             size=Size::Small
-                            update=Rc::new(move |v| { lbc::lbc_log!("[Page] update(small) -> '{}'", v); set_small_value.set(v) })
+                            update=Arc::new(move |value| {
+                                lbc::lbc_log!("[Page] update(small) -> '{}'", value);
+                                set_small_value.set(value);
+                            })
                         />
                         <p class="help">"Small: " {move || small_value.get()}</p>
                     </Control>
@@ -63,7 +77,10 @@ pub fn FormInputPage() -> impl IntoView {
                             value=normal_value
                             placeholder="Normal"
                             size=Size::Normal
-                            update=Rc::new(move |v| { lbc::lbc_log!("[Page] update(normal) -> '{}'", v); set_normal_value.set(v) })
+                            update=Arc::new(move |value| {
+                                lbc::lbc_log!("[Page] update(normal) -> '{}'", value);
+                                set_normal_value.set(value);
+                            })
                         />
                         <p class="help">"Normal: " {move || normal_value.get()}</p>
                     </Control>
@@ -73,7 +90,10 @@ pub fn FormInputPage() -> impl IntoView {
                             value=medium_value
                             placeholder="Medium"
                             size=Size::Medium
-                            update=Rc::new(move |v| { lbc::lbc_log!("[Page] update(medium) -> '{}'", v); set_medium_value.set(v) })
+                            update=Arc::new(move |value| {
+                                lbc::lbc_log!("[Page] update(medium) -> '{}'", value);
+                                set_medium_value.set(value);
+                            })
                         />
                         <p class="help">"Medium: " {move || medium_value.get()}</p>
                     </Control>
@@ -83,7 +103,10 @@ pub fn FormInputPage() -> impl IntoView {
                             value=large_value
                             placeholder="Large"
                             size=Size::Large
-                            update=Rc::new(move |v| { lbc::lbc_log!("[Page] update(large) -> '{}'", v); set_large_value.set(v) })
+                            update=Arc::new(move |value| {
+                                lbc::lbc_log!("[Page] update(large) -> '{}'", value);
+                                set_large_value.set(value);
+                            })
                         />
                         <p class="help">"Large: " {move || large_value.get()}</p>
                     </Control>
@@ -93,7 +116,10 @@ pub fn FormInputPage() -> impl IntoView {
                             value=rounded_value
                             placeholder="Rounded"
                             rounded=true
-                            update=Rc::new(move |v| { lbc::lbc_log!("[Page] update(rounded) -> '{}'", v); set_rounded_value.set(v) })
+                            update=Arc::new(move |value| {
+                                lbc::lbc_log!("[Page] update(rounded) -> '{}'", value);
+                                set_rounded_value.set(value);
+                            })
                         />
                         <p class="help">"Rounded: " {move || rounded_value.get()}</p>
                     </Control>
@@ -102,7 +128,10 @@ pub fn FormInputPage() -> impl IntoView {
                             name="readonly"
                             value=readonly_value
                             readonly=true
-                            update=Rc::new(move |v| { lbc::lbc_log!("[Page] update(readonly) -> '{}'", v); set_readonly_value.set(v) })
+                            update=Arc::new(move |value| {
+                                lbc::lbc_log!("[Page] update(readonly) -> '{}'", value);
+                                set_readonly_value.set(value);
+                            })
                         />
                         <p class="help">"Read-only: " {move || readonly_value.get()}</p>
                     </Control>
@@ -111,7 +140,10 @@ pub fn FormInputPage() -> impl IntoView {
                             name="disabled"
                             value=disabled_value
                             disabled=true
-                            update=Rc::new(move |v| { lbc::lbc_log!("[Page] update(disabled) -> '{}'", v); set_disabled_value.set(v) })
+                            update=Arc::new(move |value| {
+                                lbc::lbc_log!("[Page] update(disabled) -> '{}'", value);
+                                set_disabled_value.set(value);
+                            })
                         />
                         <p class="help">"Disabled: " {move || disabled_value.get()}</p>
                     </Control>
@@ -120,7 +152,10 @@ pub fn FormInputPage() -> impl IntoView {
                             name="static"
                             value=static_value
                             r#static=true
-                            update=Rc::new(move |v| { lbc::lbc_log!("[Page] update(static) -> '{}'", v); set_static_value.set(v) })
+                            update=Arc::new(move |value| {
+                                lbc::lbc_log!("[Page] update(static) -> '{}'", value);
+                                set_static_value.set(value);
+                            })
                         />
                         <p class="help">"Static: " {move || static_value.get()}</p>
                     </Control>
@@ -135,7 +170,10 @@ pub fn FormInputPage() -> impl IntoView {
                             r#type=InputType::Number
                             step=1.0
                             placeholder="123.45"
-                            update=Rc::new(move |v| { lbc::lbc_log!("[Page] update(amount) -> '{}'", v); set_number_value.set(v) })
+                            update=Arc::new(move |value| {
+                                lbc::lbc_log!("[Page] update(amount) -> '{}'", value);
+                                set_number_value.set(value);
+                            })
                         />
                     </Control>
                 </Field>
@@ -148,7 +186,7 @@ pub fn FormInputPage() -> impl IntoView {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use leptos::prelude::{RenderHtml, GetUntracked};
+    use leptos::prelude::{GetUntracked, RenderHtml};
 
     // Verifies that clicking the "Clear" button empties the Input with selector 'attr:input'
     #[test]
@@ -161,11 +199,14 @@ mod tests {
             <Field label="Your name">
                 <Control>
                     <Input
-                        test_attr = TestAttr::new("input","input")
+                        test_attr=TestAttr::new("input","input")
                         name="name"
                         value=text_value.get_untracked()
                         placeholder="Your name"
-                        update=Rc::new({ let set_text_value = set_text_value.clone(); move |v| set_text_value.set(v) })
+                        update=Arc::new({
+                            let set_text_value = set_text_value.clone();
+                            move |value| set_text_value.set(value)
+                        })
                     />
                 </Control>
                 <Control>
@@ -174,10 +215,15 @@ mod tests {
                     </Button>
                 </Control>
             </Field>
-        }.to_html();
+        }
+        .to_html();
 
         // Ensure the initial value is present
-        assert!(html_before.contains(r#"value="John""#), "expected initial input value in: {}", html_before);
+        assert!(
+            html_before.contains(r#"value="John""#),
+            "expected initial input value in: {}",
+            html_before
+        );
 
         // Emulate clicking the Clear button by invoking the setter (same effect as on:click)
         set_text_value.set(String::new());
@@ -187,11 +233,14 @@ mod tests {
             <Field label="Your name">
                 <Control>
                     <Input
-                        test_attr = TestAttr::new("input","input")
+                        test_attr=TestAttr::new("input","input")
                         name="name"
                         value=text_value.get_untracked()
                         placeholder="Your name"
-                        update=Rc::new({ let set_text_value = set_text_value.clone(); move |v| set_text_value.set(v) })
+                        update=Arc::new({
+                            let set_text_value = set_text_value.clone();
+                            move |value| set_text_value.set(value)
+                        })
                     />
                 </Control>
                 <Control>
@@ -200,8 +249,13 @@ mod tests {
                     </Button>
                 </Control>
             </Field>
-        }.to_html();
+        }
+        .to_html();
 
-        assert!(html_after.contains(r#"value="""#), "expected empty input value after Clear in: {}", html_after);
+        assert!(
+            html_after.contains(r#"value="""#),
+            "expected empty input value after Clear in: {}",
+            html_after
+        );
     }
 }
