@@ -1,6 +1,10 @@
+use std::cell::Cell;
+use std::rc::Rc;
+
+use leptos::html;
 use leptos::prelude::{
-    ClassAttribute, CustomAttribute, ElementChild, Get, IntoAny, IntoView, OnAttribute, Signal,
-    component, view,
+    ClassAttribute, CustomAttribute, Effect, ElementChild, Get, GetUntracked, IntoAny, IntoView,
+    NodeRef, NodeRefAttribute, Signal, component, view,
 };
 
 #[cfg(target_arch = "wasm32")]
@@ -17,6 +21,11 @@ use crate::util::{Size, TestAttr};
 /// Controlled component:
 /// - `files` is the current value (supports static Vec<File> or reactive signal).
 /// - `update` is a required callback invoked with the selected files on change.
+///
+/// NOTE (tachys 0.2.11):
+/// - Avoid `on:*` event bindings to prevent "callback removed before attaching" panics.
+///   We attach the change listener manually on wasm32.
+/// - We keep the component compiling on non-wasm targets by using a placeholder file type.
 #[component]
 pub fn File(
     /// The `name` attribute for this form element.
@@ -133,21 +142,52 @@ pub fn File(
 
     let icon_view = || view! { <span class="file-icon"></span> }.into_any();
 
-    #[cfg(target_arch = "wasm32")]
-    let on_change = {
-        move |_ev: leptos::ev::Event| {
-            // File APIs are not available via leptos::web_sys re-export in this build.
-            // No-op placeholder to keep the component compiling under wasm32 without extra deps.
-        }
-    };
-    #[cfg(not(target_arch = "wasm32"))]
-    let on_change = |_ev: leptos::ev::Event| { /* no-op on non-wasm targets */ };
-
     let (data_testid, data_cy) = match &test_attr {
         Some(attr) if attr.key == "data-testid" => (Some(attr.value.clone()), None),
         Some(attr) if attr.key == "data-cy" => (None, Some(attr.value.clone())),
         _ => (None, None),
     };
+
+    // Workaround for tachys 0.2.11 panic "callback removed before attaching":
+    // avoid `on:change` and attach the change listener manually on wasm32.
+    let input_ref: NodeRef<html::Input> = NodeRef::new();
+
+    #[cfg(target_arch = "wasm32")]
+    {
+        use leptos::wasm_bindgen::closure::Closure;
+        use leptos::wasm_bindgen::JsCast;
+        use leptos::web_sys::{Event, HtmlInputElement};
+
+        let has_attached = Rc::new(Cell::new(false));
+        let input_ref_for_effect = input_ref.clone();
+        let update_for_effect = _update.clone();
+
+        Effect::new(move |_| {
+            if has_attached.get() {
+                return;
+            }
+
+            let Some(input_element) = input_ref_for_effect.get() else {
+                return;
+            };
+
+            let input_element: HtmlInputElement = input_element.into();
+
+            let change_closure: Closure<dyn FnMut(Event)> =
+                Closure::wrap(Box::new(move |_event: Event| {
+                    // Placeholder behavior: we don't currently extract real File objects.
+                    // We still call update with an empty list to keep the controlled contract.
+                    (update_for_effect)(Vec::<LbcSysFile>::new());
+                }));
+
+            input_element
+                .add_event_listener_with_callback("change", change_closure.as_ref().unchecked_ref())
+                .ok();
+
+            has_attached.set(true);
+            change_closure.forget();
+        });
+    }
 
     view! {
         <div
@@ -157,11 +197,11 @@ pub fn File(
         >
             <label class="file-label">
                 <input
+                    node_ref=input_ref
                     type="file"
                     class="file-input"
                     name=name.clone()
                     multiple=move || multiple.get()
-                    on:change=on_change
                 />
                 <span class="file-cta">
                     {icon_view()}
