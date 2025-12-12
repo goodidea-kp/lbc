@@ -1,8 +1,13 @@
-use leptos::prelude::{
-    Children, ClassAttribute, CustomAttribute, ElementChild, Get, IntoView, OnAttribute, Signal,
-    component, view,
-};
+use std::cell::Cell;
+use std::rc::Rc;
 use std::sync::Arc;
+
+use leptos::ev::Event;
+use leptos::html;
+use leptos::prelude::{
+    Children, ClassAttribute, CustomAttribute, Effect, ElementChild, Get, GetUntracked, IntoView,
+    NodeRef, NodeRefAttribute, Signal, component, view,
+};
 
 use crate::util::TestAttr;
 
@@ -13,6 +18,11 @@ use crate::util::TestAttr;
 /// All LBC form components are controlled components. This means that the value of the field must
 /// be provided from a parent component, and changes to this component are propagated to the parent
 /// component via callback.
+///
+/// NOTE (tachys 0.2.11):
+/// - Avoid `on:*` event bindings to prevent "callback removed before attaching" panics.
+///   We attach the input listener manually on wasm32.
+/// - Avoid reactive attribute closures where possible; compute stable values once.
 #[component]
 pub fn Radio(
     /// The `name` attribute for this form element.
@@ -53,36 +63,24 @@ pub fn Radio(
     #[prop(optional, into)]
     test_attr: Option<TestAttr>,
 ) -> impl IntoView {
-    // Compute Bulma "radio" class plus any extras provided by consumer.
-    let class = {
-        let classes = classes.clone();
-        move || {
-            let extra = classes.get().trim().to_string();
-            if extra.is_empty() {
-                "radio".to_string()
-            } else {
-                format!("radio {}", extra)
-            }
-        }
-    };
+    // Compute stable values once to reduce reactive bindings.
+    let name_value = name.get_untracked();
+    let value_value = value.get_untracked();
 
-    // Determine whether this radio is currently checked by comparing the group's checked_value with this radio's value.
-    let is_checked = move || {
-        if let Some(cv) = &checked_value {
-            cv == &value.get()
+    let class_value = {
+        let extra = classes.get_untracked().trim().to_string();
+        if extra.is_empty() {
+            "radio".to_string()
         } else {
-            false
+            format!("radio {}", extra)
         }
     };
 
-    // When user selects this radio, propagate this radio's value to the parent.
-    let on_input = {
-        let update = update.clone();
-        let value = value.clone();
-        move |_| {
-            (update)(value.get());
-        }
-    };
+    let is_disabled = disabled.get_untracked();
+
+    let is_checked = checked_value
+        .as_ref()
+        .is_some_and(|checked_value| checked_value == &value_value);
 
     let (data_testid, data_cy) = match &test_attr {
         Some(attr) if attr.key == "data-testid" => (Some(attr.value.clone()), None),
@@ -90,19 +88,61 @@ pub fn Radio(
         _ => (None, None),
     };
 
+    // Workaround for tachys 0.2.11 panic "callback removed before attaching":
+    // avoid `on:input` and attach the input listener manually on wasm32.
+    let input_ref: NodeRef<html::Input> = NodeRef::new();
+
+    #[cfg(target_arch = "wasm32")]
+    {
+        use leptos::wasm_bindgen::closure::Closure;
+        use leptos::wasm_bindgen::JsCast;
+        use leptos::web_sys::Event as WebEvent;
+
+        let has_attached = Rc::new(Cell::new(false));
+        let input_ref_for_effect = input_ref.clone();
+        let update_for_effect = update.clone();
+        let value_for_effect = value_value.clone();
+
+        Effect::new(move |_| {
+            if has_attached.get() {
+                return;
+            }
+
+            let Some(input_element) = input_ref_for_effect.get() else {
+                return;
+            };
+
+            // Clone inside the effect so the effect closure remains FnMut.
+            let update_for_input = update_for_effect.clone();
+            let value_for_input = value_for_effect.clone();
+
+            let input_closure: Closure<dyn FnMut(WebEvent)> =
+                Closure::wrap(Box::new(move |_event: WebEvent| {
+                    (update_for_input)(value_for_input.clone());
+                }));
+
+            input_element
+                .add_event_listener_with_callback("input", input_closure.as_ref().unchecked_ref())
+                .ok();
+
+            has_attached.set(true);
+            input_closure.forget();
+        });
+    }
+
     view! {
         <label
-            class=move || class()
-            attr:data-testid=move || data_testid.clone()
-            attr:data-cy=move || data_cy.clone()
+            class=class_value
+            attr:data-testid=data_testid
+            attr:data-cy=data_cy
         >
             <input
+                node_ref=input_ref
                 type="radio"
-                name=name.get()
-                value=value.get()
-                checked=is_checked()
-                on:input=on_input
-                disabled=disabled.get()
+                name=name_value
+                value=value_value
+                checked=is_checked
+                disabled=is_disabled
             />
             {children()}
         </label>
