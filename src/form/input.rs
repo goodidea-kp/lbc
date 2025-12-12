@@ -1,7 +1,7 @@
 use leptos::html;
 use leptos::prelude::{
     ClassAttribute, CustomAttribute, Effect, Get, GetUntracked, IntoAny, IntoView, NodeRef,
-    NodeRefAttribute, Signal, component, on_cleanup, view,
+    NodeRefAttribute, Signal, component, view,
 };
 
 use crate::lbc_log;
@@ -51,6 +51,12 @@ fn size_class(size: Size) -> &'static str {
 /// We intentionally avoid `on:*` event bindings here because tachys can panic
 /// with "callback removed before attaching" during route transitions/rebuilds.
 /// Instead, on wasm32 we attach DOM listeners manually after mount.
+///
+/// NOTE ABOUT CLEANUP:
+/// `on_cleanup` requires `Send + Sync`, but `web_sys`/`wasm_bindgen::Closure` are not
+/// `Send`/`Sync`. To keep builds working on wasm32, we intentionally leak the JS
+/// closures via `forget()` after attaching. This avoids the Send/Sync bound and
+/// prevents the tachys panic path.
 #[component]
 pub fn Input(
     /// The `name` attribute for this form element.
@@ -266,26 +272,12 @@ pub fn Input(
                     .ok();
             }
 
-            on_cleanup(move || {
-                input_element
-                    .remove_event_listener_with_callback(
-                        "input",
-                        input_closure.as_ref().unchecked_ref(),
-                    )
-                    .ok();
-
-                if let Some(invalid_closure) = invalid_closure.as_ref() {
-                    input_element
-                        .remove_event_listener_with_callback(
-                            "invalid",
-                            invalid_closure.as_ref().unchecked_ref(),
-                        )
-                        .ok();
-                }
-
-                drop(invalid_closure);
-                drop(input_closure);
-            });
+            // Keep closures alive for the lifetime of the page/app.
+            // This avoids `on_cleanup`'s Send+Sync requirement (JS values are not Send/Sync).
+            input_closure.forget();
+            if let Some(invalid_closure) = invalid_closure {
+                invalid_closure.forget();
+            }
         });
     }
 
