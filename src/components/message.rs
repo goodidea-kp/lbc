@@ -1,8 +1,12 @@
-use leptos::prelude::{
-    AriaAttributes, Children, ClassAttribute, CustomAttribute, ElementChild, Get, IntoView,
-    OnAttribute, Set, Signal, StyleAttribute, component, view,
-};
+use std::cell::Cell;
 use std::rc::Rc;
+
+use leptos::html;
+use leptos::prelude::{
+    AriaAttributes, Children, ClassAttribute, CustomAttribute, Effect, ElementChild, Get,
+    GetUntracked, IntoView, NodeRef, NodeRefAttribute, Set, Signal, StyleAttribute, component,
+    view,
+};
 
 use crate::util::TestAttr;
 
@@ -16,6 +20,10 @@ fn base_class(extra: &str) -> String {
 
 /// Colored message blocks, to emphasize part of your page.
 /// https://bulma.io/documentation/components/message/
+///
+/// NOTE (tachys 0.2.11):
+/// - Avoid `on:*` event bindings to prevent "callback removed before attaching" panics.
+///   We attach DOM listeners manually on wasm32.
 #[component]
 pub fn Message(
     /// Extra classes to apply to the Bulma "message" container (e.g., is-primary, is-warning).
@@ -46,22 +54,63 @@ pub fn Message(
     };
 
     let (is_closed, set_is_closed) = leptos::prelude::signal(false);
-    let on_close_click = {
-        let on_close = on_close.clone();
-        move |_| {
-            if let Some(cb) = &on_close {
-                cb();
-            } else {
-                set_is_closed.set(true);
-            }
-        }
-    };
 
     let (data_testid, data_cy) = match &test_attr {
         Some(attr) if attr.key == "data-testid" => (Some(attr.value.clone()), None),
         Some(attr) if attr.key == "data-cy" => (None, Some(attr.value.clone())),
         _ => (None, None),
     };
+
+    // Workaround for tachys 0.2.11 panic "callback removed before attaching":
+    // avoid `on:click` and attach click listener manually on wasm32.
+    let close_button_ref: NodeRef<html::Button> = NodeRef::new();
+
+    #[cfg(target_arch = "wasm32")]
+    {
+        use leptos::wasm_bindgen::closure::Closure;
+        use leptos::wasm_bindgen::JsCast;
+        use leptos::web_sys::Event;
+
+        let has_attached = Rc::new(Cell::new(false));
+        let close_button_ref_for_effect = close_button_ref.clone();
+        let on_close_for_effect = on_close.clone();
+        let closable_for_effect = closable.clone();
+        let is_closed_for_effect = is_closed.clone();
+        let set_is_closed_for_effect = set_is_closed.clone();
+
+        Effect::new(move |_| {
+            if has_attached.get() {
+                return;
+            }
+
+            let Some(button_element) = close_button_ref_for_effect.get() else {
+                return;
+            };
+
+            let click_closure: Closure<dyn FnMut(Event)> =
+                Closure::wrap(Box::new(move |event: Event| {
+                    event.prevent_default();
+
+                    // If the close button isn't currently visible, ignore clicks.
+                    if !closable_for_effect.get_untracked() || is_closed_for_effect.get_untracked() {
+                        return;
+                    }
+
+                    if let Some(callback) = on_close_for_effect.as_ref() {
+                        callback();
+                    } else {
+                        set_is_closed_for_effect.set(true);
+                    }
+                }));
+
+            button_element
+                .add_event_listener_with_callback("click", click_closure.as_ref().unchecked_ref())
+                .ok();
+
+            has_attached.set(true);
+            click_closure.forget();
+        });
+    }
 
     view! {
         <article
@@ -80,14 +129,15 @@ pub fn Message(
             }
         >
             <button
+                node_ref=close_button_ref
                 class="delete is-small"
                 aria-label="delete"
+                type="button"
                 style=move || if closable.get() && !is_closed.get() {
                     "position:absolute; right:0.5rem; top:0.5rem; z-index: 10;"
                 } else {
                     "display: none;"
                 }
-                on:click=on_close_click
             />
             {children()}
         </article>
@@ -315,6 +365,22 @@ mod wasm_tests {
         assert!(
             html.contains(r#"data-testid="message-body-test""#),
             "expected data-testid attribute on MessageBody; got: {}",
+            html
+        );
+    }
+
+    #[wasm_bindgen_test]
+    fn message_closable_renders_delete_button() {
+        let html = view! {
+            <Message classes="is-primary" closable=true on_close=noop_close()>
+                <MessageBody><p>"Body"</p></MessageBody>
+            </Message>
+        }
+        .to_html();
+
+        assert!(
+            html.contains(r#"class="delete is-small""#),
+            "expected delete button when closable=true; got: {}",
             html
         );
     }
