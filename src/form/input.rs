@@ -1,7 +1,7 @@
 use leptos::html;
 use leptos::prelude::{
     ClassAttribute, CustomAttribute, Get, GetUntracked, IntoAny, IntoView, NodeRef,
-    NodeRefAttribute, OnAttribute, Signal, component, event_target_value, view,
+    NodeRefAttribute, Signal, component, view,
 };
 
 use crate::lbc_log;
@@ -46,6 +46,11 @@ fn size_class(size: Size) -> &'static str {
 /// A text input element following Bulma styles.
 /// All LBC form components are controlled: the value is provided by a parent,
 /// and changes are propagated through the `update` callback.
+///
+/// NOTE ABOUT EVENT HANDLING (tachys 0.2.11):
+/// We intentionally avoid `on:*` event bindings here because tachys can panic
+/// with "callback removed before attaching" during route transitions/rebuilds.
+/// Instead, on wasm32 we attach DOM listeners manually after mount.
 #[component]
 pub fn Input(
     /// The `name` attribute for this form element.
@@ -107,12 +112,11 @@ pub fn Input(
     test_attr: Option<TestAttr>,
 ) -> impl IntoView {
     let input_type = r#type.unwrap_or(InputType::Text);
+
+    // We always use a NodeRef so we can attach DOM listeners on wasm32.
     let input_ref: NodeRef<html::Input> = NodeRef::new();
 
-    // IMPORTANT:
-    // Avoid capturing reactive signals (like `name: Signal<String>`) inside event handlers.
-    // tachys 0.2.11 can panic ("callback removed before attaching") if the callback
-    // captures reactive values that are dropped/replaced during attachment.
+    // Avoid capturing reactive signals in event handlers; keep a plain String for logs/attrs.
     let name_for_logs = name.get_untracked();
 
     let class = {
@@ -143,64 +147,6 @@ pub fn Input(
         }
     };
 
-    // Text-like handler: forward the current target value to the parent via `update`
-    let on_input_text = {
-        let update = Arc::clone(&update);
-        let name_for_logs = name_for_logs.clone();
-        move |event| {
-            let new_value = event_target_value(&event);
-            lbc_log!(
-                "<Input> on:input (text) name='{}' -> '{}'",
-                name_for_logs,
-                new_value
-            );
-            (update)(new_value);
-        }
-    };
-
-    // Number handler: ensure validity message mirrors Yew behavior, then forward value
-    let on_input_number = {
-        let update = Arc::clone(&update);
-        let input_ref = input_ref.clone();
-        let name_for_logs = name_for_logs.clone();
-        move |event| {
-            let new_value = event_target_value(&event);
-            if let Some(input) = input_ref.get() {
-                input.set_custom_validity("");
-                let is_valid = input.check_validity();
-                if !new_value.trim().is_empty() && !is_valid {
-                    input.set_custom_validity("Please enter a number with up to two decimal places.");
-                }
-                lbc_log!(
-                    "<Input> on:input (number) name='{}' -> '{}' | valid={}",
-                    name_for_logs,
-                    new_value,
-                    is_valid
-                );
-            }
-            (update)(new_value);
-        }
-    };
-
-    let on_invalid = {
-        let input_ref = input_ref.clone();
-        let name_for_logs = name_for_logs.clone();
-        move |_| {
-            if let Some(input) = input_ref.get() {
-                if input.value().is_empty() {
-                    input.set_custom_validity("");
-                } else {
-                    input.set_custom_validity("Please enter a number with up to two decimal places.");
-                }
-                lbc_log!(
-                    "<Input> on:invalid name='{}' current='{}'",
-                    name_for_logs,
-                    input.value()
-                );
-            }
-        }
-    };
-
     let numeric_step = step.unwrap_or(1.0).to_string();
 
     let (data_testid, data_cy) = match &test_attr {
@@ -209,7 +155,6 @@ pub fn Input(
         _ => (None, None),
     };
 
-    // Render-time debug logging
     lbc_log!(
         "<Input> render name='{}' type='{}' initial='{}'",
         name_for_logs,
@@ -217,11 +162,135 @@ pub fn Input(
         value.get_untracked()
     );
 
+    // Attach DOM listeners manually on wasm32 to avoid tachys event attachment panics.
+    #[cfg(target_arch = "wasm32")]
+    {
+        use leptos::prelude::use_effect;
+        use wasm_bindgen::closure::Closure;
+        use wasm_bindgen::JsCast;
+        use web_sys::{Event, HtmlInputElement};
+
+        let update_for_effect = Arc::clone(&update);
+        let input_ref_for_effect = input_ref.clone();
+        let name_for_logs_for_effect = name_for_logs.clone();
+        let input_type_for_effect = input_type;
+
+        use_effect(move || {
+            let Some(input_element) = input_ref_for_effect.get() else {
+                // Not mounted yet; nothing to attach.
+                return;
+            };
+
+            let input_element: HtmlInputElement = input_element.into();
+
+            // "input" listener
+            let update_for_input = Arc::clone(&update_for_effect);
+            let name_for_logs_for_input = name_for_logs_for_effect.clone();
+            let input_closure: Closure<dyn FnMut(Event)> = Closure::wrap(Box::new(move |event: Event| {
+                let target = event
+                    .target()
+                    .and_then(|t| t.dyn_into::<HtmlInputElement>().ok());
+
+                let Some(target_input) = target else {
+                    return;
+                };
+
+                let new_value = target_input.value();
+
+                if matches!(input_type_for_effect, InputType::Number) {
+                    target_input.set_custom_validity("");
+                    let is_valid = target_input.check_validity();
+                    if !new_value.trim().is_empty() && !is_valid {
+                        target_input
+                            .set_custom_validity("Please enter a number with up to two decimal places.");
+                    }
+                    lbc_log!(
+                        "<Input> DOM input (number) name='{}' -> '{}' | valid={}",
+                        name_for_logs_for_input,
+                        new_value,
+                        is_valid
+                    );
+                } else {
+                    lbc_log!(
+                        "<Input> DOM input (text) name='{}' -> '{}'",
+                        name_for_logs_for_input,
+                        new_value
+                    );
+                }
+
+                (update_for_input)(new_value);
+            }));
+
+            input_element
+                .add_event_listener_with_callback("input", input_closure.as_ref().unchecked_ref())
+                .ok();
+
+            // "invalid" listener (only meaningful for number input)
+            let invalid_closure: Option<Closure<dyn FnMut(Event)>> =
+                if matches!(input_type_for_effect, InputType::Number) {
+                    let name_for_logs_for_invalid = name_for_logs_for_effect.clone();
+                    Some(Closure::wrap(Box::new(move |event: Event| {
+                        let target = event
+                            .target()
+                            .and_then(|t| t.dyn_into::<HtmlInputElement>().ok());
+
+                        let Some(target_input) = target else {
+                            return;
+                        };
+
+                        if target_input.value().is_empty() {
+                            target_input.set_custom_validity("");
+                        } else {
+                            target_input
+                                .set_custom_validity("Please enter a number with up to two decimal places.");
+                        }
+
+                        lbc_log!(
+                            "<Input> DOM invalid name='{}' current='{}'",
+                            name_for_logs_for_invalid,
+                            target_input.value()
+                        );
+                    })))
+                } else {
+                    None
+                };
+
+            if let Some(invalid_closure) = invalid_closure.as_ref() {
+                input_element
+                    .add_event_listener_with_callback(
+                        "invalid",
+                        invalid_closure.as_ref().unchecked_ref(),
+                    )
+                    .ok();
+            }
+
+            // Cleanup: remove listeners and drop closures.
+            move || {
+                input_element
+                    .remove_event_listener_with_callback(
+                        "input",
+                        input_closure.as_ref().unchecked_ref(),
+                    )
+                    .ok();
+
+                if let Some(invalid_closure) = invalid_closure.as_ref() {
+                    input_element
+                        .remove_event_listener_with_callback(
+                            "invalid",
+                            invalid_closure.as_ref().unchecked_ref(),
+                        )
+                        .ok();
+                }
+
+                drop(invalid_closure);
+                drop(input_closure);
+            }
+        });
+    }
+
     // NOTE:
     // We intentionally bind `value` as an attribute (not `prop:value`) to avoid
     // tachys "property removed early" panics introduced/triggered by newer versions.
-    // This still behaves as a controlled input because we always re-render with the
-    // latest `value` and propagate edits via `on:input`.
     view! {
         {
             if matches!(input_type, InputType::Number) {
@@ -232,8 +301,6 @@ pub fn Input(
                         class=move || class()
                         type=input_type.to_string()
                         node_ref=input_ref
-                        on:input=on_input_number
-                        on:invalid=on_invalid
                         placeholder=placeholder.get_untracked()
                         disabled=disabled.get_untracked()
                         readonly=readonly.get_untracked()
@@ -249,9 +316,9 @@ pub fn Input(
                     <input
                         name=name_for_logs.clone()
                         value=move || value.get()
-                        on:input=on_input_text
                         class=move || class()
                         type=input_type.to_string()
+                        node_ref=input_ref
                         placeholder=placeholder.get_untracked()
                         disabled=disabled.get_untracked()
                         readonly=readonly.get_untracked()
