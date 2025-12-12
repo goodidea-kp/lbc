@@ -136,6 +136,10 @@ pub fn TextArea(
     let is_readonly = readonly.get_untracked();
     let rows_value = rows.unwrap_or(0).to_string();
 
+    // Snapshot initial value once; we will apply it on mount via DOM API.
+    // This avoids using `value=` in the view macro (not supported for <textarea> in Leptos 0.8).
+    let initial_value = value.get_untracked();
+
     // Workaround for tachys 0.2.11:
     // avoid `on:input` and attach the input listener manually on wasm32.
     let textarea_ref: NodeRef<html::Textarea> = NodeRef::new();
@@ -149,6 +153,7 @@ pub fn TextArea(
         let has_attached = Rc::new(Cell::new(false));
         let textarea_ref_for_effect = textarea_ref.clone();
         let update_for_effect = update.clone();
+        let initial_value_for_effect = initial_value.clone();
 
         Effect::new(move |_| {
             if has_attached.get() {
@@ -160,6 +165,9 @@ pub fn TextArea(
             };
 
             let textarea_element: HtmlTextAreaElement = textarea_element.into();
+
+            // Apply initial value after mount.
+            textarea_element.set_value(&initial_value_for_effect);
 
             let update_for_input = update_for_effect.clone();
             let input_closure: Closure<dyn FnMut(Event)> =
@@ -204,13 +212,14 @@ pub fn TextArea(
                     <textarea
                         node_ref=textarea_ref
                         name=name_value.clone()
-                        value=move || value.get()
                         class=move || class()
                         placeholder=placeholder_value.clone()
                         disabled=is_disabled
                         readonly=is_readonly
                         rows=rows_value.clone()
-                    />
+                    >
+                        {initial_value.clone()}
+                    </textarea>
                 </div>
             }
             .into_any()
@@ -219,7 +228,6 @@ pub fn TextArea(
                 <textarea
                     node_ref=textarea_ref
                     name=name_value.clone()
-                    value=move || value.get()
                     class=move || class()
                     placeholder=placeholder_value.clone()
                     disabled=is_disabled
@@ -227,7 +235,9 @@ pub fn TextArea(
                     rows=rows_value.clone()
                     attr:data-testid=move || data_testid.clone()
                     attr:data-cy=move || data_cy.clone()
-                />
+                >
+                    {initial_value.clone()}
+                </textarea>
             }
             .into_any()
         }
