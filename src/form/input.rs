@@ -109,6 +109,12 @@ pub fn Input(
     let input_type = r#type.unwrap_or(InputType::Text);
     let input_ref: NodeRef<html::Input> = NodeRef::new();
 
+    // IMPORTANT:
+    // Avoid capturing reactive signals (like `name: Signal<String>`) inside event handlers.
+    // tachys 0.2.11 can panic ("callback removed before attaching") if the callback
+    // captures reactive values that are dropped/replaced during attachment.
+    let name_for_logs = name.get_untracked();
+
     let class = {
         let classes = classes.clone();
         let rounded = rounded.clone();
@@ -140,11 +146,12 @@ pub fn Input(
     // Text-like handler: forward the current target value to the parent via `update`
     let on_input_text = {
         let update = Arc::clone(&update);
+        let name_for_logs = name_for_logs.clone();
         move |event| {
             let new_value = event_target_value(&event);
             lbc_log!(
                 "<Input> on:input (text) name='{}' -> '{}'",
-                name.get_untracked(),
+                name_for_logs,
                 new_value
             );
             (update)(new_value);
@@ -155,6 +162,7 @@ pub fn Input(
     let on_input_number = {
         let update = Arc::clone(&update);
         let input_ref = input_ref.clone();
+        let name_for_logs = name_for_logs.clone();
         move |event| {
             let new_value = event_target_value(&event);
             if let Some(input) = input_ref.get() {
@@ -165,7 +173,7 @@ pub fn Input(
                 }
                 lbc_log!(
                     "<Input> on:input (number) name='{}' -> '{}' | valid={}",
-                    name.get_untracked(),
+                    name_for_logs,
                     new_value,
                     is_valid
                 );
@@ -176,6 +184,7 @@ pub fn Input(
 
     let on_invalid = {
         let input_ref = input_ref.clone();
+        let name_for_logs = name_for_logs.clone();
         move |_| {
             if let Some(input) = input_ref.get() {
                 if input.value().is_empty() {
@@ -185,7 +194,7 @@ pub fn Input(
                 }
                 lbc_log!(
                     "<Input> on:invalid name='{}' current='{}'",
-                    name.get_untracked(),
+                    name_for_logs,
                     input.value()
                 );
             }
@@ -203,7 +212,7 @@ pub fn Input(
     // Render-time debug logging
     lbc_log!(
         "<Input> render name='{}' type='{}' initial='{}'",
-        name.get_untracked(),
+        name_for_logs,
         input_type,
         value.get_untracked()
     );
@@ -218,7 +227,7 @@ pub fn Input(
             if matches!(input_type, InputType::Number) {
                 view! {
                     <input
-                        name=name.get_untracked()
+                        name=name_for_logs.clone()
                         value=move || value.get()
                         class=move || class()
                         type=input_type.to_string()
@@ -238,7 +247,7 @@ pub fn Input(
             } else {
                 view! {
                     <input
-                        name=name.get_untracked()
+                        name=name_for_logs.clone()
                         value=move || value.get()
                         on:input=on_input_text
                         class=move || class()
