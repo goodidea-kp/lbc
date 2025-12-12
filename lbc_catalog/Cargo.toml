@@ -2,13 +2,20 @@
 name = "lbc_catalog"
 version = "0.1.0"
 edition = "2024"
+authors = ["Konstantin Pupkov <konstantin.pupkov@fromkos.com>"]
+license = "MIT OR Apache-2.0"
+readme = "README.md"
+description = "A catalog of components built with the LBC (Leptos Bulma Components) library."
+documentation = "https://docs.rs/lbc_catalog"
+categories = ["wasm", "web-programming"]
+keywords = ["wasm", "web", "bulma", "leptos", "components"]
 
 [dependencies]
 console_error_panic_hook = "0.1.7"
-leptos = { version = "0.8.12", features = ["csr"] }
-leptos_router = "0.8.9"
+leptos = { version = "0.8.14", features = ["csr"] }
+leptos_router = "0.8.10"
 lbc = { path = ".." }
 gloo-console = "0.3.0"
 
 [dev-dependencies]
-leptos = { version = "0.8.12", features = ["ssr"] }
+leptos = { version = "0.8.14", features = ["ssr"] }
