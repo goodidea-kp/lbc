@@ -147,11 +147,14 @@ pub fn File(
                 return;
             };
 
+            // Clone inside the effect so the effect closure remains `FnMut` (not `FnOnce`).
+            let update_for_change = update_for_effect.clone();
+
             let change_closure: Closure<dyn FnMut(Event)> =
                 Closure::wrap(Box::new(move |_event: Event| {
                     // Placeholder behavior: we don't currently extract real File objects.
                     // We still call update with an empty list to keep the controlled contract.
-                    (update_for_effect)(Vec::<LbcSysFile>::new());
+                    (update_for_change)(Vec::<LbcSysFile>::new());
                 }));
 
             input_element
