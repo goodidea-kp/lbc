@@ -206,8 +206,9 @@ fn HomePage() -> impl IntoView {
 fn install_panic_logging() {
     use std::panic;
 
+    use js_sys::Error;
     use leptos::wasm_bindgen::JsValue;
-    use leptos::web_sys::{console, Error};
+    use leptos::web_sys::console;
 
     panic::set_hook(Box::new(move |panic_info| {
         let location = panic_info
@@ -228,7 +229,8 @@ fn install_panic_logging() {
         console::error_1(&JsValue::from_str(&format!("Location: {location}")));
 
         let js_error = Error::new();
-        if let Some(stack) = js_error.stack() {
+        let stack: String = js_error.stack().into();
+        if !stack.trim().is_empty() {
             console::error_1(&JsValue::from_str("JS stack:"));
             console::error_1(&JsValue::from_str(&stack));
         } else {
