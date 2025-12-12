@@ -2,8 +2,8 @@ use std::sync::Arc;
 
 use leptos::html;
 use leptos::prelude::{
-    ClassAttribute, CustomAttribute, ElementChild, Get, GetUntracked, GlobalAttributes,
-    IntoAny, IntoView, NodeRef, NodeRefAttribute, Signal, StyleAttribute, component, view,
+    ClassAttribute, CustomAttribute, ElementChild, Get, GetUntracked, GlobalAttributes, IntoAny,
+    IntoView, NodeRef, NodeRefAttribute, Signal, StyleAttribute, component, view,
 };
 
 use crate::elements::icon::Icon;

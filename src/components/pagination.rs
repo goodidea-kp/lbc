@@ -1,7 +1,7 @@
 use leptos::html;
 use leptos::prelude::{
-    AriaAttributes, Children, ClassAttribute, CustomAttribute, ElementChild, Get,
-    GlobalAttributes, IntoView, NodeRef, NodeRefAttribute, Signal, component, view,
+    AriaAttributes, Children, ClassAttribute, CustomAttribute, ElementChild, Get, GlobalAttributes,
+    IntoView, NodeRef, NodeRefAttribute, Signal, component, view,
 };
 
 use crate::util::{Size, TestAttr};

@@ -1,7 +1,7 @@
 use leptos::html;
 use leptos::prelude::{
-    ClassAttribute, CustomAttribute, ElementChild, Get, GetUntracked, IntoAny, IntoView,
-    NodeRef, NodeRefAttribute, Signal, component, view,
+    ClassAttribute, CustomAttribute, ElementChild, Get, GetUntracked, IntoAny, IntoView, NodeRef,
+    NodeRefAttribute, Signal, component, view,
 };
 
 #[cfg(target_arch = "wasm32")]

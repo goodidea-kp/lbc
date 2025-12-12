@@ -1,9 +1,8 @@
 use crate::util::TestAttr;
 use leptos::html;
 use leptos::prelude::{
-    Children, ClassAttribute, CustomAttribute, ElementChild, Get, GetUntracked,
-    GlobalAttributes, IntoAny, IntoView, NodeRef, NodeRefAttribute, Set, Signal, StyleAttribute,
-    component, view,
+    Children, ClassAttribute, CustomAttribute, ElementChild, Get, GetUntracked, GlobalAttributes,
+    IntoAny, IntoView, NodeRef, NodeRefAttribute, Set, Signal, StyleAttribute, component, view,
 };
 
 /// A Bulma dropdown menu with a trigger button.

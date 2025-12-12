@@ -2,9 +2,9 @@ use std::rc::Rc;
 
 use leptos::html;
 use leptos::prelude::{
-    AriaAttributes, Children, ClassAttribute, CustomAttribute, ElementChild, Get,
-    GetUntracked, GlobalAttributes, IntoAny, IntoView, NodeRef, NodeRefAttribute, Signal,
-    StyleAttribute, component, view,
+    AriaAttributes, Children, ClassAttribute, CustomAttribute, ElementChild, Get, GetUntracked,
+    GlobalAttributes, IntoAny, IntoView, NodeRef, NodeRefAttribute, Signal, StyleAttribute,
+    component, view,
 };
 
 use crate::util::TestAttr;
