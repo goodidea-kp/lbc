@@ -202,9 +202,49 @@ fn HomePage() -> impl IntoView {
     }
 }
 
+#[cfg(target_arch = "wasm32")]
+fn install_panic_logging() {
+    use std::panic;
+
+    use leptos::wasm_bindgen::JsValue;
+    use leptos::web_sys::{console, Error};
+
+    panic::set_hook(Box::new(move |panic_info| {
+        let location = panic_info
+            .location()
+            .map(|loc| format!("{}:{}:{}", loc.file(), loc.line(), loc.column()))
+            .unwrap_or_else(|| "<unknown>".to_string());
+
+        let payload = if let Some(message) = panic_info.payload().downcast_ref::<&str>() {
+            (*message).to_string()
+        } else if let Some(message) = panic_info.payload().downcast_ref::<String>() {
+            message.clone()
+        } else {
+            "<non-string panic payload>".to_string()
+        };
+
+        console::error_1(&JsValue::from_str("=== Rust panic captured ==="));
+        console::error_1(&JsValue::from_str(&format!("Message: {payload}")));
+        console::error_1(&JsValue::from_str(&format!("Location: {location}")));
+
+        let js_error = Error::new();
+        if let Some(stack) = js_error.stack() {
+            console::error_1(&JsValue::from_str("JS stack:"));
+            console::error_1(&JsValue::from_str(&stack));
+        } else {
+            console::error_1(&JsValue::from_str("JS stack: <unavailable>"));
+        }
+
+        console::error_1(&JsValue::from_str("=========================="));
+    }));
+}
+
 fn main() {
     #[cfg(target_arch = "wasm32")]
-    console_error_panic_hook::set_once();
+    {
+        console_error_panic_hook::set_once();
+        install_panic_logging();
+    }
 
     mount_to_body(App);
 }
