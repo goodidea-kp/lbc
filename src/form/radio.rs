@@ -2,7 +2,6 @@ use std::cell::Cell;
 use std::rc::Rc;
 use std::sync::Arc;
 
-use leptos::ev::Event;
 use leptos::html;
 use leptos::prelude::{
     Children, ClassAttribute, CustomAttribute, Effect, ElementChild, Get, GetUntracked, IntoView,
