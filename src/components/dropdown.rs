@@ -4,7 +4,7 @@ use std::rc::Rc;
 use crate::util::TestAttr;
 use leptos::html;
 use leptos::prelude::{
-    AddAnyAttr, Children, ClassAttribute, CustomAttribute, Effect, ElementChild, Get,
+    Children, ClassAttribute, CustomAttribute, Effect, ElementChild, Get, GetUntracked,
     GlobalAttributes, IntoAny, IntoView, NodeRef, NodeRefAttribute, Set, Signal, StyleAttribute,
     component, view,
 };
