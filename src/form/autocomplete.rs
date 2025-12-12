@@ -27,8 +27,6 @@ use leptos::wasm_bindgen::JsValue;
 #[cfg(target_arch = "wasm32")]
 use leptos::wasm_bindgen::closure::Closure;
 #[cfg(target_arch = "wasm32")]
-use leptos::wasm_bindgen::prelude::wasm_bindgen;
-#[cfg(target_arch = "wasm32")]
 use leptos::web_sys::Element;
 
 use crate::util::TestAttr;

@@ -1,8 +1,11 @@
 use leptos::children::Children;
 use leptos::ev::MouseEvent;
 use leptos::html;
+use std::cell::Cell;
+use leptos::prelude::Effect;
+use std::rc::Rc;
 use leptos::prelude::{
-    ClassAttribute, CustomAttribute, ElementChild, GetUntracked, IntoView, NodeRef,
+    ClassAttribute, CustomAttribute, ElementChild, Get, GetUntracked, IntoView, NodeRef,
     NodeRefAttribute, Signal, component, view,
 };
 

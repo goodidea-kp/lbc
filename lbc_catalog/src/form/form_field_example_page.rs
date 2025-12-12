@@ -2,6 +2,7 @@ use lbc::prelude::{Block, Content, Control, Field, HeaderSize, Subtitle, Title};
 use leptos::prelude::*;
 
 /// Example page showcasing the Field form container component.
+#[allow(non_snake_case)]
 pub fn FormFieldPage() -> impl IntoView {
     view! {
         <Block>

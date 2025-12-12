@@ -1,5 +1,5 @@
 use leptos::prelude::ElementChild;
-use leptos::prelude::{AddAnyAttr, ClassAttribute, IntoView, component, mount_to_body, view};
+use leptos::prelude::{ClassAttribute, IntoView, component, mount_to_body, view};
 use leptos_router::{
     components::{Route, Router, Routes},
     path,

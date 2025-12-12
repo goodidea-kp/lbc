@@ -8,8 +8,8 @@ AI Pair Programming Notes:
 use lbc::prelude::{Block, Buttons, Delete, HeaderSize, Notification, Title};
 use leptos::html;
 use leptos::prelude::{
-    AddAnyAttr, ClassAttribute, Effect, ElementChild, Get, IntoAny, IntoView, NodeRef,
-    NodeRefAttribute, Set, component, set_timeout, signal, view,
+    ClassAttribute, Effect, ElementChild, Get, IntoAny, IntoView, NodeRef, NodeRefAttribute, Set,
+    component, set_timeout, signal, view,
 };
 use std::sync::Arc;
 use std::time::Duration;
@@ -39,8 +39,8 @@ pub fn DeletePage() -> impl IntoView {
 
     #[cfg(target_arch = "wasm32")]
     {
-        use leptos::wasm_bindgen::closure::Closure;
         use leptos::wasm_bindgen::JsCast;
+        use leptos::wasm_bindgen::closure::Closure;
         use leptos::web_sys::Event;
 
         // Continue button

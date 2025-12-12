@@ -4,6 +4,7 @@ use lbc::prelude::{Block, Checkbox, Content, HeaderSize, Subtitle, Title};
 use leptos::prelude::*;
 
 /// Example page showcasing the Checkbox form component.
+#[allow(non_snake_case)]
 pub fn FormCheckboxPage() -> impl IntoView {
     let (is_checked, set_is_checked) = signal(false);
 

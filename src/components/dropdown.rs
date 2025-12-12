@@ -1,5 +1,8 @@
 use crate::util::TestAttr;
 use leptos::html;
+use std::cell::Cell;
+use leptos::prelude::Effect;
+use std::rc::Rc;
 use leptos::prelude::{
     Children, ClassAttribute, CustomAttribute, ElementChild, Get, GetUntracked, GlobalAttributes,
     IntoAny, IntoView, NodeRef, NodeRefAttribute, Set, Signal, StyleAttribute, component, view,

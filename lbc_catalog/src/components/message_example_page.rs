@@ -22,8 +22,8 @@ pub fn MessagePage() -> impl IntoView {
 
     #[cfg(target_arch = "wasm32")]
     {
-        use leptos::wasm_bindgen::closure::Closure;
         use leptos::wasm_bindgen::JsCast;
+        use leptos::wasm_bindgen::closure::Closure;
         use leptos::web_sys::Event;
 
         fn attach_button_click_once(
@@ -48,7 +48,10 @@ pub fn MessagePage() -> impl IntoView {
                     }));
 
                 button_element
-                    .add_event_listener_with_callback("click", click_closure.as_ref().unchecked_ref())
+                    .add_event_listener_with_callback(
+                        "click",
+                        click_closure.as_ref().unchecked_ref(),
+                    )
                     .ok();
 
                 has_attached.set(true);

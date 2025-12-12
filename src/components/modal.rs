@@ -1,4 +1,6 @@
 use leptos::html;
+use std::cell::Cell;
+use std::rc::Rc;
 use leptos::prelude::{
     AriaAttributes, Children, ClassAttribute, CustomAttribute, Effect, ElementChild, Get,
     GlobalAttributes, IntoView, NodeRef, NodeRefAttribute, Set, Signal, component, view,

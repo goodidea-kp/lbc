@@ -1,10 +1,12 @@
-use lbc::prelude::{Block, Content, Control, Field, HeaderSize, Input, InputType, Size, Subtitle, Title};
-use leptos::html;
-use leptos::prelude::{
-    AddAnyAttr, ClassAttribute, Effect, ElementChild, Get, IntoView, NodeRef, NodeRefAttribute, Set,
-    component, signal, view,
+use lbc::prelude::{
+    Block, Content, Control, Field, HeaderSize, Input, InputType, Size, Subtitle, Title,
 };
 use lbc::util::TestAttr;
+use leptos::html;
+use leptos::prelude::{
+    ClassAttribute, Effect, ElementChild, Get, IntoView, NodeRef, NodeRefAttribute, Set, component,
+    signal, view,
+};
 use std::sync::Arc;
 
 #[cfg(target_arch = "wasm32")]
@@ -44,8 +46,8 @@ pub fn FormInputPage() -> impl IntoView {
 
     #[cfg(target_arch = "wasm32")]
     {
-        use leptos::wasm_bindgen::closure::Closure;
         use leptos::wasm_bindgen::JsCast;
+        use leptos::wasm_bindgen::closure::Closure;
         use leptos::web_sys::Event;
 
         let clear_button_ref_for_effect = clear_button_ref.clone();
@@ -56,11 +58,12 @@ pub fn FormInputPage() -> impl IntoView {
                 return;
             };
 
-            let click_closure: Closure<dyn FnMut(Event)> = Closure::wrap(Box::new(move |_event: Event| {
-                console_log("[FormInputPage] Clear button DOM click handler invoked (start)");
-                set_text_value_for_effect.set(String::new());
-                console_log("[FormInputPage] Clear button DOM click handler invoked (end)");
-            }));
+            let click_closure: Closure<dyn FnMut(Event)> =
+                Closure::wrap(Box::new(move |_event: Event| {
+                    console_log("[FormInputPage] Clear button DOM click handler invoked (start)");
+                    set_text_value_for_effect.set(String::new());
+                    console_log("[FormInputPage] Clear button DOM click handler invoked (end)");
+                }));
 
             button_element
                 .add_event_listener_with_callback("click", click_closure.as_ref().unchecked_ref())

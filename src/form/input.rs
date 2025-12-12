@@ -1,4 +1,5 @@
 use leptos::html;
+use leptos::prelude::Effect;
 use leptos::prelude::{
     ClassAttribute, CustomAttribute, Get, GetUntracked, IntoAny, IntoView, NodeRef,
     NodeRefAttribute, Signal, component, view,

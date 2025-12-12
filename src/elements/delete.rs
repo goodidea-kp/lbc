@@ -3,7 +3,9 @@ Leptos version of Bulma Delete element.
 
 Bulma docs: https://bulma.io/documentation/elements/delete/
 */
-
+use std::cell::Cell;
+use std::rc::Rc;
+use leptos::prelude::Effect;
 use leptos::ev::MouseEvent;
 use leptos::html;
 use leptos::prelude::{

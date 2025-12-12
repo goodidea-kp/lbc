@@ -1,9 +1,11 @@
 use std::rc::Rc;
 
+use std::cell::Cell;
+use leptos::prelude::Effect;
 use leptos::html;
 use leptos::prelude::{
     AriaAttributes, Children, ClassAttribute, CustomAttribute, ElementChild, Get, GetUntracked,
-    GlobalAttributes, IntoAny, IntoView, NodeRef, NodeRefAttribute, Signal, StyleAttribute,
+    GlobalAttributes, IntoAny, IntoView, NodeRef, NodeRefAttribute, Signal, Set, StyleAttribute,
     component, view,
 };
 

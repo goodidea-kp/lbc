@@ -2,7 +2,8 @@ use std::sync::Arc;
 
 use leptos::html;
 use leptos::prelude::*;
-
+use std::cell::Cell;
+use std::rc::Rc;
 use crate::util::TestAttr;
 
 /// The 2-state checkbox in its native Bulma format.

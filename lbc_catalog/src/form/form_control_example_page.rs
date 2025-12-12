@@ -5,6 +5,7 @@ use std::cell::Cell;
 use std::rc::Rc;
 
 /// Example page showcasing the Control form component.
+#[allow(non_snake_case)]
 pub fn FormControlPage() -> impl IntoView {
     let (typed_text, set_typed_text) = signal(String::new());
 
@@ -14,8 +15,8 @@ pub fn FormControlPage() -> impl IntoView {
 
     #[cfg(target_arch = "wasm32")]
     {
-        use leptos::wasm_bindgen::closure::Closure;
         use leptos::wasm_bindgen::JsCast;
+        use leptos::wasm_bindgen::closure::Closure;
         use leptos::web_sys::{Event, HtmlInputElement};
 
         let has_attached = Rc::new(Cell::new(false));

@@ -6,6 +6,9 @@ use leptos::prelude::{
     IntoView, NodeRef, NodeRefAttribute, Signal, StyleAttribute, component, view,
 };
 
+use std::cell::Cell;
+use leptos::prelude::Effect;
+use std::rc::Rc;
 use crate::elements::icon::Icon;
 use crate::util::{Size, TestAttr};
 

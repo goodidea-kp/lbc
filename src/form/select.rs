@@ -1,8 +1,11 @@
 use std::sync::Arc;
 
+use std::cell::Cell;
+use leptos::prelude::Effect;
+use std::rc::Rc;
 use leptos::html;
 use leptos::prelude::{
-    Children, ClassAttribute, CustomAttribute, ElementChild, GetUntracked, IntoView, NodeRef,
+    Children, ClassAttribute, CustomAttribute, ElementChild, Get, GetUntracked, IntoView, NodeRef,
     NodeRefAttribute, Signal, component, view,
 };
 
