@@ -7,11 +7,9 @@ Bulma docs: https://bulma.io/documentation/elements/delete/
 use leptos::ev::MouseEvent;
 use leptos::html;
 use leptos::prelude::{
-    AnyView, Children, ClassAttribute, CustomAttribute, Effect, ElementChild, Get, IntoAny, NodeRef,
-    NodeRefAttribute, Signal, component, view,
+    AnyView, Children, ClassAttribute, CustomAttribute, ElementChild, Get, IntoAny,
+    NodeRef, NodeRefAttribute, Signal, component, view,
 };
-use std::cell::Cell;
-use std::rc::Rc;
 use std::sync::Arc;
 
 use crate::util::TestAttr;
@@ -21,8 +19,8 @@ fn attach_click_listener_once_for_button(
     element_ref: NodeRef<html::Button>,
     on_click: Option<Arc<dyn Fn(MouseEvent) + Send + Sync>>,
 ) {
-    use leptos::wasm_bindgen::closure::Closure;
     use leptos::wasm_bindgen::JsCast;
+    use leptos::wasm_bindgen::closure::Closure;
     use leptos::web_sys::{Event, EventTarget};
 
     let has_attached = Rc::new(Cell::new(false));
@@ -44,13 +42,14 @@ fn attach_click_listener_once_for_button(
 
         let event_target: EventTarget = element.unchecked_into::<EventTarget>();
 
-        let click_closure: Closure<dyn FnMut(Event)> = Closure::wrap(Box::new(move |event: Event| {
-            let Ok(mouse_event) = event.dyn_into::<MouseEvent>() else {
-                return;
-            };
+        let click_closure: Closure<dyn FnMut(Event)> =
+            Closure::wrap(Box::new(move |event: Event| {
+                let Ok(mouse_event) = event.dyn_into::<MouseEvent>() else {
+                    return;
+                };
 
-            (on_click_callback)(mouse_event);
-        }));
+                (on_click_callback)(mouse_event);
+            }));
 
         event_target
             .add_event_listener_with_callback("click", click_closure.as_ref().unchecked_ref())
@@ -66,8 +65,8 @@ fn attach_click_listener_once_for_anchor(
     element_ref: NodeRef<html::A>,
     on_click: Option<Arc<dyn Fn(MouseEvent) + Send + Sync>>,
 ) {
-    use leptos::wasm_bindgen::closure::Closure;
     use leptos::wasm_bindgen::JsCast;
+    use leptos::wasm_bindgen::closure::Closure;
     use leptos::web_sys::{Event, EventTarget};
 
     let has_attached = Rc::new(Cell::new(false));
@@ -89,13 +88,14 @@ fn attach_click_listener_once_for_anchor(
 
         let event_target: EventTarget = element.unchecked_into::<EventTarget>();
 
-        let click_closure: Closure<dyn FnMut(Event)> = Closure::wrap(Box::new(move |event: Event| {
-            let Ok(mouse_event) = event.dyn_into::<MouseEvent>() else {
-                return;
-            };
+        let click_closure: Closure<dyn FnMut(Event)> =
+            Closure::wrap(Box::new(move |event: Event| {
+                let Ok(mouse_event) = event.dyn_into::<MouseEvent>() else {
+                    return;
+                };
 
-            (on_click_callback)(mouse_event);
-        }));
+                (on_click_callback)(mouse_event);
+            }));
 
         event_target
             .add_event_listener_with_callback("click", click_closure.as_ref().unchecked_ref())
@@ -111,8 +111,8 @@ fn attach_click_listener_once_for_span(
     element_ref: NodeRef<html::Span>,
     on_click: Option<Arc<dyn Fn(MouseEvent) + Send + Sync>>,
 ) {
-    use leptos::wasm_bindgen::closure::Closure;
     use leptos::wasm_bindgen::JsCast;
+    use leptos::wasm_bindgen::closure::Closure;
     use leptos::web_sys::{Event, EventTarget};
 
     let has_attached = Rc::new(Cell::new(false));
@@ -134,13 +134,14 @@ fn attach_click_listener_once_for_span(
 
         let event_target: EventTarget = element.unchecked_into::<EventTarget>();
 
-        let click_closure: Closure<dyn FnMut(Event)> = Closure::wrap(Box::new(move |event: Event| {
-            let Ok(mouse_event) = event.dyn_into::<MouseEvent>() else {
-                return;
-            };
+        let click_closure: Closure<dyn FnMut(Event)> =
+            Closure::wrap(Box::new(move |event: Event| {
+                let Ok(mouse_event) = event.dyn_into::<MouseEvent>() else {
+                    return;
+                };
 
-            (on_click_callback)(mouse_event);
-        }));
+                (on_click_callback)(mouse_event);
+            }));
 
         event_target
             .add_event_listener_with_callback("click", click_closure.as_ref().unchecked_ref())
@@ -156,8 +157,8 @@ fn attach_click_listener_once_for_div(
     element_ref: NodeRef<html::Div>,
     on_click: Option<Arc<dyn Fn(MouseEvent) + Send + Sync>>,
 ) {
-    use leptos::wasm_bindgen::closure::Closure;
     use leptos::wasm_bindgen::JsCast;
+    use leptos::wasm_bindgen::closure::Closure;
     use leptos::web_sys::{Event, EventTarget};
 
     let has_attached = Rc::new(Cell::new(false));
@@ -179,13 +180,14 @@ fn attach_click_listener_once_for_div(
 
         let event_target: EventTarget = element.unchecked_into::<EventTarget>();
 
-        let click_closure: Closure<dyn FnMut(Event)> = Closure::wrap(Box::new(move |event: Event| {
-            let Ok(mouse_event) = event.dyn_into::<MouseEvent>() else {
-                return;
-            };
+        let click_closure: Closure<dyn FnMut(Event)> =
+            Closure::wrap(Box::new(move |event: Event| {
+                let Ok(mouse_event) = event.dyn_into::<MouseEvent>() else {
+                    return;
+                };
 
-            (on_click_callback)(mouse_event);
-        }));
+                (on_click_callback)(mouse_event);
+            }));
 
         event_target
             .add_event_listener_with_callback("click", click_closure.as_ref().unchecked_ref())

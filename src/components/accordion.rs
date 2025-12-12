@@ -81,8 +81,8 @@ pub fn AccordionItem(
 
     #[cfg(target_arch = "wasm32")]
     {
-        use leptos::wasm_bindgen::closure::Closure;
         use leptos::wasm_bindgen::JsCast;
+        use leptos::wasm_bindgen::closure::Closure;
         use leptos::web_sys::Event;
 
         let has_attached = Rc::new(Cell::new(false));

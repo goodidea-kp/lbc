@@ -1,9 +1,8 @@
-use std::cell::Cell;
 use std::rc::Rc;
 
 use leptos::html;
 use leptos::prelude::{
-    AriaAttributes, Children, ClassAttribute, CustomAttribute, Effect, ElementChild, Get,
+    AriaAttributes, Children, ClassAttribute, CustomAttribute, ElementChild, Get,
     GetUntracked, IntoView, NodeRef, NodeRefAttribute, Set, Signal, StyleAttribute, component,
     view,
 };
@@ -67,8 +66,8 @@ pub fn Message(
 
     #[cfg(target_arch = "wasm32")]
     {
-        use leptos::wasm_bindgen::closure::Closure;
         use leptos::wasm_bindgen::JsCast;
+        use leptos::wasm_bindgen::closure::Closure;
         use leptos::web_sys::Event;
 
         let has_attached = Rc::new(Cell::new(false));

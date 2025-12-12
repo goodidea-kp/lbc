@@ -1,10 +1,8 @@
-use std::cell::Cell;
-use std::rc::Rc;
 use std::sync::Arc;
 
 use leptos::html;
 use leptos::prelude::{
-    Children, ClassAttribute, CustomAttribute, Effect, ElementChild, Get, GetUntracked, IntoView,
+    Children, ClassAttribute, CustomAttribute, ElementChild, GetUntracked, IntoView,
     NodeRef, NodeRefAttribute, Signal, component, view,
 };
 
@@ -100,8 +98,8 @@ pub fn Select(
 
     #[cfg(target_arch = "wasm32")]
     {
-        use leptos::wasm_bindgen::closure::Closure;
         use leptos::wasm_bindgen::JsCast;
+        use leptos::wasm_bindgen::closure::Closure;
         use leptos::web_sys::{Event, HtmlSelectElement};
 
         let has_attached = Rc::new(Cell::new(false));
@@ -251,8 +249,8 @@ pub fn MultiSelect(
 
     #[cfg(target_arch = "wasm32")]
     {
-        use leptos::wasm_bindgen::closure::Closure;
         use leptos::wasm_bindgen::JsCast;
+        use leptos::wasm_bindgen::closure::Closure;
         use leptos::web_sys::{Event, HtmlOptionElement, HtmlSelectElement};
 
         let has_attached = Rc::new(Cell::new(false));

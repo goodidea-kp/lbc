@@ -1,10 +1,7 @@
-use std::cell::Cell;
-use std::rc::Rc;
-
 use crate::util::TestAttr;
 use leptos::html;
 use leptos::prelude::{
-    Children, ClassAttribute, CustomAttribute, Effect, ElementChild, Get, GetUntracked,
+    Children, ClassAttribute, CustomAttribute, ElementChild, Get, GetUntracked,
     GlobalAttributes, IntoAny, IntoView, NodeRef, NodeRefAttribute, Set, Signal, StyleAttribute,
     component, view,
 };
@@ -72,8 +69,8 @@ pub fn Dropdown(
 
     #[cfg(target_arch = "wasm32")]
     {
-        use leptos::wasm_bindgen::closure::Closure;
         use leptos::wasm_bindgen::JsCast;
+        use leptos::wasm_bindgen::closure::Closure;
         use leptos::web_sys::Event;
 
         let trigger_attached = Rc::new(Cell::new(false));

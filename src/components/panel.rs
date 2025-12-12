@@ -1,9 +1,8 @@
-use std::cell::Cell;
 use std::rc::Rc;
 
 use leptos::html;
 use leptos::prelude::{
-    Children, ClassAttribute, CustomAttribute, Effect, ElementChild, Get, IntoAny, IntoView,
+    Children, ClassAttribute, CustomAttribute, ElementChild, Get, IntoAny, IntoView,
     NodeRef, NodeRefAttribute, Signal, component, view,
 };
 
@@ -165,8 +164,8 @@ pub fn PanelBlock(
 
     #[cfg(target_arch = "wasm32")]
     {
-        use leptos::wasm_bindgen::closure::Closure;
         use leptos::wasm_bindgen::JsCast;
+        use leptos::wasm_bindgen::closure::Closure;
         use leptos::web_sys::Event;
 
         fn attach_click_once_for_anchor(
@@ -195,7 +194,10 @@ pub fn PanelBlock(
                     }));
 
                 element
-                    .add_event_listener_with_callback("click", click_closure.as_ref().unchecked_ref())
+                    .add_event_listener_with_callback(
+                        "click",
+                        click_closure.as_ref().unchecked_ref(),
+                    )
                     .ok();
 
                 has_attached.set(true);
@@ -229,7 +231,10 @@ pub fn PanelBlock(
                     }));
 
                 element
-                    .add_event_listener_with_callback("click", click_closure.as_ref().unchecked_ref())
+                    .add_event_listener_with_callback(
+                        "click",
+                        click_closure.as_ref().unchecked_ref(),
+                    )
                     .ok();
 
                 has_attached.set(true);
@@ -263,7 +268,10 @@ pub fn PanelBlock(
                     }));
 
                 element
-                    .add_event_listener_with_callback("click", click_closure.as_ref().unchecked_ref())
+                    .add_event_listener_with_callback(
+                        "click",
+                        click_closure.as_ref().unchecked_ref(),
+                    )
                     .ok();
 
                 has_attached.set(true);
@@ -297,7 +305,10 @@ pub fn PanelBlock(
                     }));
 
                 element
-                    .add_event_listener_with_callback("click", click_closure.as_ref().unchecked_ref())
+                    .add_event_listener_with_callback(
+                        "click",
+                        click_closure.as_ref().unchecked_ref(),
+                    )
                     .ok();
 
                 has_attached.set(true);
@@ -331,7 +342,10 @@ pub fn PanelBlock(
                     }));
 
                 element
-                    .add_event_listener_with_callback("click", click_closure.as_ref().unchecked_ref())
+                    .add_event_listener_with_callback(
+                        "click",
+                        click_closure.as_ref().unchecked_ref(),
+                    )
                     .ok();
 
                 has_attached.set(true);
@@ -362,7 +376,11 @@ pub fn PanelBlock(
                 Rc::new(Cell::new(false)),
                 on_click.clone(),
             ),
-            _ => attach_click_once_for_div(div_ref.clone(), Rc::new(Cell::new(false)), on_click.clone()),
+            _ => attach_click_once_for_div(
+                div_ref.clone(),
+                Rc::new(Cell::new(false)),
+                on_click.clone(),
+            ),
         }
     }
 

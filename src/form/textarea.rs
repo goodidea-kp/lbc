@@ -1,10 +1,8 @@
-use std::cell::Cell;
-use std::rc::Rc;
 use std::sync::Arc;
 
 use leptos::html;
 use leptos::prelude::{
-    ClassAttribute, CustomAttribute, Effect, ElementChild, Get, GetUntracked, GlobalAttributes,
+    ClassAttribute, CustomAttribute, ElementChild, Get, GetUntracked, GlobalAttributes,
     IntoAny, IntoView, NodeRef, NodeRefAttribute, Signal, StyleAttribute, component, view,
 };
 
@@ -146,8 +144,8 @@ pub fn TextArea(
 
     #[cfg(target_arch = "wasm32")]
     {
-        use leptos::wasm_bindgen::closure::Closure;
         use leptos::wasm_bindgen::JsCast;
+        use leptos::wasm_bindgen::closure::Closure;
         use leptos::web_sys::{Event, HtmlTextAreaElement};
 
         let has_attached = Rc::new(Cell::new(false));

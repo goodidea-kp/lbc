@@ -1,6 +1,6 @@
 use leptos::html;
 use leptos::prelude::{
-    ClassAttribute, CustomAttribute, Effect, Get, GetUntracked, IntoAny, IntoView, NodeRef,
+    ClassAttribute, CustomAttribute, Get, GetUntracked, IntoAny, IntoView, NodeRef,
     NodeRefAttribute, Signal, component, view,
 };
 
@@ -171,8 +171,8 @@ pub fn Input(
     // Attach DOM listeners manually on wasm32 to avoid tachys event attachment panics.
     #[cfg(target_arch = "wasm32")]
     {
-        use leptos::wasm_bindgen::closure::Closure;
         use leptos::wasm_bindgen::JsCast;
+        use leptos::wasm_bindgen::closure::Closure;
         use leptos::web_sys::{Event, HtmlInputElement};
 
         let update_for_effect = Arc::clone(&update);

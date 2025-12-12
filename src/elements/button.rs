@@ -1,11 +1,8 @@
-use std::cell::Cell;
-use std::rc::Rc;
-
 use leptos::children::Children;
 use leptos::ev::MouseEvent;
 use leptos::html;
 use leptos::prelude::{
-    ClassAttribute, CustomAttribute, Effect, ElementChild, Get, GetUntracked, IntoView, NodeRef,
+    ClassAttribute, CustomAttribute, ElementChild, GetUntracked, IntoView, NodeRef,
     NodeRefAttribute, Signal, component, view,
 };
 
@@ -109,8 +106,8 @@ pub fn Button(
 
     #[cfg(target_arch = "wasm32")]
     {
-        use leptos::wasm_bindgen::closure::Closure;
         use leptos::wasm_bindgen::JsCast;
+        use leptos::wasm_bindgen::closure::Closure;
         use leptos::web_sys::Event;
 
         let has_attached = Rc::new(Cell::new(false));

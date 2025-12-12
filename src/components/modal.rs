@@ -1,10 +1,7 @@
-use std::cell::Cell;
-use std::rc::Rc;
-
 use leptos::html;
 use leptos::prelude::{
     AriaAttributes, Children, ClassAttribute, CustomAttribute, Effect, ElementChild, Get,
-    GlobalAttributes, IntoAny, IntoView, NodeRef, NodeRefAttribute, Set, Signal, component, view,
+    GlobalAttributes, IntoView, NodeRef, NodeRefAttribute, Set, Signal, component, view,
 };
 
 use crate::util::TestAttr;
@@ -121,8 +118,8 @@ pub fn Modal(
 
     #[cfg(target_arch = "wasm32")]
     {
-        use leptos::wasm_bindgen::closure::Closure;
         use leptos::wasm_bindgen::JsCast;
+        use leptos::wasm_bindgen::closure::Closure;
         use leptos::web_sys::Event;
 
         let trigger_attached = Rc::new(Cell::new(false));
@@ -328,8 +325,8 @@ pub fn ModalCard(
 
     #[cfg(target_arch = "wasm32")]
     {
-        use leptos::wasm_bindgen::closure::Closure;
         use leptos::wasm_bindgen::JsCast;
+        use leptos::wasm_bindgen::closure::Closure;
         use leptos::web_sys::Event;
 
         let trigger_attached = Rc::new(Cell::new(false));

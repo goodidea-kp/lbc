@@ -1,10 +1,9 @@
-use std::cell::Cell;
 use std::rc::Rc;
 
 use leptos::html;
 use leptos::prelude::{
-    AriaAttributes, Children, ClassAttribute, CustomAttribute, Effect, ElementChild, Get,
-    GetUntracked, GlobalAttributes, IntoAny, IntoView, NodeRef, NodeRefAttribute, Set, Signal,
+    AriaAttributes, Children, ClassAttribute, CustomAttribute, ElementChild, Get,
+    GetUntracked, GlobalAttributes, IntoAny, IntoView, NodeRef, NodeRefAttribute, Signal,
     StyleAttribute, component, view,
 };
 
@@ -135,8 +134,8 @@ pub fn Navbar(
 
     #[cfg(target_arch = "wasm32")]
     {
-        use leptos::wasm_bindgen::closure::Closure;
         use leptos::wasm_bindgen::JsCast;
+        use leptos::wasm_bindgen::closure::Closure;
         use leptos::web_sys::Event;
 
         let has_attached = Rc::new(Cell::new(false));
@@ -171,8 +170,13 @@ pub fn Navbar(
             return view! { <></> }.into_any();
         }
 
-        let burger_class =
-            move || if is_menu_open.get() { "navbar-burger is-active" } else { "navbar-burger" };
+        let burger_class = move || {
+            if is_menu_open.get() {
+                "navbar-burger is-active"
+            } else {
+                "navbar-burger"
+            }
+        };
 
         view! {
             <a
@@ -292,10 +296,8 @@ pub fn NavbarItem(
     /// Attributes for anchor usage.
     #[prop(optional, into)]
     href: Signal<String>,
-    #[prop(optional, into)]
-    rel: Signal<String>,
-    #[prop(optional, into)]
-    target: Signal<String>,
+    #[prop(optional, into)] rel: Signal<String>,
+    #[prop(optional, into)] target: Signal<String>,
 
     /// Optional test attribute (renders as data-* attribute) on the item element.
     ///
@@ -345,8 +347,8 @@ pub fn NavbarItem(
 
     #[cfg(target_arch = "wasm32")]
     {
-        use leptos::wasm_bindgen::closure::Closure;
         use leptos::wasm_bindgen::JsCast;
+        use leptos::wasm_bindgen::closure::Closure;
         use leptos::web_sys::Event;
 
         let has_attached = Rc::new(Cell::new(false));
@@ -598,8 +600,8 @@ pub fn NavbarDropdown(
 
     #[cfg(target_arch = "wasm32")]
     {
-        use leptos::wasm_bindgen::closure::Closure;
         use leptos::wasm_bindgen::JsCast;
+        use leptos::wasm_bindgen::closure::Closure;
         use leptos::web_sys::Event;
 
         let trigger_attached = Rc::new(Cell::new(false));
