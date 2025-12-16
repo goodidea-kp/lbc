@@ -1,7 +1,6 @@
 use std::sync::Arc;
 
 use crate::util::TestAttr;
-use leptos::html;
 use leptos::prelude::*;
 #[allow(unused_imports)]
 use std::cell::Cell;
@@ -16,10 +15,6 @@ use std::rc::Rc;
 /// - `checked` is the current value (supports static bool or reactive signal).
 /// - `update` is an optional callback invoked with the next value when the user clicks.
 ///
-/// NOTE (tachys 0.2.11):
-/// - Avoid reactive property bindings for `checked` to prevent "property removed early" panics.
-/// - Avoid `on:*` event bindings to prevent "callback removed before attaching" panics.
-///   We attach the click listener manually on wasm32.
 #[component]
 pub fn Checkbox(
     /// The `name` attribute for this form element.
@@ -69,69 +64,7 @@ pub fn Checkbox(
         _ => (None, None),
     };
 
-    // IMPORTANT:
-    // Do not bind `checked` reactively (even via `checked=move || checked.get()`), because
-    // tachys may treat it as a property binding and panic "property removed early".
-    // We set the initial checked state non-reactively and rely on the parent to re-render
-    // the component when `checked` changes.
-    let initial_checked = checked.get_untracked();
-
-    // Workaround for tachys 0.2.11:
-    // - avoid `on:click`
-    // - attach click listener manually on wasm32
-    let input_ref: NodeRef<html::Input> = NodeRef::new();
-
-    #[cfg(target_arch = "wasm32")]
-    {
-        use leptos::wasm_bindgen::JsCast;
-        use leptos::wasm_bindgen::closure::Closure;
-        use leptos::web_sys::{Event, HtmlInputElement};
-
-        let has_attached = Rc::new(Cell::new(false));
-        let input_ref_for_effect = input_ref.clone();
-        let checked_for_effect = checked.clone();
-        let update_for_effect = update.clone();
-
-        Effect::new(move |_| {
-            if has_attached.get() {
-                return;
-            }
-
-            let Some(input_element) = input_ref_for_effect.get() else {
-                return;
-            };
-
-            let Some(update_callback) = update_for_effect.clone() else {
-                has_attached.set(true);
-                return;
-            };
-
-            let click_closure: Closure<dyn FnMut(Event)> =
-                Closure::wrap(Box::new(move |event: Event| {
-                    let target_input = event
-                        .target()
-                        .and_then(|target| target.dyn_into::<HtmlInputElement>().ok());
-
-                    let Some(_target_input) = target_input else {
-                        return;
-                    };
-
-                    // Controlled component: compute next value from current signal.
-                    // Use `get_untracked()` to avoid reactive-graph warnings about reading
-                    // signals outside a tracking context.
-                    let next_value = !checked_for_effect.get_untracked();
-                    (update_callback)(next_value);
-                }));
-
-            input_element
-                .add_event_listener_with_callback("click", click_closure.as_ref().unchecked_ref())
-                .ok();
-
-            has_attached.set(true);
-            click_closure.forget();
-        });
-    }
-
+    
     view! {
         <label
             class=class
@@ -139,11 +72,18 @@ pub fn Checkbox(
             attr:data-cy=move || data_cy.clone()
         >
             <input
-                node_ref=input_ref
                 type="checkbox"
                 name=name.clone()
-                checked=initial_checked
-                disabled=disabled.get_untracked()
+                // Bind reactively so UI reflects changes
+                prop:checked=move || checked.get()
+                // Bind disabled as an attribute so SSR renders it and it's still reactive at runtime
+                disabled=move || disabled.get()
+                // Notify parent about user interaction
+                on:change=move |ev| {
+                    if let Some(cb) = &update {
+                        cb(event_target_checked(&ev));
+                    }
+                }
             />
             {children()}
         </label>

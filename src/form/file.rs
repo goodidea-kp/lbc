@@ -1,9 +1,8 @@
-use leptos::html;
 #[allow(unused_imports)]
 use leptos::prelude::Effect;
 use leptos::prelude::{
-    ClassAttribute, CustomAttribute, ElementChild, Get, GetUntracked, IntoAny, IntoView, NodeRef,
-    NodeRefAttribute, Signal, component, view,
+    ClassAttribute, CustomAttribute, ElementChild, GetUntracked, IntoAny, IntoView, Signal,
+    component, view,
 };
 #[allow(unused_imports)]
 use std::cell::Cell;
@@ -25,12 +24,6 @@ use crate::util::{Size, TestAttr};
 /// - `files` is the current value (supports static Vec<File> or reactive signal).
 /// - `update` is a required callback invoked with the selected files on change.
 ///
-/// NOTE (tachys 0.2.11):
-/// - Avoid `on:*` event bindings to prevent "callback removed before attaching" panics.
-///   We attach the change listener manually on wasm32.
-/// - Avoid reactive attribute/property bindings (class/attrs/multiple/labels) which can
-///   also trigger tachys lifecycle panics. We compute these once using `get_untracked()`.
-/// - We keep the component compiling on non-wasm targets by using a placeholder file type.
 #[component]
 pub fn File(
     /// The `name` attribute for this form element.
@@ -127,48 +120,6 @@ pub fn File(
         _ => (None, None),
     };
 
-    // Workaround for tachys 0.2.11 panic "callback removed before attaching":
-    // avoid `on:change` and attach the change listener manually on wasm32.
-    let input_ref: NodeRef<html::Input> = NodeRef::new();
-
-    #[cfg(target_arch = "wasm32")]
-    {
-        use leptos::wasm_bindgen::JsCast;
-        use leptos::wasm_bindgen::closure::Closure;
-        use leptos::web_sys::Event;
-
-        let has_attached = Rc::new(Cell::new(false));
-        let input_ref_for_effect = input_ref.clone();
-        let update_for_effect = _update.clone();
-
-        Effect::new(move |_| {
-            if has_attached.get() {
-                return;
-            }
-
-            let Some(input_element) = input_ref_for_effect.get() else {
-                return;
-            };
-
-            // Clone inside the effect so the effect closure remains `FnMut` (not `FnOnce`).
-            let update_for_change = update_for_effect.clone();
-
-            let change_closure: Closure<dyn FnMut(Event)> =
-                Closure::wrap(Box::new(move |_event: Event| {
-                    // Placeholder behavior: we don't currently extract real File objects.
-                    // We still call update with an empty list to keep the controlled contract.
-                    (update_for_change)(Vec::<LbcSysFile>::new());
-                }));
-
-            input_element
-                .add_event_listener_with_callback("change", change_closure.as_ref().unchecked_ref())
-                .ok();
-
-            has_attached.set(true);
-            change_closure.forget();
-        });
-    }
-
     view! {
         <div
             class=class
@@ -177,7 +128,6 @@ pub fn File(
         >
             <label class="file-label">
                 <input
-                    node_ref=input_ref
                     type="file"
                     class="file-input"
                     name=name.clone()

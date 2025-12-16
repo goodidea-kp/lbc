@@ -1,11 +1,10 @@
 use std::sync::Arc;
 
-use leptos::html;
 #[allow(unused_imports)]
 use leptos::prelude::Effect;
 use leptos::prelude::{
-    Children, ClassAttribute, CustomAttribute, ElementChild, Get, GetUntracked, IntoView, NodeRef,
-    NodeRefAttribute, Signal, component, view,
+    Children, ClassAttribute, CustomAttribute, ElementChild, GetUntracked, IntoView, Signal,
+    component, view,
 };
 #[allow(unused_imports)]
 use std::cell::Cell;
@@ -22,10 +21,6 @@ use crate::util::TestAttr;
 /// be provided from a parent component, and changes to this component are propagated to the parent
 /// component via callback.
 ///
-/// NOTE (tachys 0.2.11):
-/// - Avoid `on:*` event bindings to prevent "callback removed before attaching" panics.
-///   We attach the input listener manually on wasm32.
-/// - Avoid reactive attribute closures where possible; compute stable values once.
 #[component]
 pub fn Radio(
     /// The `name` attribute for this form element.
@@ -91,48 +86,6 @@ pub fn Radio(
         _ => (None, None),
     };
 
-    // Workaround for tachys 0.2.11 panic "callback removed before attaching":
-    // avoid `on:input` and attach the input listener manually on wasm32.
-    let input_ref: NodeRef<html::Input> = NodeRef::new();
-
-    #[cfg(target_arch = "wasm32")]
-    {
-        use leptos::wasm_bindgen::JsCast;
-        use leptos::wasm_bindgen::closure::Closure;
-        use leptos::web_sys::Event as WebEvent;
-
-        let has_attached = Rc::new(Cell::new(false));
-        let input_ref_for_effect = input_ref.clone();
-        let update_for_effect = update.clone();
-        let value_for_effect = value_value.clone();
-
-        Effect::new(move |_| {
-            if has_attached.get() {
-                return;
-            }
-
-            let Some(input_element) = input_ref_for_effect.get() else {
-                return;
-            };
-
-            // Clone inside the effect so the effect closure remains FnMut.
-            let update_for_input = update_for_effect.clone();
-            let value_for_input = value_for_effect.clone();
-
-            let input_closure: Closure<dyn FnMut(WebEvent)> =
-                Closure::wrap(Box::new(move |_event: WebEvent| {
-                    (update_for_input)(value_for_input.clone());
-                }));
-
-            input_element
-                .add_event_listener_with_callback("input", input_closure.as_ref().unchecked_ref())
-                .ok();
-
-            has_attached.set(true);
-            input_closure.forget();
-        });
-    }
-
     view! {
         <label
             class=class_value
@@ -140,7 +93,6 @@ pub fn Radio(
             attr:data-cy=data_cy
         >
             <input
-                node_ref=input_ref
                 type="radio"
                 name=name_value
                 value=value_value

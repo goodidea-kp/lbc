@@ -1,9 +1,8 @@
-use leptos::html;
 #[allow(unused_imports)]
 use leptos::prelude::Effect;
 use leptos::prelude::{
     AriaAttributes, Children, ClassAttribute, CustomAttribute, ElementChild, Get, GlobalAttributes,
-    IntoView, NodeRef, NodeRefAttribute, Signal, component, view,
+    IntoView, Signal, component, view,
 };
 #[allow(unused_imports)]
 use std::cell::Cell;
@@ -124,75 +123,6 @@ pub fn Pagination(
         _ => (None, None),
     };
 
-    // Workaround for tachys 0.2.11 panic "callback removed before attaching":
-    // avoid `on:click` and attach click listeners manually on wasm32.
-    let previous_ref: NodeRef<html::A> = NodeRef::new();
-    let next_ref: NodeRef<html::A> = NodeRef::new();
-
-    #[cfg(target_arch = "wasm32")]
-    {
-        use leptos::wasm_bindgen::JsCast;
-        use leptos::wasm_bindgen::closure::Closure;
-        use leptos::web_sys::Event;
-
-        let previous_attached = Rc::new(Cell::new(false));
-        let next_attached = Rc::new(Cell::new(false));
-
-        let previous_ref_for_effect = previous_ref.clone();
-        let next_ref_for_effect = next_ref.clone();
-
-        let on_previous_for_effect = on_previous.clone();
-        let on_next_for_effect = on_next.clone();
-
-        Effect::new(move |_| {
-            if !previous_attached.get() {
-                if let Some(previous_element) = previous_ref_for_effect.get() {
-                    if let Some(callback) = on_previous_for_effect.clone() {
-                        let click_closure: Closure<dyn FnMut(Event)> =
-                            Closure::wrap(Box::new(move |event: Event| {
-                                event.prevent_default();
-                                callback();
-                            }));
-
-                        previous_element
-                            .add_event_listener_with_callback(
-                                "click",
-                                click_closure.as_ref().unchecked_ref(),
-                            )
-                            .ok();
-
-                        click_closure.forget();
-                    }
-
-                    previous_attached.set(true);
-                }
-            }
-
-            if !next_attached.get() {
-                if let Some(next_element) = next_ref_for_effect.get() {
-                    if let Some(callback) = on_next_for_effect.clone() {
-                        let click_closure: Closure<dyn FnMut(Event)> =
-                            Closure::wrap(Box::new(move |event: Event| {
-                                event.prevent_default();
-                                callback();
-                            }));
-
-                        next_element
-                            .add_event_listener_with_callback(
-                                "click",
-                                click_closure.as_ref().unchecked_ref(),
-                            )
-                            .ok();
-
-                        click_closure.forget();
-                    }
-
-                    next_attached.set(true);
-                }
-            }
-        });
-    }
-
     view! {
         <nav
             class=move || class()
@@ -203,14 +133,12 @@ pub fn Pagination(
             attr:data-cy=move || data_cy.clone()
         >
             <a
-                node_ref=previous_ref
                 class="pagination-previous"
                 href="#"
             >
                 {previous_label.get()}
             </a>
             <a
-                node_ref=next_ref
                 class="pagination-next"
                 href="#"
             >
@@ -270,52 +198,8 @@ pub fn PaginationItem(
         _ => (None, None),
     };
 
-    // Workaround for tachys 0.2.11 panic "callback removed before attaching":
-    // avoid `on:click` and attach click listener manually on wasm32.
-    let item_ref: NodeRef<html::A> = NodeRef::new();
-
-    #[cfg(target_arch = "wasm32")]
-    {
-        use leptos::wasm_bindgen::JsCast;
-        use leptos::wasm_bindgen::closure::Closure;
-        use leptos::web_sys::Event;
-
-        let has_attached = Rc::new(Cell::new(false));
-        let item_ref_for_effect = item_ref.clone();
-        let on_click_for_effect = on_click.clone();
-
-        Effect::new(move |_| {
-            if has_attached.get() {
-                return;
-            }
-
-            let Some(anchor_element) = item_ref_for_effect.get() else {
-                return;
-            };
-
-            let Some(callback) = on_click_for_effect.clone() else {
-                has_attached.set(true);
-                return;
-            };
-
-            let click_closure: Closure<dyn FnMut(Event)> =
-                Closure::wrap(Box::new(move |event: Event| {
-                    event.prevent_default();
-                    callback();
-                }));
-
-            anchor_element
-                .add_event_listener_with_callback("click", click_closure.as_ref().unchecked_ref())
-                .ok();
-
-            has_attached.set(true);
-            click_closure.forget();
-        });
-    }
-
     view! {
         <a
-            node_ref=item_ref
             class=move || class()
             aria-label=label.get()
             href="#"

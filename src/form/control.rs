@@ -13,10 +13,6 @@ use crate::util::TestAttr;
 /// - `expanded`: when true, adds "is-expanded"
 /// - `children`: inner content (typically inputs/buttons)
 ///
-/// NOTE (tachys 0.2.11):
-/// Some reactive attribute/property bindings can panic with "property removed early"
-/// during rebuilds. To avoid this, we compute attributes once using `get_untracked()`
-/// and render them as plain values.
 #[component]
 pub fn Control(
     /// Additional CSS classes to append to Bulma's "control".
