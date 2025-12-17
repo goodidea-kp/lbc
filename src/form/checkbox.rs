@@ -64,7 +64,6 @@ pub fn Checkbox(
         _ => (None, None),
     };
 
-    
     view! {
         <label
             class=class

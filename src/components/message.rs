@@ -1,11 +1,7 @@
-#[allow(unused_imports)]
-use leptos::prelude::Effect;
 use leptos::prelude::{
     AriaAttributes, Children, ClassAttribute, CustomAttribute, ElementChild, Get, GetUntracked,
-    IntoView, NodeRefAttribute, Set, Signal, StyleAttribute, component, view,
+    IntoView, Set, Signal, StyleAttribute, component, view,
 };
-#[allow(unused_imports)]
-use std::cell::Cell;
 use std::rc::Rc;
 
 use crate::util::TestAttr;
@@ -49,7 +45,7 @@ pub fn Message(
         let classes = classes.clone();
         move || base_class(&classes.get())
     };
-
+    #[allow(unused)]
     let (is_closed, set_is_closed) = leptos::prelude::signal(false);
 
     let (data_testid, data_cy) = match &test_attr {
