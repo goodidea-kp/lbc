@@ -10,6 +10,7 @@ use leptos::prelude::{
 
 #[component]
 pub fn PanelPage() -> impl IntoView {
+    #[allow(unused)]
     let (active_tab, set_active_tab) = signal(0usize);
     let (active_block, set_active_block) = signal(0usize);
 

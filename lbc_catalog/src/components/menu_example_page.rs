@@ -6,7 +6,9 @@ use leptos::prelude::{
 #[component]
 pub fn MenuPage() -> impl IntoView {
     // Track the currently selected menu item and whether "Manage Your Team" submenu is open.
+    #[allow(unused)]
     let (selected, set_selected) = signal(String::from("Dashboard"));
+    #[allow(unused)]
     let (is_team_open, set_is_team_open) = signal(false);
 
     view! {

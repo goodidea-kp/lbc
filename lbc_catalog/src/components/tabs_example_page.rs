@@ -4,8 +4,11 @@ use leptos::prelude::{ClassAttribute, ElementChild, Get, IntoView, component, si
 #[component]
 pub fn TabsPage() -> impl IntoView {
     // Track active selection for each tabs example.
+    #[allow(unused)]
     let (active_basic, set_active_basic) = signal(0usize);
+    #[allow(unused)]
     let (active_centered, set_active_centered) = signal(0usize);
+    #[allow(unused)]
     let (active_toggle, set_active_toggle) = signal(0usize);
 
     view! {

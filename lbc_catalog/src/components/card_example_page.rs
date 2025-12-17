@@ -6,7 +6,9 @@ use leptos::prelude::{ClassAttribute, ElementChild, Get, IntoView, component, si
 
 #[component]
 pub fn CardPage() -> impl IntoView {
+    #[allow(unused)]
     let (liked, set_liked) = signal(false);
+    #[allow(unused)]
     let (theme, set_theme) = signal(String::new());
 
     view! {

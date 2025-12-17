@@ -4,6 +4,7 @@ use leptos::prelude::*;
 /// Example page showcasing the Control form component.
 #[allow(non_snake_case)]
 pub fn FormControlPage() -> impl IntoView {
+    #[allow(unused)]
     let (typed_text, set_typed_text) = signal(String::new());
 
     view! {

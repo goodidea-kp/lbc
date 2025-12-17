@@ -6,8 +6,11 @@ use leptos::prelude::{ClassAttribute, ElementChild, IntoView, component, signal,
 
 #[component]
 pub fn BreadcrumbPage() -> impl IntoView {
+    #[allow(unused)]
     let (size, set_size) = signal::<Option<BreadcrumbSize>>(None);
+    #[allow(unused)]
     let (alignment, set_alignment) = signal::<Option<Alignment>>(None);
+    #[allow(unused)]
     let (separator, set_separator) = signal::<Option<BreadcrumbSeparator>>(None);
 
     view! {

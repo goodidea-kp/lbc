@@ -10,7 +10,7 @@ use leptos::prelude::{
 pub fn ModalPage() -> impl IntoView {
     let closer = leptos::prelude::RwSignal::new(String::new());
     provide_context::<ModalCloserContext>(closer);
-
+    #[allow(unused)]
     let (show_toast, set_show_toast) = signal(false);
 
     view! {
