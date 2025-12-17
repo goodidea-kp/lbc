@@ -3,7 +3,7 @@ use lbc::prelude::{
     PaginationItemType, Size, Subtitle, Title,
 };
 use leptos::prelude::{
-    ClassAttribute, ElementChild, Get, IntoView, Set, Signal, component, signal, view,
+    ClassAttribute, ElementChild, Get, GetUntracked, IntoView, Set, Signal, component, signal, view,
 };
 use std::sync::Arc;
 
@@ -15,7 +15,7 @@ pub fn PaginationPage() -> impl IntoView {
     let on_prev = {
         let set_current_page = set_current_page.clone();
         Arc::new(move || {
-            let page = current_page.get();
+            let page = current_page.get_untracked();
             if page > 1 {
                 set_current_page.set(page - 1);
             }
@@ -24,7 +24,7 @@ pub fn PaginationPage() -> impl IntoView {
     let on_next = {
         let set_current_page = set_current_page.clone();
         Arc::new(move || {
-            let page = current_page.get();
+            let page = current_page.get_untracked();
             if page < total_pages {
                 set_current_page.set(page + 1);
             }

@@ -1,12 +1,7 @@
-use leptos::html;
-#[allow(unused_imports)]
-use leptos::prelude::Effect;
 use leptos::prelude::{
     AriaAttributes, Children, ClassAttribute, CustomAttribute, ElementChild, Get, GetUntracked,
-    IntoView, NodeRef, NodeRefAttribute, Set, Signal, StyleAttribute, component, view,
+    IntoView, Set, Signal, StyleAttribute, component, view,
 };
-#[allow(unused_imports)]
-use std::cell::Cell;
 use std::rc::Rc;
 
 use crate::util::TestAttr;
@@ -22,9 +17,6 @@ fn base_class(extra: &str) -> String {
 /// Colored message blocks, to emphasize part of your page.
 /// https://bulma.io/documentation/components/message/
 ///
-/// NOTE (tachys 0.2.11):
-/// - Avoid `on:*` event bindings to prevent "callback removed before attaching" panics.
-///   We attach DOM listeners manually on wasm32.
 #[component]
 pub fn Message(
     /// Extra classes to apply to the Bulma "message" container (e.g., is-primary, is-warning).
@@ -53,7 +45,7 @@ pub fn Message(
         let classes = classes.clone();
         move || base_class(&classes.get())
     };
-
+    #[allow(unused)]
     let (is_closed, set_is_closed) = leptos::prelude::signal(false);
 
     let (data_testid, data_cy) = match &test_attr {
@@ -61,63 +53,6 @@ pub fn Message(
         Some(attr) if attr.key == "data-cy" => (None, Some(attr.value.clone())),
         _ => (None, None),
     };
-
-    // Workaround for tachys 0.2.11 panic "callback removed before attaching":
-    // avoid `on:click` and attach click listener manually on wasm32.
-    let close_button_ref: NodeRef<html::Button> = NodeRef::new();
-
-    #[cfg(target_arch = "wasm32")]
-    {
-        use leptos::wasm_bindgen::JsCast;
-        use leptos::wasm_bindgen::closure::Closure;
-        use leptos::web_sys::Event;
-
-        let has_attached = Rc::new(Cell::new(false));
-        let close_button_ref_for_effect = close_button_ref.clone();
-        let on_close_for_effect = on_close.clone();
-        let closable_for_effect = closable.clone();
-        let is_closed_for_effect = is_closed.clone();
-        let set_is_closed_for_effect = set_is_closed.clone();
-
-        Effect::new(move |_| {
-            if has_attached.get() {
-                return;
-            }
-
-            let Some(button_element) = close_button_ref_for_effect.get() else {
-                return;
-            };
-
-            // Clone the callback into the event handler so the Effect closure remains FnMut.
-            let on_close_for_click = on_close_for_effect.clone();
-            let closable_for_click = closable_for_effect.clone();
-            let is_closed_for_click = is_closed_for_effect.clone();
-            let set_is_closed_for_click = set_is_closed_for_effect.clone();
-
-            let click_closure: Closure<dyn FnMut(Event)> =
-                Closure::wrap(Box::new(move |event: Event| {
-                    event.prevent_default();
-
-                    // If the close button isn't currently visible, ignore clicks.
-                    if !closable_for_click.get_untracked() || is_closed_for_click.get_untracked() {
-                        return;
-                    }
-
-                    if let Some(callback) = on_close_for_click.as_ref() {
-                        callback();
-                    } else {
-                        set_is_closed_for_click.set(true);
-                    }
-                }));
-
-            button_element
-                .add_event_listener_with_callback("click", click_closure.as_ref().unchecked_ref())
-                .ok();
-
-            has_attached.set(true);
-            click_closure.forget();
-        });
-    }
 
     view! {
         <article
@@ -136,7 +71,6 @@ pub fn Message(
             }
         >
             <button
-                node_ref=close_button_ref
                 class="delete is-small"
                 aria-label="delete"
                 type="button"

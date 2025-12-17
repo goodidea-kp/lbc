@@ -1,12 +1,11 @@
 use std::sync::Arc;
 
-use leptos::html;
 #[allow(unused_imports)]
 use leptos::prelude::Effect;
 #[allow(unused_imports)]
 use leptos::prelude::{
-    Children, ClassAttribute, CustomAttribute, ElementChild, Get, GetUntracked, IntoView, NodeRef,
-    NodeRefAttribute, Signal, component, view,
+    Children, ClassAttribute, CustomAttribute, ElementChild, Get, GetUntracked, IntoView, Signal,
+    component, view,
 };
 #[allow(unused_imports)]
 use std::cell::Cell;
@@ -31,11 +30,6 @@ fn size_class(size: Size) -> &'static str {
 /// All LBC form components are controlled components. The value comes from a parent,
 /// and changes are propagated via the `update` callback.
 ///
-/// NOTE (tachys 0.2.11):
-/// - Avoid `prop:value` to prevent "property removed early" panics.
-/// - Avoid `on:*` event bindings to prevent "callback removed before attaching" panics.
-///   We attach DOM listeners manually on wasm32.
-/// - Avoid reactive wrapper attribute closures where possible.
 #[component]
 pub fn Select(
     /// The `name` attribute for this form element.
@@ -101,59 +95,6 @@ pub fn Select(
         _ => (None, None),
     };
 
-    let select_ref: NodeRef<html::Select> = NodeRef::new();
-
-    #[cfg(target_arch = "wasm32")]
-    {
-        use leptos::wasm_bindgen::JsCast;
-        use leptos::wasm_bindgen::closure::Closure;
-        use leptos::web_sys::{Event, HtmlSelectElement};
-
-        let has_attached = Rc::new(Cell::new(false));
-        let select_ref_for_effect = select_ref.clone();
-        let update_for_effect = update.clone();
-        let initial_value_for_effect = initial_value.clone();
-
-        Effect::new(move |_| {
-            if has_attached.get() {
-                return;
-            }
-
-            let Some(select_element) = select_ref_for_effect.get() else {
-                return;
-            };
-
-            // Ensure the initial selected value is applied after mount.
-            // We avoid `value=` bindings in the view macro because Leptos 0.8 doesn't
-            // provide a `value` builder for <select> and tachys can be sensitive to
-            // reactive property bindings.
-            let select_element: HtmlSelectElement = select_element.into();
-            select_element.set_value(&initial_value_for_effect);
-
-            let update_for_input = update_for_effect.clone();
-
-            let input_closure: Closure<dyn FnMut(Event)> =
-                Closure::wrap(Box::new(move |event: Event| {
-                    let target_select = event
-                        .target()
-                        .and_then(|target| target.dyn_into::<HtmlSelectElement>().ok());
-
-                    let Some(target_select) = target_select else {
-                        return;
-                    };
-
-                    (update_for_input)(target_select.value());
-                }));
-
-            select_element
-                .add_event_listener_with_callback("input", input_closure.as_ref().unchecked_ref())
-                .ok();
-
-            has_attached.set(true);
-            input_closure.forget();
-        });
-    }
-
     view! {
         <div
             class=wrapper_class
@@ -161,7 +102,6 @@ pub fn Select(
             attr:data-cy=data_cy
         >
             <select
-                node_ref=select_ref
                 name=name_value
                 disabled=is_disabled
             >
@@ -177,9 +117,6 @@ pub fn Select(
 ///
 /// Controlled component: values come from a parent; updates are sent via `update`.
 ///
-/// NOTE (tachys 0.2.11):
-/// - Avoid `prop:value` and `on:*` event bindings; attach DOM listeners manually on wasm32.
-/// - Compute wrapper attributes once (safe mode).
 #[component]
 pub fn MultiSelect(
     /// The `name` attribute for this form element.
@@ -252,87 +189,6 @@ pub fn MultiSelect(
         _ => (None, None),
     };
 
-    let select_ref: NodeRef<html::Select> = NodeRef::new();
-
-    #[cfg(target_arch = "wasm32")]
-    {
-        use leptos::wasm_bindgen::JsCast;
-        use leptos::wasm_bindgen::closure::Closure;
-        use leptos::web_sys::{Event, HtmlOptionElement, HtmlSelectElement};
-
-        let has_attached = Rc::new(Cell::new(false));
-        let select_ref_for_effect = select_ref.clone();
-        let update_for_effect = update.clone();
-        let initial_values_for_effect = initial_values.clone();
-
-        Effect::new(move |_| {
-            if has_attached.get() {
-                return;
-            }
-
-            let Some(select_element) = select_ref_for_effect.get() else {
-                return;
-            };
-
-            let select_element: HtmlSelectElement = select_element.into();
-
-            // Apply initial selected values after mount.
-            // We mark options as selected by iterating the options collection.
-            let options = select_element.options();
-            for option_index in 0..options.length() {
-                let Some(option_node) = options.item(option_index) else {
-                    continue;
-                };
-
-                let Ok(option_element) = option_node.dyn_into::<HtmlOptionElement>() else {
-                    continue;
-                };
-
-                let should_select = initial_values_for_effect
-                    .iter()
-                    .any(|selected_value| selected_value == &option_element.value());
-
-                option_element.set_selected(should_select);
-            }
-
-            let update_for_input = update_for_effect.clone();
-
-            let input_closure: Closure<dyn FnMut(Event)> =
-                Closure::wrap(Box::new(move |event: Event| {
-                    let target_select = event
-                        .target()
-                        .and_then(|target| target.dyn_into::<HtmlSelectElement>().ok());
-
-                    let Some(target_select) = target_select else {
-                        return;
-                    };
-
-                    let selected_options = target_select.selected_options();
-                    let mut selected_values = Vec::new();
-                    for index in 0..selected_options.length() {
-                        let Some(option_node) = selected_options.item(index) else {
-                            continue;
-                        };
-
-                        let Ok(option_element) = option_node.dyn_into::<HtmlOptionElement>() else {
-                            continue;
-                        };
-
-                        selected_values.push(option_element.value());
-                    }
-
-                    (update_for_input)(selected_values);
-                }));
-
-            select_element
-                .add_event_listener_with_callback("input", input_closure.as_ref().unchecked_ref())
-                .ok();
-
-            has_attached.set(true);
-            input_closure.forget();
-        });
-    }
-
     view! {
         <div
             class=wrapper_class
@@ -340,7 +196,6 @@ pub fn MultiSelect(
             attr:data-cy=data_cy
         >
             <select
-                node_ref=select_ref
                 multiple=true
                 size=size_attr
                 name=name_value

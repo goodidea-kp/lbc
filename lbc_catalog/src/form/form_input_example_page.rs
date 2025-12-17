@@ -1,12 +1,7 @@
-use lbc::prelude::{
-    Block, Content, Control, Field, HeaderSize, Input, InputType, Size, Subtitle, Title,
-};
+use lbc::prelude::*;
 use lbc::util::TestAttr;
-use leptos::html;
-use leptos::prelude::{
-    ClassAttribute, Effect, ElementChild, Get, IntoView, NodeRef, NodeRefAttribute, Set, component,
-    signal, view,
-};
+use leptos::prelude::*;
+use leptos::prelude::{ClassAttribute, ElementChild, Get, IntoView, Set, component, signal, view};
 use std::sync::Arc;
 
 #[cfg(target_arch = "wasm32")]
@@ -40,40 +35,6 @@ pub fn FormInputPage() -> impl IntoView {
     let (disabled_value, set_disabled_value) = signal("Disabled value".to_string());
     let (static_value, set_static_value) = signal("Static value".to_string());
 
-    // Workaround for tachys 0.2.11 panic "callback removed before attaching":
-    // avoid `on:click` and attach the click listener manually.
-    let clear_button_ref: NodeRef<html::Button> = NodeRef::new();
-
-    #[cfg(target_arch = "wasm32")]
-    {
-        use leptos::wasm_bindgen::JsCast;
-        use leptos::wasm_bindgen::closure::Closure;
-        use leptos::web_sys::Event;
-
-        let clear_button_ref_for_effect = clear_button_ref.clone();
-        let set_text_value_for_effect = set_text_value.clone();
-
-        Effect::new(move |_| {
-            let Some(button_element) = clear_button_ref_for_effect.get() else {
-                return;
-            };
-
-            let click_closure: Closure<dyn FnMut(Event)> =
-                Closure::wrap(Box::new(move |_event: Event| {
-                    console_log("[FormInputPage] Clear button DOM click handler invoked (start)");
-                    set_text_value_for_effect.set(String::new());
-                    console_log("[FormInputPage] Clear button DOM click handler invoked (end)");
-                }));
-
-            button_element
-                .add_event_listener_with_callback("click", click_closure.as_ref().unchecked_ref())
-                .ok();
-
-            // Keep closure alive for the lifetime of the page/app.
-            click_closure.forget();
-        });
-    }
-
     view! {
         <Block>
             <Title size=HeaderSize::Is5>"Form: Input"</Title>
@@ -96,14 +57,9 @@ pub fn FormInputPage() -> impl IntoView {
                     </Control>
 
                     <Control>
-                        // Use a plain button to avoid tachys `on:click` event binding.
-                        <button
-                            node_ref=clear_button_ref
-                            class="button is-small"
-                            type="button"
-                        >
+                        <Button size=Size::Small on:click=move |_| { lbc::lbc_log!("[Page] Clear clicked for name"); set_text_value.set(String::new()) }>
                             "Clear"
-                        </button>
+                        </Button>
                     </Control>
                 </Field>
                 <p class="help">"Entered: " {move || text_value.get()}</p>

@@ -1,11 +1,10 @@
 use std::rc::Rc;
 
-use leptos::html;
 #[allow(unused_imports)]
 use leptos::prelude::Effect;
 use leptos::prelude::{
-    Children, ClassAttribute, CustomAttribute, ElementChild, Get, IntoAny, IntoView, NodeRef,
-    NodeRefAttribute, Signal, component, view,
+    Children, ClassAttribute, CustomAttribute, ElementChild, Get, IntoAny, IntoView, Signal,
+    component, view,
 };
 #[allow(unused_imports)]
 use std::cell::Cell;
@@ -158,242 +157,11 @@ pub fn PanelBlock(
         _ => (None, None),
     };
 
-    // Workaround for tachys 0.2.11 panic "callback removed before attaching":
-    // avoid `on:click` and attach click listeners manually on wasm32.
-    let anchor_ref: NodeRef<html::A> = NodeRef::new();
-    let button_ref: NodeRef<html::Button> = NodeRef::new();
-    let paragraph_ref: NodeRef<html::P> = NodeRef::new();
-    let span_ref: NodeRef<html::Span> = NodeRef::new();
-    let div_ref: NodeRef<html::Div> = NodeRef::new();
-
-    #[cfg(target_arch = "wasm32")]
-    {
-        use leptos::wasm_bindgen::JsCast;
-        use leptos::wasm_bindgen::closure::Closure;
-        use leptos::web_sys::Event;
-
-        fn attach_click_once_for_anchor(
-            element_ref: NodeRef<html::A>,
-            has_attached: Rc<Cell<bool>>,
-            on_click: Option<Rc<dyn Fn()>>,
-        ) {
-            Effect::new(move |_| {
-                if has_attached.get() {
-                    return;
-                }
-
-                let Some(element) = element_ref.get() else {
-                    return;
-                };
-
-                let Some(on_click_callback) = on_click.clone() else {
-                    has_attached.set(true);
-                    return;
-                };
-
-                let click_closure: Closure<dyn FnMut(Event)> =
-                    Closure::wrap(Box::new(move |event: Event| {
-                        event.prevent_default();
-                        (on_click_callback)();
-                    }));
-
-                element
-                    .add_event_listener_with_callback(
-                        "click",
-                        click_closure.as_ref().unchecked_ref(),
-                    )
-                    .ok();
-
-                has_attached.set(true);
-                click_closure.forget();
-            });
-        }
-
-        fn attach_click_once_for_button(
-            element_ref: NodeRef<html::Button>,
-            has_attached: Rc<Cell<bool>>,
-            on_click: Option<Rc<dyn Fn()>>,
-        ) {
-            Effect::new(move |_| {
-                if has_attached.get() {
-                    return;
-                }
-
-                let Some(element) = element_ref.get() else {
-                    return;
-                };
-
-                let Some(on_click_callback) = on_click.clone() else {
-                    has_attached.set(true);
-                    return;
-                };
-
-                let click_closure: Closure<dyn FnMut(Event)> =
-                    Closure::wrap(Box::new(move |event: Event| {
-                        event.prevent_default();
-                        (on_click_callback)();
-                    }));
-
-                element
-                    .add_event_listener_with_callback(
-                        "click",
-                        click_closure.as_ref().unchecked_ref(),
-                    )
-                    .ok();
-
-                has_attached.set(true);
-                click_closure.forget();
-            });
-        }
-
-        fn attach_click_once_for_paragraph(
-            element_ref: NodeRef<html::P>,
-            has_attached: Rc<Cell<bool>>,
-            on_click: Option<Rc<dyn Fn()>>,
-        ) {
-            Effect::new(move |_| {
-                if has_attached.get() {
-                    return;
-                }
-
-                let Some(element) = element_ref.get() else {
-                    return;
-                };
-
-                let Some(on_click_callback) = on_click.clone() else {
-                    has_attached.set(true);
-                    return;
-                };
-
-                let click_closure: Closure<dyn FnMut(Event)> =
-                    Closure::wrap(Box::new(move |event: Event| {
-                        event.prevent_default();
-                        (on_click_callback)();
-                    }));
-
-                element
-                    .add_event_listener_with_callback(
-                        "click",
-                        click_closure.as_ref().unchecked_ref(),
-                    )
-                    .ok();
-
-                has_attached.set(true);
-                click_closure.forget();
-            });
-        }
-
-        fn attach_click_once_for_span(
-            element_ref: NodeRef<html::Span>,
-            has_attached: Rc<Cell<bool>>,
-            on_click: Option<Rc<dyn Fn()>>,
-        ) {
-            Effect::new(move |_| {
-                if has_attached.get() {
-                    return;
-                }
-
-                let Some(element) = element_ref.get() else {
-                    return;
-                };
-
-                let Some(on_click_callback) = on_click.clone() else {
-                    has_attached.set(true);
-                    return;
-                };
-
-                let click_closure: Closure<dyn FnMut(Event)> =
-                    Closure::wrap(Box::new(move |event: Event| {
-                        event.prevent_default();
-                        (on_click_callback)();
-                    }));
-
-                element
-                    .add_event_listener_with_callback(
-                        "click",
-                        click_closure.as_ref().unchecked_ref(),
-                    )
-                    .ok();
-
-                has_attached.set(true);
-                click_closure.forget();
-            });
-        }
-
-        fn attach_click_once_for_div(
-            element_ref: NodeRef<html::Div>,
-            has_attached: Rc<Cell<bool>>,
-            on_click: Option<Rc<dyn Fn()>>,
-        ) {
-            Effect::new(move |_| {
-                if has_attached.get() {
-                    return;
-                }
-
-                let Some(element) = element_ref.get() else {
-                    return;
-                };
-
-                let Some(on_click_callback) = on_click.clone() else {
-                    has_attached.set(true);
-                    return;
-                };
-
-                let click_closure: Closure<dyn FnMut(Event)> =
-                    Closure::wrap(Box::new(move |event: Event| {
-                        event.prevent_default();
-                        (on_click_callback)();
-                    }));
-
-                element
-                    .add_event_listener_with_callback(
-                        "click",
-                        click_closure.as_ref().unchecked_ref(),
-                    )
-                    .ok();
-
-                has_attached.set(true);
-                click_closure.forget();
-            });
-        }
-
-        let tag_name = tag.clone().unwrap_or_else(|| "div".to_string());
-
-        match tag_name.as_str() {
-            "a" => attach_click_once_for_anchor(
-                anchor_ref.clone(),
-                Rc::new(Cell::new(false)),
-                on_click.clone(),
-            ),
-            "button" => attach_click_once_for_button(
-                button_ref.clone(),
-                Rc::new(Cell::new(false)),
-                on_click.clone(),
-            ),
-            "p" => attach_click_once_for_paragraph(
-                paragraph_ref.clone(),
-                Rc::new(Cell::new(false)),
-                on_click.clone(),
-            ),
-            "span" => attach_click_once_for_span(
-                span_ref.clone(),
-                Rc::new(Cell::new(false)),
-                on_click.clone(),
-            ),
-            _ => attach_click_once_for_div(
-                div_ref.clone(),
-                Rc::new(Cell::new(false)),
-                on_click.clone(),
-            ),
-        }
-    }
-
     view! {
         {
             match tag.as_deref().unwrap_or("div") {
                 "a" => view! {
                     <a
-                        node_ref=anchor_ref
                         class=move || class()
                         href="#"
                         attr:data-testid=move || data_testid.clone()
@@ -404,7 +172,6 @@ pub fn PanelBlock(
                 }.into_any(),
                 "button" => view! {
                     <button
-                        node_ref=button_ref
                         class=move || class()
                         type="button"
                         attr:data-testid=move || data_testid.clone()
@@ -415,7 +182,6 @@ pub fn PanelBlock(
                 }.into_any(),
                 "p" => view! {
                     <p
-                        node_ref=paragraph_ref
                         class=move || class()
                         attr:data-testid=move || data_testid.clone()
                         attr:data-cy=move || data_cy.clone()
@@ -425,7 +191,6 @@ pub fn PanelBlock(
                 }.into_any(),
                 "span" => view! {
                     <span
-                        node_ref=span_ref
                         class=move || class()
                         attr:data-testid=move || data_testid.clone()
                         attr:data-cy=move || data_cy.clone()
@@ -435,7 +200,6 @@ pub fn PanelBlock(
                 }.into_any(),
                 _ => view! {
                     <div
-                        node_ref=div_ref
                         class=move || class()
                         attr:data-testid=move || data_testid.clone()
                         attr:data-cy=move || data_cy.clone()
