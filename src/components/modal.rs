@@ -1,6 +1,6 @@
 use leptos::prelude::{
     Children, ClassAttribute, CustomAttribute, Effect, ElementChild, Get, GlobalAttributes,
-    IntoView, Set, Signal, component, view,
+    IntoView, OnAttribute, Set, Signal, component, view,
 };
 #[allow(unused_imports)]
 use std::cell::Cell;
@@ -109,10 +109,11 @@ pub fn Modal(
         Some(attr) if attr.key == "data-cy" => (None, Some(attr.value.clone())),
         _ => (None, None),
     };
-
+    let open = set_is_active.clone();
+    let close = set_is_active.clone();
     view! {
         <>
-            <div>{trigger()}</div>
+             <div on:click = move |_| open.set(true)>{trigger()}</div>
 
             <div
                 id=id.clone()
@@ -120,15 +121,16 @@ pub fn Modal(
                 attr:data-testid=move || data_testid.clone()
                 attr:data-cy=move || data_cy.clone()
             >
-                <div class="modal-background"></div>
+                <div class="modal-background" on:click = move |_| close.set(false)></div>
 
                 <div class="modal-content">
                     {children()}
                 </div>
 
                 <button
+                    on:click = { move |_| close.set(false) }
                     class="modal-close is-large"
-                    aria-label="close"
+                    aria_labelledby-label="close"
                     type="button"
                 ></button>
             </div>
@@ -217,9 +219,11 @@ pub fn ModalCard(
         _ => (None, None),
     };
 
+    let open = set_is_active.clone();
+    let close = set_is_active.clone();
     view! {
         <>
-            <div>{trigger()}</div>
+            <div on:click = move |_| open.set(true)>{trigger()}</div>
 
             <div
                 id=id.clone()
@@ -227,14 +231,15 @@ pub fn ModalCard(
                 attr:data-testid=move || data_testid.clone()
                 attr:data-cy=move || data_cy.clone()
             >
-                <div class="modal-background"></div>
+                <div class="modal-background" on:click = move |_| close.set(false)></div>
 
                 <div class="modal-card">
                     <header class="modal-card-head">
                         <p class="modal-card-title">{title.clone()}</p>
                         <button
+                            on:click = { move |_| close.set(false) }
                             class="delete"
-                            aria-label="close"
+                            aria_labelledby-label="close"
                             type="button"
                         ></button>
                     </header>
@@ -249,8 +254,9 @@ pub fn ModalCard(
                 </div>
 
                 <button
+                    on:click = { move |_| close.set(false) }
                     class="modal-close is-large"
-                    aria-label="close"
+                    aria_labelledby-label="close"
                     type="button"
                 ></button>
             </div>

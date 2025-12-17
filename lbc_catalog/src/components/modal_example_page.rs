@@ -1,3 +1,4 @@
+use leptos::prelude::{OnAttribute, Set};
 use lbc::prelude::{
     Block, Button, Content, HeaderSize, Modal, ModalCard, ModalCloserContext, Notification, Title,
 };
@@ -12,7 +13,11 @@ pub fn ModalPage() -> impl IntoView {
     provide_context::<ModalCloserContext>(closer);
     #[allow(unused)]
     let (show_toast, set_show_toast) = signal(false);
-
+    let trigger_btn = Box::new(|| view! {
+                        <Button color=lbc::elements::button::ButtonColor::Link>
+                            "Open Modal Card"
+                        </Button>
+                    }.into_any());
     view! {
         <Block>
             <Title size=HeaderSize::Is5>"Modal"</Title>
@@ -40,11 +45,7 @@ pub fn ModalPage() -> impl IntoView {
                     id="id1".to_string()
                     title="Modal Card".to_string()
                     classes=""
-                    trigger=Box::new(|| view! {
-                        <Button color=lbc::elements::button::ButtonColor::Link>
-                            "Open Modal Card"
-                        </Button>
-                    }.into_any())
+                    trigger=trigger_btn
                     body=Box::new(|| view! {
                         <div>
                             <p>"Modal card body content."</p>
@@ -56,6 +57,10 @@ pub fn ModalPage() -> impl IntoView {
                                 <button
                                     class="button is-success"
                                     type="button"
+                                    on:click=move |_| {
+                                        set_show_toast.set(true);
+                                        closer.set("id1-close".to_string());
+                                    }
                                 >
                                     "Save changes"
                                 </button>
@@ -63,6 +68,7 @@ pub fn ModalPage() -> impl IntoView {
                                 <button
                                     class="button is-warning"
                                     type="button"
+                                    on:click=move |_| closer.set("id1-close".to_string())
                                 >
                                     "Cancel"
                                 </button>
@@ -76,6 +82,10 @@ pub fn ModalPage() -> impl IntoView {
                 <button
                     class="button is-danger"
                     type="button"
+                    on:click=move |_| {
+                        // Close ModalCard with id="id1" via context
+                        closer.set("id1-close".to_string());
+                    }
                 >
                     "Close Modal Card via Context"
                 </button>
