@@ -1,6 +1,6 @@
 [package]
 name = "lbc"
-version = "0.1.7"
+version = "0.1.8"
 edition = "2024"
 description = "A Leptos component library based on the Bulma CSS framework."
 authors = ["Konstantin Pupkov <konstantin.pupkov@fromkos.com>"]
