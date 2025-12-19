@@ -15,11 +15,10 @@ Notes
 
 */
 
-use std::rc::Rc;
-
+use leptos::callback::{Callable, Callback};
 use leptos::prelude::{
-    Children, ClassAttribute, CustomAttribute, Effect, ElementChild, Get, GlobalAttributes,
-    IntoView, Signal, component, view,
+    Children, ClassAttribute, CustomAttribute, Effect, ElementChild, Get, GetUntracked,
+    GlobalAttributes, IntoView, OnAttribute, Set, Signal, component, view,
 };
 
 #[cfg(target_arch = "wasm32")]
@@ -41,8 +40,8 @@ pub fn AccordionItem(
     open: Signal<bool>,
 
     /// Optional click handler invoked when header is clicked.
-    #[prop(optional)]
-    on_toggle: Option<Rc<dyn Fn()>>,
+    #[prop(optional, into)]
+    on_toggle: Option<Callback<bool>>,
 
     /// Optional test attribute (renders as data-* attribute) on the root <article>.
     ///
@@ -54,14 +53,17 @@ pub fn AccordionItem(
     /// Body content of the accordion.
     children: Children,
 ) -> impl IntoView {
-    let class = {
-        let open = open.clone();
-        move || {
-            if open.get() {
-                "accordion is-active".to_string()
-            } else {
-                "accordion".to_string()
-            }
+    let (opened, set_opened) = leptos::prelude::signal(open.get_untracked());
+
+    Effect::new(move |_| {
+        set_opened.set(open.get());
+    });
+
+    let class = move || {
+        if opened.get() {
+            "accordion is-active".to_string()
+        } else {
+            "accordion".to_string()
         }
     };
 
@@ -81,8 +83,15 @@ pub fn AccordionItem(
                 <p>{title.get()}</p>
                 <button
                     class="toggle"
-                    aria-label="toggle"
+                    aria_labelledby-label="toggle"
                     type="button"
+                    on:click=move |_| {
+                        let new_state = !opened.get();
+                        set_opened.set(new_state);
+                        if let Some(cb) = on_toggle {
+                            cb.run(new_state);
+                        }
+                    }
                 ></button>
             </div>
             <div class="accordion-body">

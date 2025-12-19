@@ -780,7 +780,7 @@ dependencies = [
 
 [[package]]
 name = "lbc"
-version = "0.1.10"
+version = "0.1.11"
 dependencies = [
  "console_error_panic_hook",
  "gloo-console",

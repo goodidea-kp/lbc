@@ -17,7 +17,6 @@ pub fn ModalPage() -> impl IntoView {
     let (show_toast, set_show_toast) = signal(false);
     let trigger2 = Box::new(move || {
         view! {
-
                         <Button color=lbc::elements::button::ButtonColor::Primary
                             on_click=Callback::new(move |_|closer.set("id2-open".to_string()))
         >
