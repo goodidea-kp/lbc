@@ -5,7 +5,8 @@ use leptos::prelude::Effect;
 #[allow(unused_imports)]
 use leptos::prelude::{
     AriaAttributes, Children, ClassAttribute, CustomAttribute, ElementChild, Get, GetUntracked,
-    GlobalAttributes, IntoAny, IntoView, Set, Signal, StyleAttribute, component, view,
+    GlobalAttributes, IntoAny, IntoView, OnAttribute, Set, Signal, StyleAttribute, Update,
+    component, view,
 };
 #[allow(unused_imports)]
 use std::cell::Cell;
@@ -148,9 +149,9 @@ pub fn Navbar(
                 role="button"
                 aria-label="menu"
                 aria-expanded=move || if is_menu_open.get() { "true" } else { "false" }
+                on:click=move |_| is_menu_open.update(|v| *v = !*v)
                 href="#"
             >
-                <span aria-hidden="true"></span>
                 <span aria-hidden="true"></span>
                 <span aria-hidden="true"></span>
                 <span aria-hidden="true"></span>
