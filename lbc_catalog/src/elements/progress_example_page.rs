@@ -14,9 +14,9 @@ use leptos::callback::Callback;
 use leptos::prelude::{
     ClassAttribute, ElementChild, Get, IntoView, Set, Update, component, signal, view,
 };
-use std::rc::Rc;
 
 #[component]
+#[allow(non_snake_case)]
 pub fn ProgressPage() -> impl IntoView {
     let (progress_value, set_progress_value) = signal(25.0);
 

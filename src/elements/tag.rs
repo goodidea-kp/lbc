@@ -134,18 +134,8 @@ mod tests {
             "expected color and rounded classes"
         );
     }
-}
 
-#[cfg(all(test, target_arch = "wasm32"))]
-mod wasm_tests {
-    use super::*;
-    use crate::util::TestAttr;
-    use leptos::prelude::*;
-    use wasm_bindgen_test::*;
-
-    wasm_bindgen_test_configure!(run_in_browser);
-
-    #[wasm_bindgen_test]
+    #[test]
     fn tag_renders_test_id() {
         let html = view! {
             <Tag test_attr=TestAttr::test_id("tag-test")>"Content"</Tag>
@@ -159,7 +149,7 @@ mod wasm_tests {
         );
     }
 
-    #[wasm_bindgen_test]
+    #[test]
     fn tag_no_test_attr_when_not_provided() {
         let html = view! {
             <Tag>"Content"</Tag>
@@ -173,7 +163,7 @@ mod wasm_tests {
         );
     }
 
-    #[wasm_bindgen_test]
+    #[test]
     fn tag_accepts_custom_test_attr_key() {
         let html = view! {
             <Tag test_attr=TestAttr::new("data-cy", "tag-cy")>"Content"</Tag>
@@ -186,4 +176,10 @@ mod wasm_tests {
             html
         );
     }
+}
+
+// All tests for Tag can be run on non-wasm targets as they only verify HTML output.
+#[cfg(all(test, target_arch = "wasm32"))]
+mod wasm_tests {
+    // No wasm-specific tests needed for now.
 }

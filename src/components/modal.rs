@@ -1,11 +1,7 @@
 use leptos::prelude::{
-    AriaAttributes, Children, ClassAttribute, CustomAttribute, Effect, ElementChild, Get,
-    GlobalAttributes, IntoView, OnAttribute, Set, Signal, component, view,
+    Children, ClassAttribute, CustomAttribute, Effect, ElementChild, Get, GlobalAttributes,
+    IntoView, OnAttribute, Set, Signal, component, view,
 };
-#[allow(unused_imports)]
-use std::cell::Cell;
-#[allow(unused_imports)]
-use std::rc::Rc;
 
 use crate::util::TestAttr;
 

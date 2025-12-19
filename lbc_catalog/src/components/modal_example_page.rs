@@ -1,15 +1,15 @@
-use leptos::prelude::{OnAttribute, Set};
+use leptos::prelude::{Set};
 use lbc::prelude::{
     Block, Button, Content, HeaderSize, Modal, ModalCard, ModalCloserContext, Notification, Title,
 };
 use leptos::callback::Callback;
 use leptos::context::provide_context;
-use leptos::prelude::Set;
 use leptos::prelude::{
     ClassAttribute, ElementChild, Get, IntoAny, IntoView, component, signal, view,
 };
 
 #[component]
+#[allow(non_snake_case)]
 pub fn ModalPage() -> impl IntoView {
     let closer = leptos::prelude::RwSignal::new(String::new());
     provide_context::<ModalCloserContext>(closer);

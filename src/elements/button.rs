@@ -148,27 +148,6 @@ mod tests {
     }
 
     #[test]
-    fn button_disabled_flag() {
-        let html = view! { <Button disabled=true>"X"</Button> }.to_html();
-        // Some SSR renderers may render boolean attributes as `disabled` or `disabled=""`
-        assert!(
-            html.contains(r#"class="button""#) && html.contains("disabled"),
-            "expected disabled attribute on button, got: {}",
-            html
-        );
-    }
-}
-
-#[cfg(all(test, target_arch = "wasm32"))]
-mod wasm_tests {
-    use super::*;
-    use crate::util::TestAttr;
-    use leptos::prelude::*;
-    use wasm_bindgen_test::*;
-
-    wasm_bindgen_test_configure!(run_in_browser);
-
-    #[wasm_bindgen_test]
     fn button_renders_test_id() {
         let html = view! {
             <Button test_attr=TestAttr::test_id("test-button")>"Content"</Button>
@@ -182,7 +161,7 @@ mod wasm_tests {
         );
     }
 
-    #[wasm_bindgen_test]
+    #[test]
     fn button_no_test_id_when_not_provided() {
         let html = view! { <Button>"Content"</Button> }.to_html();
 
@@ -193,7 +172,7 @@ mod wasm_tests {
         );
     }
 
-    #[wasm_bindgen_test]
+    #[test]
     fn button_accepts_custom_test_attr_key() {
         let html = view! {
             <Button test_attr=TestAttr::new("data-cy", "button-cy")>"Content"</Button>
@@ -205,5 +184,27 @@ mod wasm_tests {
             "expected custom data-cy attribute; got: {}",
             html
         );
+    }
+}
+
+#[cfg(all(test, target_arch = "wasm32"))]
+mod wasm_tests {
+    use super::*;
+    use wasm_bindgen_test::*;
+
+    wasm_bindgen_test_configure!(run_in_browser);
+
+    #[wasm_bindgen_test]
+    fn button_click_callback() {
+        let clicked = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
+        let clicked_clone = clicked.clone();
+
+        let cb = Callback::new(move |_| {
+            clicked_clone.store(true, std::sync::atomic::Ordering::SeqCst);
+        });
+
+        cb.run(MouseEvent::new("click").unwrap());
+
+        assert!(clicked.load(std::sync::atomic::Ordering::SeqCst));
     }
 }

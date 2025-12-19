@@ -3,10 +3,10 @@ use lbc::prelude::{Block, Content, Control, Field, HeaderSize, Radio, Subtitle, 
 use leptos::prelude::{
     ClassAttribute, ElementChild, Get, GetUntracked, IntoView, Set, component, signal, view,
 };
-use std::sync::Arc;
 
 /// Example page showcasing the Radio form component.
 #[component]
+#[allow(non_snake_case)]
 pub fn FormRadioPage() -> impl IntoView {
     let (selected, set_selected) = signal(String::from("b"));
 

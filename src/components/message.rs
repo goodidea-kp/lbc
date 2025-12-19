@@ -1,7 +1,7 @@
 use crate::util::TestAttr;
 use leptos::prelude::{
-    AriaAttributes, Children, ClassAttribute, CustomAttribute, ElementChild, Get, GetUntracked,
-    IntoView, Set, Signal, StyleAttribute, component, view,
+    AriaAttributes, Children, ClassAttribute, CustomAttribute, ElementChild, Get, IntoView, Signal,
+    StyleAttribute, component, view,
 };
 
 fn base_class(extra: &str) -> String {

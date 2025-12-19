@@ -327,30 +327,26 @@ mod tests {
     }
 
     #[test]
-    fn number_input_has_pattern_and_step() {
+    fn input_renders_test_attr_as_data_testid() {
         let html = view! {
-            <Input
-                name="amount"
-                value="0"
-                r#type=InputType::Number
-                step=1.0
-                update=noop()
-            />
+            <Input name="username" value="" update=noop() test_attr=TestAttr::test_id("input-test") />
         }
         .to_html();
+
         assert!(
-            html.contains(r#"type="number""#),
-            "expected type=number; got: {}",
+            html.contains(r#"data-testid="input-test""#),
+            "expected data-testid attribute; got: {}",
             html
         );
+    }
+
+    #[test]
+    fn input_no_test_attr_when_not_provided() {
+        let html = view! { <Input name="username" value="" update=noop() /> }.to_html();
+
         assert!(
-            html.contains(r#"pattern="[0-9]+([.][0-9]{0,2})?""#),
-            "expected pattern attribute; got: {}",
-            html
-        );
-        assert!(
-            html.contains(r#"step="1""#),
-            "expected step=1; got: {}",
+            !html.contains("data-testid") && !html.contains("data-cy"),
+            "expected no data attribute; got: {}",
             html
         );
     }

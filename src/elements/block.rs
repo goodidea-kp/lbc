@@ -82,18 +82,8 @@ mod tests {
         );
         assert!(html.contains('Y'));
     }
-}
 
-#[cfg(all(test, target_arch = "wasm32"))]
-mod wasm_tests {
-    use super::*;
-    use crate::util::TestAttr;
-    use leptos::prelude::*;
-    use wasm_bindgen_test::*;
-
-    wasm_bindgen_test_configure!(run_in_browser);
-
-    #[wasm_bindgen_test]
+    #[test]
     fn block_renders_test_id() {
         let html = view! {
             <Block test_attr=TestAttr::test_id("block-test")>"Content"</Block>
@@ -107,7 +97,7 @@ mod wasm_tests {
         );
     }
 
-    #[wasm_bindgen_test]
+    #[test]
     fn block_no_test_id_when_not_provided() {
         let html = view! {
             <Block>"Content"</Block>
@@ -121,7 +111,7 @@ mod wasm_tests {
         );
     }
 
-    #[wasm_bindgen_test]
+    #[test]
     fn block_accepts_custom_test_attr_key() {
         let html = view! {
             <Block test_attr=TestAttr::new("data-cy", "block-cy")>"Content"</Block>
@@ -134,4 +124,9 @@ mod wasm_tests {
             html
         );
     }
+}
+
+#[cfg(all(test, target_arch = "wasm32"))]
+mod wasm_tests {
+    // No wasm-specific tests needed for now.
 }
