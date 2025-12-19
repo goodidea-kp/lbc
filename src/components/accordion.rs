@@ -16,7 +16,10 @@ Notes
 */
 
 use leptos::callback::{Callable, Callback};
-use leptos::prelude::{Children, ClassAttribute, CustomAttribute, Effect, ElementChild, Get, GetUntracked, GlobalAttributes, IntoView, Signal, component, view, OnAttribute, Set};
+use leptos::prelude::{
+    Children, ClassAttribute, CustomAttribute, Effect, ElementChild, Get, GetUntracked,
+    GlobalAttributes, IntoView, OnAttribute, Set, Signal, component, view,
+};
 
 #[cfg(target_arch = "wasm32")]
 use leptos::wasm_bindgen::JsValue;
@@ -38,7 +41,7 @@ pub fn AccordionItem(
 
     /// Optional click handler invoked when header is clicked.
     #[prop(optional, into)]
-    on_toggle: Option<Callback<bool>>, 
+    on_toggle: Option<Callback<bool>>,
 
     /// Optional test attribute (renders as data-* attribute) on the root <article>.
     ///
