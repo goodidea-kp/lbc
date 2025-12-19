@@ -2,7 +2,9 @@ use leptos::prelude::{OnAttribute, Set};
 use lbc::prelude::{
     Block, Button, Content, HeaderSize, Modal, ModalCard, ModalCloserContext, Notification, Title,
 };
+use leptos::callback::Callback;
 use leptos::context::provide_context;
+use leptos::prelude::Set;
 use leptos::prelude::{
     ClassAttribute, ElementChild, Get, IntoAny, IntoView, component, signal, view,
 };
@@ -13,25 +15,37 @@ pub fn ModalPage() -> impl IntoView {
     provide_context::<ModalCloserContext>(closer);
     #[allow(unused)]
     let (show_toast, set_show_toast) = signal(false);
-    let trigger_btn = Box::new(|| view! {
-                        <Button color=lbc::elements::button::ButtonColor::Link>
-                            "Open Modal Card"
+    let trigger2 = Box::new(move || {
+        view! {
+
+                        <Button color=lbc::elements::button::ButtonColor::Primary
+                            on_click=Callback::new(move |_|closer.set("id2-open".to_string()))
+        >
+                            "Open Modal"
                         </Button>
-                    }.into_any());
+                    }
+        .into_any()
+    });
+
+    let trigger1 = Box::new(move || {
+        view! {
+            <Button color=lbc::elements::button::ButtonColor::Link
+              on_click=Callback::new(move |_|closer.set("id1-open".to_string()))
+               >
+                "Open Modal Card"
+            </Button>
+        }
+        .into_any()
+    });
     view! {
         <Block>
             <Title size=HeaderSize::Is5>"Modal"</Title>
             <Content>
                 <p class="subtitle is-6">"Basic Modal and ModalCard"</p>
-
                 <Modal
                     id="id2".to_string()
                     classes=""
-                    trigger=Box::new(|| view! {
-                        <Button color=lbc::elements::button::ButtonColor::Primary>
-                            "Open Modal"
-                        </Button>
-                    }.into_any())
+                    trigger=trigger2
                 >
                     <lbc::prelude::Box>
                         <p>"This is a simple modal content."</p>
@@ -45,7 +59,7 @@ pub fn ModalPage() -> impl IntoView {
                     id="id1".to_string()
                     title="Modal Card".to_string()
                     classes=""
-                    trigger=trigger_btn
+                    trigger=trigger1
                     body=Box::new(|| view! {
                         <div>
                             <p>"Modal card body content."</p>
@@ -54,41 +68,25 @@ pub fn ModalPage() -> impl IntoView {
                     footer=Box::new(move || {
                         view! {
                             <>
-                                <button
-                                    class="button is-success"
-                                    type="button"
-                                    on:click=move |_| {
-                                        set_show_toast.set(true);
-                                        closer.set("id1-close".to_string());
-                                    }
+                                <lbc::prelude::Button
+                                    classes="is-success"
+                 on_click={Callback::new(move |_|{set_show_toast.set(true);closer.set("id1-close".to_string())})}
                                 >
                                     "Save changes"
-                                </button>
+                                </lbc::prelude::Button>
 
-                                <button
-                                    class="button is-warning"
-                                    type="button"
-                                    on:click=move |_| closer.set("id1-close".to_string())
+                                <lbc::prelude::Button
+                                    classes="is-warning"
+                on_click=Callback::new(move |_|closer.set("id1-close".to_string()))
                                 >
                                     "Cancel"
-                                </button>
+                                </lbc::prelude::Button>
                             </>
                         }.into_any()
                     })
                 />
 
                 <div class="mt-4"></div>
-
-                <button
-                    class="button is-danger"
-                    type="button"
-                    on:click=move |_| {
-                        // Close ModalCard with id="id1" via context
-                        closer.set("id1-close".to_string());
-                    }
-                >
-                    "Close Modal Card via Context"
-                </button>
 
                 {move || {
                     if show_toast.get() {

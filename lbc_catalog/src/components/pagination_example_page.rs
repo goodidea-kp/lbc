@@ -13,7 +13,6 @@ pub fn PaginationPage() -> impl IntoView {
     let total_pages = 5usize;
 
     let on_prev = {
-        let set_current_page = set_current_page.clone();
         Arc::new(move || {
             let page = current_page.get_untracked();
             if page > 1 {
@@ -22,7 +21,6 @@ pub fn PaginationPage() -> impl IntoView {
         })
     };
     let on_next = {
-        let set_current_page = set_current_page.clone();
         Arc::new(move || {
             let page = current_page.get_untracked();
             if page < total_pages {
@@ -52,7 +50,6 @@ pub fn PaginationPage() -> impl IntoView {
                             label="Page 1"
                             current=Signal::derive(move || current_page.get() == 1)
                             on_click={
-                                let set_current_page = set_current_page.clone();
                                 Arc::new(move || set_current_page.set(1))
                             }
                         >{"1"}</PaginationItem>
@@ -63,7 +60,6 @@ pub fn PaginationPage() -> impl IntoView {
                             label="Page 2"
                             current=Signal::derive(move || current_page.get() == 2)
                             on_click={
-                                let set_current_page = set_current_page.clone();
                                 Arc::new(move || set_current_page.set(2))
                             }
                         >{"2"}</PaginationItem>
@@ -74,7 +70,6 @@ pub fn PaginationPage() -> impl IntoView {
                             label="Page 3"
                             current=Signal::derive(move || current_page.get() == 3)
                             on_click={
-                                let set_current_page = set_current_page.clone();
                                 Arc::new(move || set_current_page.set(3))
                             }
                         >{"3"}</PaginationItem>
@@ -85,7 +80,6 @@ pub fn PaginationPage() -> impl IntoView {
                             label="Page 4"
                             current=Signal::derive(move || current_page.get() == 4)
                             on_click={
-                                let set_current_page = set_current_page.clone();
                                 Arc::new(move || set_current_page.set(4))
                             }
                         >{"4"}</PaginationItem>
@@ -97,7 +91,6 @@ pub fn PaginationPage() -> impl IntoView {
                             current=Signal::derive(move || current_page.get() == 5)
                             on_click={
                                 Arc::new({
-                                    let set_current_page = set_current_page.clone();
                                     move || set_current_page.set(5)
                                 })
                             }

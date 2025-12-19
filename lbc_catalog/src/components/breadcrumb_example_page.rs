@@ -18,24 +18,24 @@ pub fn BreadcrumbPage() -> impl IntoView {
             <Title size=HeaderSize::Is5>"Breadcrumb"</Title>
 
             <Buttons size=Size::Small>
-                <button class="button" type="button">"Default"</button>
-                <button class="button" type="button">"Small"</button>
-                <button class="button" type="button">"Medium"</button>
-                <button class="button" type="button">"Large"</button>
+                <lbc::prelude::Button classes="is-primary">"Default"</lbc::prelude::Button>
+                <lbc::prelude::Button classes="is-primary">"Small"</lbc::prelude::Button>
+                <lbc::prelude::Button classes="is-primary">"Medium"</lbc::prelude::Button>
+                <lbc::prelude::Button classes="is-primary">"Large"</lbc::prelude::Button>
             </Buttons>
 
             <Buttons size=Size::Small>
-                <button class="button" type="button">"Left"</button>
-                <button class="button" type="button">"Centered"</button>
-                <button class="button" type="button">"Right"</button>
+                <lbc::prelude::Button classes="is-primary">"Left"</lbc::prelude::Button>
+                <lbc::prelude::Button classes="is-primary">"Centered"</lbc::prelude::Button>
+                <lbc::prelude::Button classes="is-primary">"Right"</lbc::prelude::Button>
             </Buttons>
 
             <Buttons size=Size::Small>
-                <button class="button" type="button">"Default"</button>
-                <button class="button" type="button">"Arrow"</button>
-                <button class="button" type="button">"Bullet"</button>
-                <button class="button" type="button">"Dot"</button>
-                <button class="button" type="button">"Succeeds"</button>
+                <lbc::prelude::Button classes="is-primary">"Default"</lbc::prelude::Button>
+                <lbc::prelude::Button classes="is-primary">"Arrow"</lbc::prelude::Button>
+                <lbc::prelude::Button classes="is-primary">"Bullet"</lbc::prelude::Button>
+                <lbc::prelude::Button classes="is-primary">"Dot"</lbc::prelude::Button>
+                <lbc::prelude::Button classes="is-primary">"Succeeds"</lbc::prelude::Button>
             </Buttons>
 
             <Content>

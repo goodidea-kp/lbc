@@ -1,17 +1,9 @@
-use std::sync::Arc;
-
-#[allow(unused_imports)]
-use leptos::prelude::Effect;
-use leptos::prelude::{
-    Children, ClassAttribute, CustomAttribute, ElementChild, GetUntracked, IntoView, Signal,
-    component, view,
-};
-#[allow(unused_imports)]
-use std::cell::Cell;
-#[allow(unused_imports)]
-use std::rc::Rc;
-
 use crate::util::TestAttr;
+use leptos::callback::Callable;
+use leptos::prelude::{
+    Callback, Children, ClassAttribute, CustomAttribute, ElementChild, GetUntracked, IntoView,
+    OnAttribute, Signal, component, event_target_value, view,
+};
 
 /// The mutually exclusive radio buttons in their native format.
 ///
@@ -41,7 +33,7 @@ pub fn Radio(
     checked_value: Option<String>,
 
     /// The callback to be used for propagating changes to the selected radio of the radio group.
-    update: Arc<dyn Fn(String) + Send + Sync>,
+    update: Callback<String>,
 
     /// Component children rendered next to the radio input inside the label.
     children: Children,
@@ -98,6 +90,7 @@ pub fn Radio(
                 value=value_value
                 checked=is_checked
                 disabled=is_disabled
+                on:change=move |v| update.run(event_target_value(&v))
             />
             {children()}
         </label>
@@ -108,10 +101,9 @@ pub fn Radio(
 mod tests {
     use super::*;
     use leptos::prelude::RenderHtml;
-    use std::sync::Arc;
 
-    fn noop() -> Arc<dyn Fn(String) + Send + Sync> {
-        Arc::new(|_v| {})
+    fn noop() -> Callback<String> {
+        Callback::new(|_v| {})
     }
 
     #[test]
@@ -164,11 +156,10 @@ mod wasm_tests {
     use super::*;
     use crate::util::TestAttr;
     use leptos::prelude::*;
-    use std::sync::Arc;
     use wasm_bindgen_test::*;
 
-    fn noop() -> Arc<dyn Fn(String) + Send + Sync> {
-        Arc::new(|_v| {})
+    fn noop() -> Callback<String> {
+        Callback::new(|_v| {})
     }
 
     wasm_bindgen_test_configure!(run_in_browser);

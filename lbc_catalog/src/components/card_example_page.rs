@@ -1,30 +1,40 @@
+use lbc::prelude::Buttons;
 use lbc::prelude::{
     Block, Card, CardContent, CardFooter, CardHeader, CardImage, Content, HeaderSize, Image, Tag,
     TagColor, Title,
 };
-use leptos::prelude::{ClassAttribute, ElementChild, Get, IntoView, component, signal, view};
+use leptos::ev::MouseEvent;
+use leptos::prelude::AddAnyAttr;
+use leptos::prelude::Set;
+use leptos::prelude::{
+    ClassAttribute, ElementChild, Get, IntoView, OnAttribute, Update, component, signal, view,
+};
 
 #[component]
 pub fn CardPage() -> impl IntoView {
-    #[allow(unused)]
     let (liked, set_liked) = signal(false);
-    #[allow(unused)]
-    let (theme, set_theme) = signal(String::new());
+    let (theme, set_theme) = signal("light".to_string());
 
     view! {
         <Block>
             <Title size=HeaderSize::Is5>"Card"</Title>
 
-            <div class="buttons">
-                <button
-                    class="button"
-                    type="button"
+            <Buttons>
+                <lbc::prelude::Button
+                    classes="is-primary"
+                    on:click=move |_| set_theme.set(
+                        if theme.get() == "light" {
+                            "dark".to_string()
+                        } else {
+                            "light".to_string()
+                        }
+                    )
                 >
-                    "Toggle Theme"
-                </button>
-            </div>
+                    "Toggle Card Theme"
+                </lbc::prelude::Button>
+            </Buttons>
 
-            <Card classes=theme>
+            <Card data_theme=theme>
                 <CardHeader classes="p-2">
                     <p class="card-header-title">"Leptos Card"</p>
                 </CardHeader>
@@ -69,12 +79,26 @@ pub fn CardPage() -> impl IntoView {
                     <a
                         class="card-footer-item"
                         href="#"
+                        on:click=move |e: MouseEvent| {
+                            e.prevent_default();
+                            set_liked.update(|v| *v = !*v);
+                        }
                     >
                         {move || if liked.get() { "Liked ✓" } else { "Like" }}
                     </a>
                     <a
                         class="card-footer-item"
                         href="#"
+                        on:click=move |e: MouseEvent| {
+                            e.prevent_default();
+                            set_theme.update(|t| {
+                                if t == "light" {
+                                    *t = "dark".to_string();
+                                } else {
+                                    *t = "light".to_string();
+                                }
+                            });
+                        }
                     >
                         "Theme"
                     </a>

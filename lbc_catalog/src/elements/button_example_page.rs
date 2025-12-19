@@ -8,7 +8,7 @@ AI Pair Programming Notes:
 */
 
 use lbc::prelude::{Block, Button, ButtonColor, Buttons, HeaderSize, Size, Title};
-use leptos::prelude::{Get, IntoView, Update, component, signal, view};
+use leptos::prelude::{Callback, Get, IntoView, Update, component, signal, view};
 
 #[component]
 pub fn ButtonPage() -> impl IntoView {
@@ -21,7 +21,7 @@ pub fn ButtonPage() -> impl IntoView {
                 <Button color=ButtonColor::Success size=Size::Small>"Small Success"</Button>
                 <Button
                     loading=is_loading
-                    on_click=std::rc::Rc::new(move |_| set_is_loading.update(|value| *value = !*value))
+                    on_click=Callback::new(move |_| set_is_loading.update(|value| *value = !*value))
                 >
                     {move || if is_loading.get() { "Stop Loading" } else { "Start Loading" }}
                 </Button>

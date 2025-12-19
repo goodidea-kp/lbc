@@ -1,7 +1,6 @@
 use lbc::prelude::{Block, Buttons, HeaderSize, Message, MessageBody, MessageHeader, Title};
-use leptos::prelude::{
-    ClassAttribute, ElementChild, Get, IntoAny, IntoView, Set, component, signal, view,
-};
+use leptos::prelude::AddAnyAttr;
+use leptos::prelude::{ElementChild, Get, IntoAny, IntoView, Set, component, signal, view};
 
 #[component]
 pub fn MessagePage() -> impl IntoView {
@@ -13,30 +12,30 @@ pub fn MessagePage() -> impl IntoView {
             <Title size=HeaderSize::Is5>"Message"</Title>
 
             <Buttons>
-                <button
-                    class="button is-primary"
-                    type="button"
+                <lbc::prelude::Button
+                    classes="is-primary"
+        on:click=move |_| {set_show_primary.set(true); set_color_class.set("is-primary".to_string())}
                 >
                     "Primary"
-                </button>
-                <button
-                    class="button is-warning"
-                    type="button"
+                </lbc::prelude::Button>
+                <lbc::prelude::Button
+                    classes="is-warning"
+         on:click=move |_| {set_show_primary.set(true); set_color_class.set("is-warning".to_string())}
                 >
                     "Warning"
-                </button>
-                <button
-                    class="button is-info"
-                    type="button"
+                </lbc::prelude::Button>
+                <lbc::prelude::Button
+                    classes="is-info"
+         on:click=move |_| {set_show_primary.set(true); set_color_class.set("is-info".to_string())}
                 >
                     "Info"
-                </button>
-                <button
-                    class="button is-light"
-                    type="button"
+                </lbc::prelude::Button>
+                <lbc::prelude::Button
+                    classes="is-light"
+         on:click=move |_| {set_show_primary.set(true); set_color_class.set("is-light".to_string())}
                 >
                     "Show"
-                </button>
+                </lbc::prelude::Button>
             </Buttons>
 
             {move || if show_primary.get() {
@@ -44,10 +43,7 @@ pub fn MessagePage() -> impl IntoView {
                     <Message
                         classes=color_class.get()
                         closable=true
-                        on_close=std::rc::Rc::new({
-                            let set_show_primary = set_show_primary.clone();
-                            move || set_show_primary.set(false)
-                        })
+                        on:click=move |_| set_show_primary.set(false)
                     >
                         <MessageHeader>
                             <p>"Interactive Message"</p>

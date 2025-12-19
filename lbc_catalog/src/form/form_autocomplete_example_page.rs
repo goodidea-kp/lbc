@@ -12,7 +12,6 @@ pub fn FormAutoCompletePage() -> impl IntoView {
 
     // Merge new value into the set
     let on_add = {
-        let set_selected = set_selected.clone();
         Arc::new(move |v: String| {
             set_selected.update(|list| {
                 if !list.iter().any(|item| item == &v) {
@@ -24,7 +23,6 @@ pub fn FormAutoCompletePage() -> impl IntoView {
 
     // Remove value from the set
     let on_remove = {
-        let set_selected = set_selected.clone();
         Arc::new(move |v: String| {
             set_selected.update(|list| {
                 list.retain(|item| item != &v);

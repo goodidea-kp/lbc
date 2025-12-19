@@ -1,17 +1,17 @@
+use crate::util::{Size, TestAttr};
+use leptos::callback::Callback;
 use leptos::children::Children;
 use leptos::ev::MouseEvent;
 #[allow(unused_imports)]
 use leptos::prelude::Effect;
 use leptos::prelude::{
-    ClassAttribute, CustomAttribute, ElementChild, Get, IntoView, OnAttribute, Signal, component,
-    view,
+    Callable, ClassAttribute, CustomAttribute, ElementChild, Get, IntoView, OnAttribute, Signal,
+    component, view,
 };
 #[allow(unused_imports)]
 use std::cell::Cell;
 #[allow(unused_imports)]
 use std::rc::Rc;
-
-use crate::util::{Size, TestAttr};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ButtonColor {
@@ -55,7 +55,7 @@ pub fn Button(
     #[prop(optional, into)] loading: Signal<bool>,
     #[prop(optional, into)] disabled: Signal<bool>,
     #[prop(optional, into)] classes: Option<Signal<String>>,
-    #[prop(optional)] on_click: Option<std::rc::Rc<dyn Fn(MouseEvent)>>,
+    #[prop(optional)] on_click: Option<Callback<MouseEvent>>,
     /// Optional test attribute (renders as data-* attribute)
     ///
     /// When provided as a &str or String, this becomes `data-testid="value"`.
@@ -64,8 +64,6 @@ pub fn Button(
     test_attr: Option<TestAttr>,
     children: Children,
 ) -> impl IntoView {
-    let on_click_callback = on_click.clone();
-
     let class = move || {
         let mut class_parts: Vec<&str> = vec!["button"];
         if let Some(color_value) = color {
@@ -110,9 +108,10 @@ pub fn Button(
             disabled=move || disabled.get()
             attr:data-testid=move || data_testid.clone()
             attr:data-cy=move || data_cy.clone()
-            on:click=move |event| {
-                if let Some(cb) = on_click_callback.as_ref() {
-                    (cb)(event);
+            on:click=move |ev| {
+                if let Some(cb) = on_click {
+                    // gloo_console::log!("Button clicked");
+                    cb.run(ev);
                 }
             }
         >

@@ -21,6 +21,19 @@
 }
 
 /* Common Bulma containers */
+[data-theme="dark"].box,
+[data-theme="dark"].panel,
+[data-theme="dark"].card,
+[data-theme="dark"].menu,
+[data-theme="dark"].dropdown-content,
+[data-theme="dark"].message,
+[data-theme="dark"].notification,
+[data-theme="dark"].panel-block,
+[data-theme="dark"].modal-card,
+[data-theme="dark"].modal-content,
+[data-theme="dark"].content,
+[data-theme="dark"].tags,
+[data-theme="dark"].table-container,
 [data-theme="dark"] .box,
 [data-theme="dark"] .panel,
 [data-theme="dark"] .card,
@@ -89,6 +102,9 @@
 }
 
 /* Helper: thin border on boxes/cards in dark */
+[data-theme="dark"].box,
+[data-theme="dark"].card,
+[data-theme="dark"].panel,
 [data-theme="dark"] .box,
 [data-theme="dark"] .card,
 [data-theme="dark"] .panel {

@@ -1,3 +1,4 @@
+use leptos::callback::Callback;
 use lbc::prelude::{Block, Content, Control, Field, HeaderSize, Radio, Subtitle, Title};
 use leptos::prelude::{
     ClassAttribute, ElementChild, Get, GetUntracked, IntoView, Set, component, signal, view,
@@ -9,7 +10,7 @@ use std::sync::Arc;
 pub fn FormRadioPage() -> impl IntoView {
     let (selected, set_selected) = signal(String::from("b"));
 
-    let update = Arc::new(move |v: String| set_selected.set(v));
+    let update = Callback::new(move |v: String| set_selected.set(v));
     // Clone update for each radio to avoid moving it into multiple closures
     let update_a = update.clone();
     let update_b = update.clone();
@@ -71,7 +72,7 @@ pub fn FormRadioPage() -> impl IntoView {
                             value="x"
                             checked_value="x".to_string()
                             disabled=true
-                            update=Arc::new(|_| {})
+                            update=Callback::new(|_| {})
                         >
                             "Disabled X"
                         </Radio>
