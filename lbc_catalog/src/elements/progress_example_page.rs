@@ -10,12 +10,13 @@ AI Pair Programming Notes:
 use lbc::prelude::{
     Block, Button, ButtonColor, Buttons, HeaderSize, Progress, Size, Subtitle, Title,
 };
+use leptos::callback::Callback;
 use leptos::prelude::{
     ClassAttribute, ElementChild, Get, IntoView, Set, Update, component, signal, view,
 };
-use std::rc::Rc;
 
 #[component]
+#[allow(non_snake_case)]
 pub fn ProgressPage() -> impl IntoView {
     let (progress_value, set_progress_value) = signal(25.0);
 
@@ -50,19 +51,19 @@ pub fn ProgressPage() -> impl IntoView {
                 <Buttons classes="mt-4" size=Size::Small>
                     <Button
                         color=ButtonColor::Success
-                        on_click=Rc::new(move |_| set_progress_value.update(|v| *v = (*v + 10.0).min(100.0)))
+                        on_click=Callback::new(move |_| set_progress_value.update(|v| *v = (*v + 10.0).min(100.0)))
                     >
                         "+10%"
                     </Button>
                     <Button
                         color=ButtonColor::Danger
-                        on_click=Rc::new(move |_| set_progress_value.update(|v| *v = (*v - 10.0).max(0.0)))
+                        on_click=Callback::new(move |_| set_progress_value.update(|v| *v = (*v - 10.0).max(0.0)))
                     >
                         "-10%"
                     </Button>
                     <Button
                         classes="is-light"
-                        on_click=Rc::new(move |_| set_progress_value.set(0.0))
+                        on_click=Callback::new(move |_| set_progress_value.set(0.0))
                     >
                         "Reset"
                     </Button>

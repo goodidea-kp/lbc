@@ -1,10 +1,8 @@
-use leptos::prelude::{
-    AriaAttributes, Children, ClassAttribute, CustomAttribute, ElementChild, Get, GetUntracked,
-    IntoView, Set, Signal, StyleAttribute, component, view,
-};
-use std::rc::Rc;
-
 use crate::util::TestAttr;
+use leptos::prelude::{
+    AriaAttributes, Children, ClassAttribute, CustomAttribute, ElementChild, Get, IntoView, Signal,
+    StyleAttribute, component, view,
+};
 
 fn base_class(extra: &str) -> String {
     if extra.trim().is_empty() {
@@ -26,10 +24,6 @@ pub fn Message(
     /// When true, renders a close button in the top-right that hides the entire message when clicked.
     #[prop(optional, into)]
     closable: Signal<bool>,
-
-    /// Optional close callback invoked when the close button is clicked.
-    #[prop(optional)]
-    on_close: Option<Rc<dyn Fn()>>,
 
     /// Optional test attribute (renders as data-* attribute) on the root <article>.
     ///

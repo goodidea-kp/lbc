@@ -2,13 +2,9 @@ use crate::util::TestAttr;
 #[allow(unused_imports)]
 use leptos::prelude::Effect;
 use leptos::prelude::{
-    Children, ClassAttribute, CustomAttribute, ElementChild, Get, GetUntracked, GlobalAttributes,
-    IntoAny, IntoView, Set, Signal, StyleAttribute, component, view,
+    Children, ClassAttribute, CustomAttribute, ElementChild, Get, GlobalAttributes, IntoAny,
+    IntoView, Signal, StyleAttribute, component, view,
 };
-#[allow(unused_imports)]
-use std::cell::Cell;
-#[allow(unused_imports)]
-use std::rc::Rc;
 
 /// A Bulma dropdown menu with a trigger button.
 /// https://bulma.io/documentation/components/dropdown/

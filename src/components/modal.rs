@@ -2,10 +2,6 @@ use leptos::prelude::{
     Children, ClassAttribute, CustomAttribute, Effect, ElementChild, Get, GlobalAttributes,
     IntoView, OnAttribute, Set, Signal, component, view,
 };
-#[allow(unused_imports)]
-use std::cell::Cell;
-#[allow(unused_imports)]
-use std::rc::Rc;
 
 use crate::util::TestAttr;
 
@@ -84,9 +80,12 @@ pub fn Modal(
             }
 
             if let Some((target_id, op)) = action.split_once('-') {
-                if target_id == id_clone && op == "close" {
-                    set_is_active.set(false);
-                    // reset context to avoid re-trigger
+                if target_id == id_clone {
+                    if op == "close" {
+                        set_is_active.set(false);
+                    } else if op == "open" {
+                        set_is_active.set(true);
+                    }
                     closer_signal.set(String::new());
                 }
             }
@@ -113,7 +112,7 @@ pub fn Modal(
     let close = set_is_active.clone();
     view! {
         <>
-             <div on:click = move |_| open.set(true)>{trigger()}</div>
+            <div on:click=move |_| set_is_active.set(true)>{trigger()}</div>
 
             <div
                 id=id.clone()
@@ -121,17 +120,17 @@ pub fn Modal(
                 attr:data-testid=move || data_testid.clone()
                 attr:data-cy=move || data_cy.clone()
             >
-                <div class="modal-background" on:click = move |_| close.set(false)></div>
+                <div class="modal-background" on:click=move |_| set_is_active.set(false)></div>
 
                 <div class="modal-content">
                     {children()}
                 </div>
 
                 <button
-                    on:click = { move |_| close.set(false) }
                     class="modal-close is-large"
                     aria_labelledby-label="close"
                     type="button"
+                    on:click=move |_| set_is_active.set(false)
                 ></button>
             </div>
         </>
@@ -194,8 +193,12 @@ pub fn ModalCard(
             }
 
             if let Some((target_id, op)) = action.split_once('-') {
-                if target_id == id_clone && op == "close" {
-                    set_is_active.set(false);
+                if target_id == id_clone {
+                    if op == "close" {
+                        set_is_active.set(false);
+                    } else if op == "open" {
+                        set_is_active.set(true);
+                    }
                     closer_signal.set(String::new());
                 }
             }
@@ -223,7 +226,7 @@ pub fn ModalCard(
     let close = set_is_active.clone();
     view! {
         <>
-            <div on:click = move |_| open.set(true)>{trigger()}</div>
+            <div on:click=move |_| set_is_active.set(true)>{trigger()}</div>
 
             <div
                 id=id.clone()
@@ -231,16 +234,16 @@ pub fn ModalCard(
                 attr:data-testid=move || data_testid.clone()
                 attr:data-cy=move || data_cy.clone()
             >
-                <div class="modal-background" on:click = move |_| close.set(false)></div>
+                <div class="modal-background" on:click=move |_| set_is_active.set(false)></div>
 
                 <div class="modal-card">
                     <header class="modal-card-head">
                         <p class="modal-card-title">{title.clone()}</p>
                         <button
-                            on:click = { move |_| close.set(false) }
                             class="delete"
                             aria_labelledby-label="close"
                             type="button"
+                            on:click=move |_| set_is_active.set(false)
                         ></button>
                     </header>
 
@@ -254,10 +257,10 @@ pub fn ModalCard(
                 </div>
 
                 <button
-                    on:click = { move |_| close.set(false) }
                     class="modal-close is-large"
                     aria_labelledby-label="close"
                     type="button"
+                    on:click=move |_| set_is_active.set(false)
                 ></button>
             </div>
         </>

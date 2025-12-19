@@ -27,6 +27,10 @@ pub fn Card(
     #[prop(optional, into)]
     test_attr: Option<TestAttr>,
 
+    /// Optional theme attribute (renders as data-theme attribute) on the root <div>.
+    #[prop(optional, into)]
+    data_theme: Option<Signal<String>>,
+
     /// Card body content (header, image, content, footer, etc.).
     children: Children,
 ) -> impl IntoView {
@@ -34,6 +38,8 @@ pub fn Card(
         let classes = classes.clone();
         move || base_class("card", &classes.get())
     };
+
+    let theme = move || data_theme.as_ref().map(|s| s.get());
 
     let (data_testid, data_cy) = match &test_attr {
         Some(attr) if attr.key == "data-testid" => (Some(attr.value.clone()), None),
@@ -44,6 +50,7 @@ pub fn Card(
     view! {
         <div
             class=class
+            data-theme=theme
             attr:data-testid=move || data_testid.clone()
             attr:data-cy=move || data_cy.clone()
         >
