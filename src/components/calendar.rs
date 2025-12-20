@@ -10,6 +10,10 @@ Value format
 - The emitted string follows the configured `date_format` and `time_format` patterns understood by bulmaCalendar.
 - Clearing the picker emits an empty string.
 
+Programmatic control
+- To update the picker value from the outside, update the `date` signal.
+- To clear the picker from the outside, set the `date` signal to a single space `" "`.
+
 Required static assets
 - CSS (add in <head>):
   https://cdn.jsdelivr.net/npm/bulma-calendar@7.1.1/dist/css/bulma-calendar.min.css
@@ -18,9 +22,10 @@ Required static assets
 */
 
 use leptos::html;
+use leptos::prelude::Callback;
 use leptos::prelude::{
-    ClassAttribute, CustomAttribute, Get, GetUntracked, GlobalAttributes, IntoView, NodeRef,
-    NodeRefAttribute, Signal, component, view,
+    Callable, ClassAttribute, CustomAttribute, Get, GetUntracked, GlobalAttributes, IntoView,
+    NodeRef, NodeRefAttribute, Signal, component, view,
 };
 #[cfg(target_arch = "wasm32")]
 use leptos::wasm_bindgen::closure::Closure;
@@ -48,11 +53,11 @@ pub fn Calendar(
     time_format: Signal<String>,
 
     /// Optional initial value to seed the widget with.
-    #[prop(optional)]
-    date: Option<String>,
+    #[prop(optional, into)]
+    date: Signal<String>,
 
     /// Callback invoked when the date/time changes; receives empty string on clear.
-    update: std::sync::Arc<dyn Fn(String) + Send + Sync>,
+    update: Callback<String>,
 
     /// Extra classes appended after Bulma "input".
     #[prop(optional, into)]
@@ -81,7 +86,7 @@ pub fn Calendar(
     };
 
     // Keep simple initial value for SSR; runtime is controlled by JS widget.
-    let initial_value = date.clone().unwrap_or_default();
+    let initial_value = date.get_untracked();
     let _date_format_sig = date_format.clone();
     // Validate date_format strictly: allow only exact "yyyy-MM-dd" (lowercase), or empty to use default.
     {
@@ -95,6 +100,8 @@ pub fn Calendar(
     }
     let _time_format_sig = time_format.clone();
     let _id_for_cleanup = id.clone();
+    let _id_for_effect = id.clone();
+    let _date_sig = date.clone();
     #[cfg(target_arch = "wasm32")]
     let initial_for_js = initial_value.clone();
     #[cfg(not(target_arch = "wasm32"))]
@@ -114,7 +121,7 @@ pub fn Calendar(
                     let update = update.clone();
                     Closure::wrap(Box::new(move |date: JsValue| {
                         let s = date.as_string().unwrap_or_default();
-                        (update)(s);
+                        update.run(s);
                     }) as Box<dyn FnMut(JsValue)>)
                 };
 
@@ -153,6 +160,19 @@ pub fn Calendar(
                     &JsValue::from(picker_type),
                 );
                 cb.forget();
+            }
+        });
+
+        // Watch for changes in the date signal to update or clear the picker.
+        leptos::prelude::Effect::new(move |_| {
+            let current_date = _date_sig.get();
+            if current_date == " " {
+                clear_date(&JsValue::from(_id_for_effect.as_str()));
+            } else {
+                update_value(
+                    &JsValue::from(_id_for_effect.as_str()),
+                    &JsValue::from(current_date),
+                );
             }
         });
     }
@@ -212,10 +232,22 @@ export function setup_date_picker(element, callback, initial_date, date_format, 
             callback(datepicker.data.value());
         });
     }
-    init.get(element.id).value(initial_date);
+    if (initial_date) {
+        init.get(element.id).value(initial_date);
+    }
 }
 export function detach_date_picker(id) {
     init.delete(id);
+}
+export function clear_date(id) {
+    if (init.has(id)) {
+        init.get(id).clear();
+    }
+}
+export function update_value(id, value) {
+    if (init.has(id)) {
+        init.get(id).value(value);
+    }
 }
 "#)]
 #[cfg(target_arch = "wasm32")]
@@ -231,16 +263,19 @@ extern "C" {
     );
 
     fn detach_date_picker(id: &JsValue);
+
+    fn clear_date(id: &JsValue);
+
+    fn update_value(id: &JsValue, value: &JsValue);
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use leptos::prelude::RenderHtml;
-    use std::sync::Arc;
 
-    fn noop() -> Arc<dyn Fn(String) + Send + Sync> {
-        Arc::new(|_| {})
+    fn noop() -> Callback<String> {
+        Callback::new(|_: String| {})
     }
 
     #[test]
@@ -261,8 +296,9 @@ mod tests {
     #[test]
     fn calendar_initial_value_and_extra_classes() {
         let html = view! {
-            <Calendar id="d".to_string() date="2025-01-01 10:00".to_string() classes="is-small" update=noop() />
-        }.to_html();
+            <Calendar id="d".to_string() date="2025-01-01 10:00" classes="is-small" update=noop() />
+        }
+        .to_html();
         assert!(
             html.contains(r#"class="input is-small""#)
                 || html.contains(r#"class="input is-small ""#),
@@ -281,7 +317,7 @@ mod tests {
         let html = view! {
             <Calendar
                 id="only-date".to_string()
-                date="2025-02-03".to_string()
+                date="2025-02-03"
                 date_format="yyyy-MM-dd"
                 update=noop()
             />
@@ -299,7 +335,7 @@ mod tests {
         let html = view! {
             <Calendar
                 id="with-datetime".to_string()
-                date="2025-02-03 12:34".to_string()
+                date="2025-02-03 12:34"
                 date_format="yyyy-MM-dd"
                 time_format="HH:mm"
                 update=noop()
@@ -332,11 +368,10 @@ mod tests {
 mod wasm_tests {
     use super::*;
     use leptos::prelude::*;
-    use std::sync::Arc;
     use wasm_bindgen_test::*;
 
-    fn noop() -> Arc<dyn Fn(String) + Send + Sync> {
-        Arc::new(|_| {})
+    fn noop() -> Callback<String> {
+        Callback::new(|_: String| {})
     }
 
     wasm_bindgen_test_configure!(run_in_browser);
