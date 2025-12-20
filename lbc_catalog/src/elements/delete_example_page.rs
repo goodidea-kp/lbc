@@ -8,12 +8,13 @@ AI Pair Programming Notes:
 use lbc::prelude::{Block, Button, Buttons, Delete, HeaderSize, Notification, Title};
 use leptos::prelude::AddAnyAttr;
 use leptos::prelude::{
-    ClassAttribute, ElementChild, Get, IntoAny, IntoView, Set, component, set_timeout, signal, view,
+    Callback, ClassAttribute, ElementChild, Get, IntoAny, IntoView, Set, component, set_timeout,
+    signal, view,
 };
-use std::sync::Arc;
 use std::time::Duration;
 
 #[component]
+#[allow(non_snake_case)]
 pub fn DeletePage() -> impl IntoView {
     let (is_confirming, set_is_confirming) = signal(false);
     let (user_choice, set_user_choice) = signal::<Option<bool>>(None);
@@ -21,12 +22,12 @@ pub fn DeletePage() -> impl IntoView {
 
     let prompt_text = "configration to continue for Delete";
 
-    let delete_click = Arc::new(move |_| {
+    let delete_click = Callback::new(move |_| {
         set_is_confirming.set(true);
         set_user_choice.set(None);
     });
 
-    let anchor_delete_click = Arc::new(move |_| {
+    let anchor_delete_click = Callback::new(move |_| {
         set_show_toast.set(true);
         set_timeout(move || set_show_toast.set(false), Duration::from_secs(2));
     });

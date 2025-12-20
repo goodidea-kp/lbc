@@ -1,6 +1,6 @@
 [package]
 name = "lbc"
-version = "0.1.11"
+version = "0.1.12"
 edition = "2024"
 description = "A Leptos component library based on the Bulma CSS framework."
 authors = ["Konstantin Pupkov <konstantin.pupkov@fromkos.com>"]
@@ -15,6 +15,7 @@ default = []
 # Enable library debug logging (uses `leptos::logging::log!`).
 # Disabled by default to avoid noisy console output in production.
 logging = []
+
 
 [dependencies]
 console_error_panic_hook = "0.1.7"

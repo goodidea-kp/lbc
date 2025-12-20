@@ -3,205 +3,14 @@ Leptos version of Bulma Delete element.
 
 Bulma docs: https://bulma.io/documentation/elements/delete/
 */
+use leptos::callback::Callable;
 use leptos::ev::MouseEvent;
-use leptos::html;
-#[allow(unused_imports)]
-use leptos::prelude::Effect;
 use leptos::prelude::{
-    AnyView, Children, ClassAttribute, CustomAttribute, ElementChild, Get, IntoAny, NodeRef,
-    NodeRefAttribute, Signal, component, view,
+    AnyView, Callback, Children, ClassAttribute, CustomAttribute, ElementChild, Get, IntoAny,
+    OnAttribute, Signal, component, view,
 };
-#[allow(unused_imports)]
-use std::cell::Cell;
-#[allow(unused_imports)]
-use std::rc::Rc;
-use std::sync::Arc;
 
 use crate::util::TestAttr;
-
-#[cfg(target_arch = "wasm32")]
-fn attach_click_listener_once_for_button(
-    element_ref: NodeRef<html::Button>,
-    on_click: Option<Arc<dyn Fn(MouseEvent) + Send + Sync>>,
-) {
-    use leptos::wasm_bindgen::JsCast;
-    use leptos::wasm_bindgen::closure::Closure;
-    use leptos::web_sys::{Event, EventTarget};
-
-    let has_attached = Rc::new(Cell::new(false));
-    let on_click_for_effect = on_click.clone();
-
-    Effect::new(move |_| {
-        if has_attached.get() {
-            return;
-        }
-
-        let Some(element) = element_ref.get() else {
-            return;
-        };
-
-        let Some(on_click_callback) = on_click_for_effect.clone() else {
-            has_attached.set(true);
-            return;
-        };
-
-        let event_target: EventTarget = element.unchecked_into::<EventTarget>();
-
-        let click_closure: Closure<dyn FnMut(Event)> =
-            Closure::wrap(Box::new(move |event: Event| {
-                let Ok(mouse_event) = event.dyn_into::<MouseEvent>() else {
-                    return;
-                };
-
-                (on_click_callback)(mouse_event);
-            }));
-
-        event_target
-            .add_event_listener_with_callback("click", click_closure.as_ref().unchecked_ref())
-            .ok();
-
-        has_attached.set(true);
-        click_closure.forget();
-    });
-}
-
-#[cfg(target_arch = "wasm32")]
-fn attach_click_listener_once_for_anchor(
-    element_ref: NodeRef<html::A>,
-    on_click: Option<Arc<dyn Fn(MouseEvent) + Send + Sync>>,
-) {
-    use leptos::wasm_bindgen::JsCast;
-    use leptos::wasm_bindgen::closure::Closure;
-    use leptos::web_sys::{Event, EventTarget};
-
-    let has_attached = Rc::new(Cell::new(false));
-    let on_click_for_effect = on_click.clone();
-
-    Effect::new(move |_| {
-        if has_attached.get() {
-            return;
-        }
-
-        let Some(element) = element_ref.get() else {
-            return;
-        };
-
-        let Some(on_click_callback) = on_click_for_effect.clone() else {
-            has_attached.set(true);
-            return;
-        };
-
-        let event_target: EventTarget = element.unchecked_into::<EventTarget>();
-
-        let click_closure: Closure<dyn FnMut(Event)> =
-            Closure::wrap(Box::new(move |event: Event| {
-                let Ok(mouse_event) = event.dyn_into::<MouseEvent>() else {
-                    return;
-                };
-
-                (on_click_callback)(mouse_event);
-            }));
-
-        event_target
-            .add_event_listener_with_callback("click", click_closure.as_ref().unchecked_ref())
-            .ok();
-
-        has_attached.set(true);
-        click_closure.forget();
-    });
-}
-
-#[cfg(target_arch = "wasm32")]
-fn attach_click_listener_once_for_span(
-    element_ref: NodeRef<html::Span>,
-    on_click: Option<Arc<dyn Fn(MouseEvent) + Send + Sync>>,
-) {
-    use leptos::wasm_bindgen::JsCast;
-    use leptos::wasm_bindgen::closure::Closure;
-    use leptos::web_sys::{Event, EventTarget};
-
-    let has_attached = Rc::new(Cell::new(false));
-    let on_click_for_effect = on_click.clone();
-
-    Effect::new(move |_| {
-        if has_attached.get() {
-            return;
-        }
-
-        let Some(element) = element_ref.get() else {
-            return;
-        };
-
-        let Some(on_click_callback) = on_click_for_effect.clone() else {
-            has_attached.set(true);
-            return;
-        };
-
-        let event_target: EventTarget = element.unchecked_into::<EventTarget>();
-
-        let click_closure: Closure<dyn FnMut(Event)> =
-            Closure::wrap(Box::new(move |event: Event| {
-                let Ok(mouse_event) = event.dyn_into::<MouseEvent>() else {
-                    return;
-                };
-
-                (on_click_callback)(mouse_event);
-            }));
-
-        event_target
-            .add_event_listener_with_callback("click", click_closure.as_ref().unchecked_ref())
-            .ok();
-
-        has_attached.set(true);
-        click_closure.forget();
-    });
-}
-
-#[cfg(target_arch = "wasm32")]
-fn attach_click_listener_once_for_div(
-    element_ref: NodeRef<html::Div>,
-    on_click: Option<Arc<dyn Fn(MouseEvent) + Send + Sync>>,
-) {
-    use leptos::wasm_bindgen::JsCast;
-    use leptos::wasm_bindgen::closure::Closure;
-    use leptos::web_sys::{Event, EventTarget};
-
-    let has_attached = Rc::new(Cell::new(false));
-    let on_click_for_effect = on_click.clone();
-
-    Effect::new(move |_| {
-        if has_attached.get() {
-            return;
-        }
-
-        let Some(element) = element_ref.get() else {
-            return;
-        };
-
-        let Some(on_click_callback) = on_click_for_effect.clone() else {
-            has_attached.set(true);
-            return;
-        };
-
-        let event_target: EventTarget = element.unchecked_into::<EventTarget>();
-
-        let click_closure: Closure<dyn FnMut(Event)> =
-            Closure::wrap(Box::new(move |event: Event| {
-                let Ok(mouse_event) = event.dyn_into::<MouseEvent>() else {
-                    return;
-                };
-
-                (on_click_callback)(mouse_event);
-            }));
-
-        event_target
-            .add_event_listener_with_callback("click", click_closure.as_ref().unchecked_ref())
-            .ok();
-
-        has_attached.set(true);
-        click_closure.forget();
-    });
-}
 
 /// A versatile delete cross.
 #[component]
@@ -217,7 +26,7 @@ pub fn Delete(
     children: Option<Children>,
     /// Optional click handler passed through to the rendered element.
     #[prop(optional)]
-    on_click: Option<Arc<dyn Fn(MouseEvent) + Send + Sync>>,
+    on_click: Option<Callback<MouseEvent>>,
     /// Optional test attribute (renders as data-* attribute) on the rendered element.
     ///
     /// When provided as a &str or String, this becomes `data-testid="value"`.
@@ -254,79 +63,67 @@ pub fn Delete(
     };
 
     match tag_name.as_str() {
-        "a" => {
-            let element_ref: NodeRef<html::A> = NodeRef::new();
-
-            #[cfg(target_arch = "wasm32")]
-            attach_click_listener_once_for_anchor(element_ref.clone(), on_click.clone());
-
-            view! {
-                <a
-                    node_ref=element_ref
-                    class=class_attr.clone()
-                    attr:data-testid=move || data_testid.clone()
-                    attr:data-cy=move || data_cy.clone()
-                >
-                    {content}
-                </a>
-            }
-            .into_any()
+        "a" => view! {
+            <a
+                class=class_attr.clone()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+                on:click=move |ev| {
+                    if let Some(on_click) = on_click {
+                        on_click.run(ev);
+                    }
+                }
+            >
+                {content}
+            </a>
         }
-        "span" => {
-            let element_ref: NodeRef<html::Span> = NodeRef::new();
-
-            #[cfg(target_arch = "wasm32")]
-            attach_click_listener_once_for_span(element_ref.clone(), on_click.clone());
-
-            view! {
-                <span
-                    node_ref=element_ref
-                    class=class_attr.clone()
-                    attr:data-testid=move || data_testid.clone()
-                    attr:data-cy=move || data_cy.clone()
-                >
-                    {content}
-                </span>
-            }
-            .into_any()
+        .into_any(),
+        "span" => view! {
+            <span
+                class=class_attr.clone()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+                on:click=move |ev| {
+                    if let Some(on_click) = on_click {
+                        on_click.run(ev);
+                    }
+                }
+            >
+                {content}
+            </span>
         }
-        "div" => {
-            let element_ref: NodeRef<html::Div> = NodeRef::new();
-
-            #[cfg(target_arch = "wasm32")]
-            attach_click_listener_once_for_div(element_ref.clone(), on_click.clone());
-
-            view! {
-                <div
-                    node_ref=element_ref
-                    class=class_attr.clone()
-                    attr:data-testid=move || data_testid.clone()
-                    attr:data-cy=move || data_cy.clone()
-                >
-                    {content}
-                </div>
-            }
-            .into_any()
+        .into_any(),
+        "div" => view! {
+            <div
+                class=class_attr.clone()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+                on:click=move |ev| {
+                    if let Some(on_click) = on_click {
+                        on_click.run(ev);
+                    }
+                }
+            >
+                {content}
+            </div>
         }
+        .into_any(),
         // default "button"
-        _ => {
-            let element_ref: NodeRef<html::Button> = NodeRef::new();
-
-            #[cfg(target_arch = "wasm32")]
-            attach_click_listener_once_for_button(element_ref.clone(), on_click.clone());
-
-            view! {
-                <button
-                    node_ref=element_ref
-                    class=class_attr.clone()
-                    attr:data-testid=move || data_testid.clone()
-                    attr:data-cy=move || data_cy.clone()
-                >
-                    {content}
-                </button>
-            }
-            .into_any()
+        _ => view! {
+            <button
+                class=class_attr.clone()
+                attr:data-testid=move || data_testid.clone()
+                attr:data-cy=move || data_cy.clone()
+                on:click=move |ev| {
+                    if let Some(on_click) = on_click {
+                        on_click.run(ev);
+                    }
+                }
+            >
+                {content}
+            </button>
         }
+        .into_any(),
     }
 }
 
