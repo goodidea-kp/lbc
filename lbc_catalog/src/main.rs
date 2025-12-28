@@ -5,6 +5,7 @@ use leptos_router::{
     path,
 };
 
+use console_error_panic_hook;
 mod columns_example_page;
 mod components;
 mod container_example_page;
@@ -60,6 +61,7 @@ use tile_example_page::TilePage;
 
 #[component]
 fn App() -> impl IntoView {
+    console_error_panic_hook::set_once();
     view! {
         <Router>
             <section class="section">
