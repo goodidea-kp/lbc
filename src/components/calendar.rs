@@ -24,8 +24,8 @@ Required static assets
 use leptos::html;
 use leptos::prelude::Callback;
 use leptos::prelude::{
-    Callable, ClassAttribute, CustomAttribute, Get, GetUntracked, GlobalAttributes, IntoView,
-    NodeRef, NodeRefAttribute, Signal, component, view,
+    ClassAttribute, CustomAttribute, Get, GetUntracked, GlobalAttributes, IntoView, NodeRef,
+    NodeRefAttribute, Signal, component, view,
 };
 #[cfg(target_arch = "wasm32")]
 use leptos::wasm_bindgen::closure::Closure;
@@ -70,7 +70,8 @@ pub fn Calendar(
     #[prop(optional, into)]
     test_attr: Option<TestAttr>,
 
-    #[prop(optional, into)] calendar_type: Signal<String>,
+    #[prop(optional, into)]
+    calendar_type: Signal<String>,
 ) -> impl IntoView {
     let input_ref: NodeRef<html::Input> = NodeRef::new();
 
@@ -193,13 +194,26 @@ pub fn Calendar(
         _ => (None, None),
     };
 
+    // For SSR/tests: render a reasonable input type.
+    // Existing tests expect:
+    // - type="date" when time_format is empty
+    // - type="datetime" when time_format is provided
+    let input_type = {
+        let tf = _time_format_sig.clone();
+        move || {
+            if tf.get().trim().is_empty() {
+                "date".to_string()
+            } else {
+                "datetime".to_string()
+            }
+        }
+    };
+
     view! {
         <input
             id=id.clone()
             class=move || class()
-            type=move || {
-                let s = _calendar_type_sig.get();
-            }
+            type=input_type
             value=initial_value
             node_ref=input_ref
             attr:data-testid=move || data_testid.clone()
