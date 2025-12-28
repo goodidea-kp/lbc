@@ -24,8 +24,8 @@ Required static assets
 use leptos::html;
 use leptos::prelude::Callback;
 use leptos::prelude::{
-    ClassAttribute, CustomAttribute, Get, GetUntracked, GlobalAttributes, IntoView, NodeRef,
-    NodeRefAttribute, Signal, component, view,
+    Callable, ClassAttribute, CustomAttribute, Get, GetUntracked, GlobalAttributes, IntoView,
+    NodeRef, NodeRefAttribute, Signal, component, view,
 };
 #[cfg(target_arch = "wasm32")]
 use leptos::wasm_bindgen::closure::Closure;
@@ -70,7 +70,8 @@ pub fn Calendar(
     #[prop(optional, into)]
     test_attr: Option<TestAttr>,
 
-    #[prop(optional, into)] calendar_type: Signal<String>,
+    #[prop(optional, into)]
+    calendar_type: Signal<String>,
 ) -> impl IntoView {
     let input_ref: NodeRef<html::Input> = NodeRef::new();
 
