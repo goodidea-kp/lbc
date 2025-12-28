@@ -19,6 +19,11 @@ pub fn CalendarPage() -> impl IntoView {
         info!("Selected date: {}", &v);
         set_selected_d.set(v);
     });
+    let (selected_t, set_selected_t) = signal("12:45".to_string());
+    let on_change_t = Callback::new(move |v: String| {
+        info!("Selected time: {}", &v);
+        set_selected_t.set(v);
+    });
 
     view! {
         <Block>
@@ -62,6 +67,20 @@ pub fn CalendarPage() -> impl IntoView {
                 >
                     "Clear Birthday"
                 </Button>
+
+               <Field label="Time)" classes="mt-4">
+                    <Control>
+                        <Calendar
+                            id="time".to_string()
+                            time_format="HH:mm"
+                            date=selected_t
+                            classes=""
+                            update=on_change_t.clone()
+                            calendar_type="time"
+                        />
+                    </Control>
+                </Field>
+                <p class="help">"Selected (time): " {move || selected_t.get()}</p>
 
                 <Notification classes="is-light mt-3">
                     "Note: bulma-calendar JS and CSS must be loaded. We've added them to index.html for the catalog."

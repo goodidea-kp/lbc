@@ -69,6 +69,8 @@ pub fn Calendar(
     /// You can also pass a full `TestAttr` to override the attribute key.
     #[prop(optional, into)]
     test_attr: Option<TestAttr>,
+
+    #[prop(optional, into)] calendar_type: Signal<String>,
 ) -> impl IntoView {
     let input_ref: NodeRef<html::Input> = NodeRef::new();
 
@@ -102,6 +104,11 @@ pub fn Calendar(
     let _id_for_cleanup = id.clone();
     let _id_for_effect = id.clone();
     let _date_sig = date.clone();
+    let _calendar_type_sig = if calendar_type.get().trim().is_empty() {
+        Signal::from("datetime")
+    } else {
+        calendar_type.clone()
+    };
     #[cfg(target_arch = "wasm32")]
     let initial_for_js = initial_value.clone();
     #[cfg(not(target_arch = "wasm32"))]
@@ -144,11 +151,7 @@ pub fn Calendar(
                 };
 
                 // Determine picker type based on whether time format is provided.
-                let picker_type = if _time_format_sig.get_untracked().trim().is_empty() {
-                    "date".to_string()
-                } else {
-                    "datetime".to_string()
-                };
+                let picker_type = _calendar_type_sig.get_untracked();
 
                 // Seed initial value, attach plugin, and keep the closure alive.
                 setup_date_picker(
@@ -195,8 +198,7 @@ pub fn Calendar(
             id=id.clone()
             class=move || class()
             type=move || {
-                let s = _time_format_sig.get();
-                if s.trim().is_empty() { "date".to_string() } else { "datetime".to_string() }
+                let s = _calendar_type_sig.get();
             }
             value=initial_value
             node_ref=input_ref
@@ -230,6 +232,7 @@ export function setup_date_picker(element, callback, initial_date, date_format, 
         });
         calendarInstance.on('validate', function(datepicker) {
             callback(datepicker.data.value());
+            calendarInstance.hide();
         });
     }
     if (initial_date) {
