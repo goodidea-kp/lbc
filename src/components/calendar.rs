@@ -70,8 +70,7 @@ pub fn Calendar(
     #[prop(optional, into)]
     test_attr: Option<TestAttr>,
 
-    #[prop(optional, into)]
-    calendar_type: Signal<String>,
+    #[prop(optional, into)] calendar_type: Signal<String>,
 ) -> impl IntoView {
     let input_ref: NodeRef<html::Input> = NodeRef::new();
 
