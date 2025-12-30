@@ -65,6 +65,7 @@ pub fn NavbarPage() -> impl IntoView {
                                 >
                                     <NavbarItem tag=lbc::components::navbar::NavbarItemTag::A
                                                 on_click=Callback::new(move |_| set_about.set("About".to_string()))
+                                                auto_close=true
                                     >"About"</NavbarItem>
                                     <NavbarItem tag=lbc::components::navbar::NavbarItemTag::A
                                                 on_click=Callback::new(move |_| set_jobs.set("Jobs".to_string()))

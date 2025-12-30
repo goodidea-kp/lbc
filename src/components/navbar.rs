@@ -2,9 +2,9 @@
 use leptos::prelude::Effect;
 #[allow(unused_imports)]
 use leptos::prelude::{
-    AriaAttributes, Callable, Callback, Children, ClassAttribute, CustomAttribute, ElementChild, Get,
-    GetUntracked, GlobalAttributes, IntoAny, IntoView, OnAttribute, Set, Signal, StyleAttribute,
-    Update, component, view,
+    AriaAttributes, Callable, Callback, Children, ClassAttribute, CustomAttribute, ElementChild,
+    Get, GetUntracked, GlobalAttributes, IntoAny, IntoView, OnAttribute, Set, Signal,
+    StyleAttribute, Update, component, view,
 };
 #[allow(unused_imports)]
 use std::cell::Cell;
@@ -298,10 +298,8 @@ pub fn NavbarItem(
     /// Attributes for anchor usage.
     #[prop(optional, into)]
     href: Signal<String>,
-    #[prop(optional, into)]
-    rel: Signal<String>,
-    #[prop(optional, into)]
-    target: Signal<String>,
+    #[prop(optional, into)] rel: Signal<String>,
+    #[prop(optional, into)] target: Signal<String>,
 
     /// Optional test attribute (renders as data-* attribute) on the item element.
     ///

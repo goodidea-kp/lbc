@@ -1,5 +1,2 @@
 [build]
-# Make output dirs explicit so trunk always creates them before writing the JS loader.
-dist = "dist"
-target = "target/trunk"
 public_url = "/"
