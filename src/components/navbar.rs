@@ -2,7 +2,7 @@
 use leptos::prelude::Effect;
 #[allow(unused_imports)]
 use leptos::prelude::{
-    AriaAttributes, Callback, Children, ClassAttribute, CustomAttribute, ElementChild, Get,
+    AriaAttributes, Callable, Callback, Children, ClassAttribute, CustomAttribute, ElementChild, Get,
     GetUntracked, GlobalAttributes, IntoAny, IntoView, OnAttribute, Set, Signal, StyleAttribute,
     Update, component, view,
 };
