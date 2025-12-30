@@ -2,9 +2,9 @@ use lbc::prelude::{
     Block, Buttons, Content, HeaderSize, Navbar, NavbarDivider, NavbarDropdown, NavbarItem, Title,
 };
 use leptos::prelude::{
-    ClassAttribute, ElementChild, Get, IntoAny, IntoView, Set, Signal, component, signal, view,
+    Callback, ClassAttribute, ElementChild, Get, IntoAny, IntoView, Set, Signal, component, signal,
+    view,
 };
-use std::rc::Rc;
 
 #[component]
 pub fn NavbarPage() -> impl IntoView {
@@ -45,7 +45,7 @@ pub fn NavbarPage() -> impl IntoView {
                                 <NavbarItem tag=lbc::components::navbar::NavbarItemTag::A
                                             href="/"
                                             active=Signal::derive(move || selected_home.get() == "Home")
-                                            on_click=Rc::new(move || set_home.set("Home".to_string()))
+                                            on_click=Callback::new(move |_| set_home.set("Home".to_string()))
                                 >
                                     "Home"
                                 </NavbarItem>
@@ -53,7 +53,7 @@ pub fn NavbarPage() -> impl IntoView {
                                 <NavbarItem tag=lbc::components::navbar::NavbarItemTag::A
                                             href="/docs"
                                             active=Signal::derive(move || selected_docs.get() == "Docs")
-                                            on_click=Rc::new(move || set_docs.set("Docs".to_string()))
+                                            on_click=Callback::new(move |_| set_docs.set("Docs".to_string()))
                                 >
                                     "Documentation"
                                 </NavbarItem>
@@ -64,17 +64,17 @@ pub fn NavbarPage() -> impl IntoView {
                                     boxed=true
                                 >
                                     <NavbarItem tag=lbc::components::navbar::NavbarItemTag::A
-                                                on_click=Rc::new(move || set_about.set("About".to_string()))
+                                                on_click=Callback::new(move |_| set_about.set("About".to_string()))
                                     >"About"</NavbarItem>
                                     <NavbarItem tag=lbc::components::navbar::NavbarItemTag::A
-                                                on_click=Rc::new(move || set_jobs.set("Jobs".to_string()))
+                                                on_click=Callback::new(move |_| set_jobs.set("Jobs".to_string()))
                                     >"Jobs"</NavbarItem>
                                     <NavbarItem tag=lbc::components::navbar::NavbarItemTag::A
-                                                on_click=Rc::new(move || set_contact.set("Contact".to_string()))
+                                                on_click=Callback::new(move |_| set_contact.set("Contact".to_string()))
                                     >"Contact"</NavbarItem>
                                     <NavbarDivider/>
                                     <NavbarItem tag=lbc::components::navbar::NavbarItemTag::A
-                                                on_click=Rc::new(move || set_report.set("Report".to_string()))
+                                                on_click=Callback::new(move |_| set_report.set("Report".to_string()))
                                     >"Report an issue"</NavbarItem>
                                 </NavbarDropdown>
                             </>
