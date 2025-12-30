@@ -1,12 +1,10 @@
-use std::rc::Rc;
-
 #[allow(unused_imports)]
 use leptos::prelude::Effect;
 #[allow(unused_imports)]
 use leptos::prelude::{
-    AriaAttributes, Children, ClassAttribute, CustomAttribute, ElementChild, Get, GetUntracked,
-    GlobalAttributes, IntoAny, IntoView, OnAttribute, Set, Signal, StyleAttribute, Update,
-    component, view,
+    AriaAttributes, Callback, Children, ClassAttribute, CustomAttribute, ElementChild, Get,
+    GetUntracked, GlobalAttributes, IntoAny, IntoView, OnAttribute, Set, Signal, StyleAttribute,
+    Update, component, view,
 };
 #[allow(unused_imports)]
 use std::cell::Cell;
@@ -15,6 +13,18 @@ use crate::util::TestAttr;
 
 //// Context signal used to track global navbar menu open/closed state (burger/menu visibility).
 pub type NavbarMenuContext = leptos::prelude::RwSignal<bool>;
+
+/// Controller API for programmatically controlling the navbar menu open state.
+#[derive(Clone)]
+pub struct NavbarMenuController {
+    pub open: Callback<()>,
+    pub close: Callback<()>,
+    pub toggle: Callback<()>,
+    pub set_open: Callback<bool>,
+}
+
+/// Context for the controller (preferred over directly mutating the signal).
+pub type NavbarMenuControllerContext = NavbarMenuController;
 
 /// The 2 possible fixed positions available for a navbar.
 ///
@@ -116,6 +126,30 @@ pub fn Navbar(
     // Make menu open state available via context to descendants (e.g., items/dropdowns) or globally.
     leptos::prelude::provide_context::<NavbarMenuContext>(is_menu_open);
 
+    let open_cb = {
+        let is_menu_open = is_menu_open;
+        Callback::new(move |_| is_menu_open.set(true))
+    };
+    let close_cb = {
+        let is_menu_open = is_menu_open;
+        Callback::new(move |_| is_menu_open.set(false))
+    };
+    let toggle_cb = {
+        let is_menu_open = is_menu_open;
+        Callback::new(move |_| is_menu_open.update(|v| *v = !*v))
+    };
+    let set_open_cb = {
+        let is_menu_open = is_menu_open;
+        Callback::new(move |v: bool| is_menu_open.set(v))
+    };
+
+    leptos::prelude::provide_context::<NavbarMenuControllerContext>(NavbarMenuController {
+        open: open_cb,
+        close: close_cb,
+        toggle: toggle_cb,
+        set_open: set_open_cb,
+    });
+
     // Pre-render slot children once to avoid moving FnOnce in reactive closures.
     let brand_view = brand.map(|children| children().into_any());
     let start_view = start.map(|children| children().into_any());
@@ -130,34 +164,37 @@ pub fn Navbar(
         _ => (None, None),
     };
 
-    let burger_node = move || {
-        if !navburger.get() {
-            return view! { <></> }.into_any();
-        }
-
-        let burger_class = move || {
-            if is_menu_open.get() {
-                "navbar-burger is-active"
-            } else {
-                "navbar-burger"
+    let burger_node = {
+        let toggle_cb = toggle_cb.clone();
+        move || {
+            if !navburger.get() {
+                return view! { <></> }.into_any();
             }
-        };
 
-        view! {
-            <a
-                class=burger_class
-                role="button"
-                aria-label="menu"
-                aria-expanded=move || if is_menu_open.get() { "true" } else { "false" }
-                on:click=move |_| is_menu_open.update(|v| *v = !*v)
-                href="#"
-            >
-                <span aria-hidden="true"></span>
-                <span aria-hidden="true"></span>
-                <span aria-hidden="true"></span>
-            </a>
+            let burger_class = move || {
+                if is_menu_open.get() {
+                    "navbar-burger is-active"
+                } else {
+                    "navbar-burger"
+                }
+            };
+
+            view! {
+                <a
+                    class=burger_class
+                    role="button"
+                    aria-label="menu"
+                    aria-expanded=move || if is_menu_open.get() { "true" } else { "false" }
+                    on:click=move |_| toggle_cb.run(())
+                    href="#"
+                >
+                    <span aria-hidden="true"></span>
+                    <span aria-hidden="true"></span>
+                    <span aria-hidden="true"></span>
+                </a>
+            }
+            .into_any()
         }
-        .into_any()
     };
 
     view! {
@@ -236,7 +273,11 @@ pub fn NavbarItem(
 
     /// Optional click handler for this item.
     #[prop(optional)]
-    on_click: Option<Rc<dyn Fn()>>,
+    on_click: Option<Callback<()>>,
+
+    /// If true, clicking this item will close the navbar menu (useful on mobile).
+    #[prop(optional, into)]
+    auto_close: Signal<bool>,
 
     /// Add the `has-dropdown` class (used as a parent of a dropdown).
     #[prop(optional, into)]
@@ -257,8 +298,10 @@ pub fn NavbarItem(
     /// Attributes for anchor usage.
     #[prop(optional, into)]
     href: Signal<String>,
-    #[prop(optional, into)] rel: Signal<String>,
-    #[prop(optional, into)] target: Signal<String>,
+    #[prop(optional, into)]
+    rel: Signal<String>,
+    #[prop(optional, into)]
+    target: Signal<String>,
 
     /// Optional test attribute (renders as data-* attribute) on the item element.
     ///
@@ -297,6 +340,19 @@ pub fn NavbarItem(
 
     let tag = tag.unwrap_or(NavbarItemTag::Div);
 
+    let controller = leptos::prelude::use_context::<NavbarMenuControllerContext>();
+
+    let handle_click = move |_| {
+        if let Some(cb) = &on_click {
+            cb.run(());
+        }
+        if auto_close.get() {
+            if let Some(ctrl) = &controller {
+                ctrl.close.run(());
+            }
+        }
+    };
+
     let (data_testid, data_cy) = match &test_attr {
         Some(attr) if attr.key == "data-testid" => (Some(attr.value.clone()), None),
         Some(attr) if attr.key == "data-cy" => (None, Some(attr.value.clone())),
@@ -310,6 +366,7 @@ pub fn NavbarItem(
                 href=href.get()
                 rel=rel.get()
                 target=target.get()
+                on:click=handle_click
                 attr:data-testid=move || data_testid.clone()
                 attr:data-cy=move || data_cy.clone()
             >
@@ -320,6 +377,7 @@ pub fn NavbarItem(
         NavbarItemTag::Div => view! {
             <div
                 class=move || class()
+                on:click=handle_click
                 attr:data-testid=move || data_testid.clone()
                 attr:data-cy=move || data_cy.clone()
             >
