@@ -1,5 +1,8 @@
 use leptos::prelude::CustomAttribute;
-use leptos::prelude::{component, view, Children, ClassAttribute, Effect, Get, GlobalAttributes, IntoAny, IntoView, NodeRef, NodeRefAttribute, OnAttribute, Set, Signal};
+use leptos::prelude::{
+    component, view, Children, ClassAttribute, Effect, ElementChild, Get, GlobalAttributes,
+    IntoView, NodeRef, NodeRefAttribute, OnAttribute, Set, Signal,
+};
 use leptos::web_sys;
 use wasm_bindgen::JsCast;
 
@@ -124,8 +127,8 @@ pub fn Modal(
                 return;
             };
 
-            // Only meaningful in the browser; on SSR this won't run.
-            let dialog: web_sys::HtmlDialogElement = dialog_el.into_any().unchecked_into();
+            // Cast the underlying DOM element to HtmlDialogElement.
+            let dialog: web_sys::HtmlDialogElement = dialog_el.unchecked_into();
 
             if active {
                 // Avoid throwing if already open.
@@ -147,7 +150,7 @@ pub fn Modal(
                 id=id.clone()
                 class=move || class()
                 // Backdrop click: if the click target is the <dialog> itself, user clicked outside content.
-                on:click=move |ev| {
+                on:click=move |ev: web_sys::MouseEvent| {
                     if let Some(target) = ev.target() {
                         if let Ok(el) = target.dyn_into::<web_sys::Element>() {
                             if el.tag_name().to_ascii_lowercase() == "dialog" {
@@ -157,16 +160,16 @@ pub fn Modal(
                     }
                 }
                 // Escape key: close on cancel.
-                on:cancel=move |ev| {
+                on:cancel=move |ev: web_sys::Event| {
                     ev.prevent_default();
                     set_is_active.set(false);
                 }
                 // If something else closes the dialog, sync state.
-                on:close=move |_| {
+                on:close=move |_ev: web_sys::Event| {
                     set_is_active.set(false);
                 }
             >
-                <div class="modal-background" on:click=move |_| set_is_active.set(false)></div>
+                <div class="modal-background" on:click=move |_ev: web_sys::MouseEvent| set_is_active.set(false)></div>
 
                 <div class="modal-content">
                     {children()}
@@ -176,7 +179,7 @@ pub fn Modal(
                     class="modal-close is-large"
                     aria_labelledby-label="close"
                     type="button"
-                    on:click=move |_| set_is_active.set(false)
+                    on:click=move |_ev: web_sys::MouseEvent| set_is_active.set(false)
                 ></button>
             </dialog>
         </>
@@ -269,7 +272,7 @@ pub fn ModalCard(
                 return;
             };
 
-            let dialog: web_sys::HtmlDialogElement = dialog_el.into_any().unchecked_into();
+            let dialog: web_sys::HtmlDialogElement = dialog_el.unchecked_into();
 
             if active {
                 if !dialog.open() {
@@ -289,7 +292,7 @@ pub fn ModalCard(
                 node_ref=dialog_ref
                 id=id.clone()
                 class=move || class()
-                on:click=move |ev| {
+                on:click=move |ev: web_sys::MouseEvent| {
                     if let Some(target) = ev.target() {
                         if let Ok(el) = target.dyn_into::<web_sys::Element>() {
                             if el.tag_name().to_ascii_lowercase() == "dialog" {
@@ -298,15 +301,15 @@ pub fn ModalCard(
                         }
                     }
                 }
-                on:cancel=move |ev| {
+                on:cancel=move |ev: web_sys::Event| {
                     ev.prevent_default();
                     set_is_active.set(false);
                 }
-                on:close=move |_| {
+                on:close=move |_ev: web_sys::Event| {
                     set_is_active.set(false);
                 }
             >
-                <div class="modal-background" on:click=move |_| set_is_active.set(false)></div>
+                <div class="modal-background" on:click=move |_ev: web_sys::MouseEvent| set_is_active.set(false)></div>
 
                 <div class="modal-card">
                     <header class="modal-card-head">
@@ -315,7 +318,7 @@ pub fn ModalCard(
                             class="delete"
                             aria_labelledby-label="close"
                             type="button"
-                            on:click=move |_| set_is_active.set(false)
+                            on:click=move |_ev: web_sys::MouseEvent| set_is_active.set(false)
                         ></button>
                     </header>
 
@@ -332,7 +335,7 @@ pub fn ModalCard(
                     class="modal-close is-large"
                     aria_labelledby-label="close"
                     type="button"
-                    on:click=move |_| set_is_active.set(false)
+                    on:click=move |_ev: web_sys::MouseEvent| set_is_active.set(false)
                 ></button>
             </dialog>
         </>
