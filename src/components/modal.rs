@@ -1,14 +1,22 @@
-use leptos::prelude::{
-    component, view, Children, Effect, Get, IntoView, NodeRef, OnAttribute, Set, Signal,
-};
+use leptos::prelude::{component, view, Children, Effect, Get, IntoView, NodeRef, Set, Signal};
 use wasm_bindgen::JsCast;
 
-use crate::util::TestAttr;
+/// A typed command for controlling modals via context.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum ModalCommand {
+    Open { id: String },
+    Close { id: String },
+    CloseAll,
+}
 
 /// Context signal used to close/open modals by ID from anywhere in the component tree.
-/// Convention: write "<id>-close" to request closing a modal with id = <id>.
-/// Convention: write "<id>-open" to request opening a modal with id = <id>.
-pub type ModalCloserContext = leptos::prelude::RwSignal<String>;
+///
+/// Write `Some(ModalCommand::Close { id })` to request closing a modal.
+/// Write `Some(ModalCommand::Open { id })` to request opening a modal.
+/// Write `Some(ModalCommand::CloseAll)` to request closing all modals.
+///
+/// After a modal consumes a command, it will reset the context back to `None`.
+pub type ModalCloserContext = leptos::prelude::RwSignal<Option<ModalCommand>>;
 
 fn is_valid_modal_id(id: &str) -> bool {
     if let Some(rest) = id.strip_prefix("id") {
@@ -16,10 +24,6 @@ fn is_valid_modal_id(id: &str) -> bool {
     } else {
         false
     }
-}
-
-fn closer_key(id: &str) -> String {
-    format!("{}-close", id)
 }
 
 fn base_class(extra: &str) -> String {
@@ -36,20 +40,19 @@ fn base_class(extra: &str) -> String {
 ///
 /// ID format requirement:
 /// - The `id` must match the pattern `id[0-9]+`, for example: "id1", "id99".
-/// - To close a modal via context, write "<id>-close" (e.g., "id1-close") into ModalCloserContext.
-/// - To open a modal via context, write "<id>-open" (e.g., "id1-open") into ModalCloserContext.
 ///
 /// Notes:
 /// - SSR renders the dialog closed (no `open` attribute).
 /// - On the client, we call `showModal()` / `close()` to control visibility.
 /// - Click outside closes (backdrop click).
 /// - Escape closes (via `cancel` event).
+/// - External open/close is supported via `ModalCloserContext` using `ModalCommand`.
 ///
 /// https://bulma.io/documentation/components/modal/
 ///
 #[component]
 pub fn Modal(
-    /// A unique ID for this modal used together with ModalCloserContext ("<id>-close"/"<id>-open").
+    /// A unique ID for this modal used together with ModalCloserContext.
     id: String,
 
     /// Modal body content rendered inside "modal-content".
@@ -77,19 +80,26 @@ pub fn Modal(
     if let Some(closer_signal) = closer.clone() {
         let id_clone = id.clone();
         Effect::new(move |_| {
-            let action = closer_signal.get();
-            if action.is_empty() {
+            let cmd = closer_signal.get();
+            let Some(cmd) = cmd else {
                 return;
-            }
+            };
 
-            if let Some((target_id, op)) = action.split_once('-') {
-                if target_id == id_clone {
-                    if op == "close" {
-                        set_is_active.set(false);
-                    } else if op == "open" {
-                        set_is_active.set(true);
-                    }
-                    closer_signal.set(String::new());
+            match cmd {
+                ModalCommand::Open { id } if id == id_clone => {
+                    set_is_active.set(true);
+                    closer_signal.set(None);
+                }
+                ModalCommand::Close { id } if id == id_clone => {
+                    set_is_active.set(false);
+                    closer_signal.set(None);
+                }
+                ModalCommand::CloseAll => {
+                    set_is_active.set(false);
+                    closer_signal.set(None);
+                }
+                _ => {
+                    // Not for us; ignore.
                 }
             }
         });
@@ -175,19 +185,18 @@ pub fn Modal(
 ///
 /// ID format requirement:
 /// - The `id` must match the pattern `id[0-9]+`, for example: "id1", "id99".
-/// - To close a modal via context, write "<id>-close" (e.g., "id1-close") into ModalCloserContext.
-/// - To open a modal via context, write "<id>-open" (e.g., "id1-open") into ModalCloserContext.
 ///
 /// Notes:
 /// - SSR renders the dialog closed (no `open` attribute).
 /// - Click outside closes.
 /// - Escape closes.
+/// - External open/close is supported via `ModalCloserContext` using `ModalCommand`.
 ///
 /// https://bulma.io/documentation/components/modal/
 ///
 #[component]
 pub fn ModalCard(
-    /// A unique ID for this modal used together with ModalCloserContext ("<id>-close"/"<id>-open").
+    /// A unique ID for this modal used together with ModalCloserContext.
     id: String,
 
     /// Title text shown in the modal-card header.
@@ -220,20 +229,25 @@ pub fn ModalCard(
     if let Some(closer_signal) = closer.clone() {
         let id_clone = id.clone();
         Effect::new(move |_| {
-            let action = closer_signal.get();
-            if action.is_empty() {
+            let cmd = closer_signal.get();
+            let Some(cmd) = cmd else {
                 return;
-            }
+            };
 
-            if let Some((target_id, op)) = action.split_once('-') {
-                if target_id == id_clone {
-                    if op == "close" {
-                        set_is_active.set(false);
-                    } else if op == "open" {
-                        set_is_active.set(true);
-                    }
-                    closer_signal.set(String::new());
+            match cmd {
+                ModalCommand::Open { id } if id == id_clone => {
+                    set_is_active.set(true);
+                    closer_signal.set(None);
                 }
+                ModalCommand::Close { id } if id == id_clone => {
+                    set_is_active.set(false);
+                    closer_signal.set(None);
+                }
+                ModalCommand::CloseAll => {
+                    set_is_active.set(false);
+                    closer_signal.set(None);
+                }
+                _ => {}
             }
         });
     }
@@ -324,18 +338,30 @@ pub fn ModalCard(
 }
 
 /// Provide a ModalCloserContext to descendants.
-/// Write "<id>-close" to the context to request closing a modal by ID.
-/// Write "<id>-open" to the context to request opening a modal by ID.
+///
+/// This provider stores a single "command slot" (`Option<ModalCommand>`).
+/// Any descendant can request open/close by writing a command into the context.
+/// The target modal will consume the command and reset it back to `None`.
 #[component]
 pub fn ModalCloserProvider(
-    /// Initial action value; default empty.
+    /// Initial command value; default None.
     #[prop(optional, into)]
-    initial: Signal<String>,
+    initial: Signal<Option<ModalCommand>>,
     children: Children,
 ) -> impl IntoView {
     let signal = leptos::prelude::RwSignal::new(initial.get());
     leptos::prelude::provide_context::<ModalCloserContext>(signal);
     view! { {children()} }
+}
+
+impl ModalCommand {
+    pub fn open(id: impl Into<String>) -> Self {
+        Self::Open { id: id.into() }
+    }
+
+    pub fn close(id: impl Into<String>) -> Self {
+        Self::Close { id: id.into() }
+    }
 }
 
 #[cfg(test)]
@@ -383,11 +409,6 @@ mod tests {
         );
         assert!(html.contains("Title"), "expected title; got: {}", html);
         assert!(html.contains("Body"), "expected body; got: {}", html);
-    }
-
-    #[test]
-    fn closer_key_formats_expected_suffix() {
-        assert_eq!(super::closer_key("id1"), "id1-close");
     }
 
     #[test]
