@@ -1,4 +1,6 @@
-use leptos::prelude::{component, view, Children, Effect, Get, IntoView, NodeRef, Set, Signal};
+use leptos::prelude::CustomAttribute;
+use leptos::prelude::{component, view, Children, ClassAttribute, Effect, Get, GlobalAttributes, IntoAny, IntoView, NodeRef, NodeRefAttribute, OnAttribute, Set, Signal};
+use leptos::web_sys;
 use wasm_bindgen::JsCast;
 
 /// A typed command for controlling modals via context.
