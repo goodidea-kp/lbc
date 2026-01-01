@@ -5,10 +5,6 @@ use leptos::prelude::{
     Callable, ClassAttribute, CustomAttribute, ElementChild, GetUntracked, IntoAny, IntoView,
     OnAttribute, Signal, component, view,
 };
-#[allow(unused_imports)]
-use std::cell::Cell;
-#[allow(unused_imports)]
-use std::rc::Rc;
 
 #[cfg(target_arch = "wasm32")]
 type LbcSysFile = ();
