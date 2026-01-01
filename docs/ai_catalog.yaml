@@ -1,343 +1,264 @@
 catalog:
-  name: "LBC Component Catalog (AI)"
-  css:
-    - "https://cdn.jsdelivr.net/npm/bulma@latest/css/bulma.min.css"
-    - "https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.0.1/css/all.min.css"
-    - "https://cdn.jsdelivr.net/npm/bulma-calendar@7.1.1/dist/css/bulma-calendar.min.css"
-    - "https://cdn.jsdelivr.net/npm/@creativebulma/bulma-tagsinput@1.0.3/dist/css/bulma-tagsinput.min.css"
-    - "https://cdn.jsdelivr.net/npm/bulma-accordion@2.0.1/dist/css/bulma-accordion.min.css"
-  js:
-    - "https://cdn.jsdelivr.net/npm/bulma-calendar@7.1.1/dist/js/bulma-calendar.min.js"
-    - "https://cdn.jsdelivr.net/npm/@creativebulma/bulma-tagsinput@1.0.3/dist/js/bulma-tagsinput.min.js"
-    - "https://cdn.jsdelivr.net/npm/bulma-accordion@2.0.1/dist/js/bulma-accordion.min.js"
-  notes:
-    - "CSS/JS mirror lbc_catalog/index.html, using full CDN URLs."
-    - "This catalog targets LBC (Leptos + Bulma Components)."
+  name: "LBC (Leptos Bulma Components) AI Reference"
+  version: "0.1.0"
+  framework: "Leptos 0.8.15 (prelude)"
+  styling: "Bulma 1.0.4"
+  context:
+    imports:
+      - "leptos::prelude::*"
+      - "lbc::prelude::*"
+    common_types:
+      Size: "Small | Normal | Medium | Large"
+      Alignment: "Centered | Right"
+      ButtonColor: "Primary | Link | Info | Success | Warning | Danger | White | Light | Dark | Black | Text"
+      TagColor: "same as ButtonColor"
+    global_js_deps:
+      - "bulma-calendar-js@7.1.2"
+      - "@creativebulma/bulma-tagsinput@1.0.3"
+      - "bulma-accordion@2.0.1"
 
 components:
-  # ELEMENTS
-  - id: "block"
-    name: "Block"
-    file: "https://github.com/goodidea-kp/lbc/blob/main/lbc_catalog/src/elements/block_example_page.rs"
-    route: "/elements/block"
-    requires_css: ["bulma"]
-    requires_js: []
-
-  - id: "box"
-    name: "Box"
-    file: "https://github.com/goodidea-kp/lbc/blob/main/lbc_catalog/src/elements/box_example_page.rs"
-    route: "/elements/box"
-    requires_css: ["bulma"]
-    requires_js: []
-
+  # --- ELEMENTS ---
   - id: "button"
     name: "Button"
-    file: "https://github.com/goodidea-kp/lbc/blob/main/lbc_catalog/src/elements/button_example_page.rs"
-    route: "/elements/button"
-    requires_css: ["bulma"]
-    requires_js: []
-    props_summary:
-      - "Variants: is-primary | is-link | is-info | is-success | is-warning | is-danger | is-light | is-dark"
-      - "States: is-loading, is-outlined, is-inverted, is-rounded, is-static, disabled"
-      - "Sizes: is-small | is-normal | is-medium | is-large"
-    additional_rules: "Use Bulma button classes via class attribute when not using LBC button wrappers."
+    props:
+      color: "Option<ButtonColor>"
+      size: "Option<Size>"
+      outlined: "bool"
+      inverted: "bool"
+      light: "bool"
+      loading: "Signal<bool>"
+      disabled: "Signal<bool>"
+      classes: "Option<Signal<String>>"
+      on_click: "Option<Callback<MouseEvent>>"
+      r#type: "Option<Signal<String>>"
+    usage: |
+      view! { <Button color=ButtonColor::Primary on_click=move |_| set_count.update(|n| *n += 1)>"Click"</Button> }
 
-  - id: "colors"
-    name: "Helpers: Colors"
-    file: "https://github.com/goodidea-kp/lbc/blob/main/lbc_catalog/src/elements/colors_example_page.rs"
-    route: "/helpers/colors"
-    requires_css: ["bulma"]
-    requires_js: []
-
-  - id: "content"
-    name: "Content"
-    file: "https://github.com/goodidea-kp/lbc/blob/main/lbc_catalog/src/elements/content_example_page.rs"
-    route: "/elements/content"
-    requires_css: ["bulma"]
-    requires_js: []
-
-  - id: "delete"
-    name: "Delete"
-    file: "https://github.com/goodidea-kp/lbc/blob/main/lbc_catalog/src/elements/delete_example_page.rs"
-    route: "/elements/delete"
-    requires_css: ["bulma"]
-    requires_js: []
-
-  - id: "icon"
-    name: "Icon"
-    file: "https://github.com/goodidea-kp/lbc/blob/main/lbc_catalog/src/elements/icon_example_page.rs"
-    route: "/elements/icon"
-    requires_css: ["bulma", "font-awesome"]
-    requires_js: []
-    props_summary:
-      - "Integrates Font Awesome icons using <i class=\"fa[bs] fa-...\"></i> inside Bulma .icon container"
-    additional_rules: "Font Awesome stylesheet must be loaded (provided in catalog css)."
+  - id: "buttons"
+    name: "Buttons (Group)"
+    props:
+      size: "Option<Size>"
+      addons: "Signal<bool>"
+      alignment: "Option<Alignment>"
+      classes: "Option<Signal<String>>"
+    usage: |
+      view! { <Buttons addons=true><Button>"Yes"</Button><Button>"No"</Button></Buttons> }
 
   - id: "notification"
     name: "Notification"
-    file: "https://github.com/goodidea-kp/lbc/blob/main/lbc_catalog/src/elements/notification_example_page.rs"
-    route: "/elements/notification"
-    requires_css: ["bulma"]
-    requires_js: []
-    props_summary:
-      - "Levels/colors: is-primary, is-link, is-info, is-success, is-warning, is-danger"
-      - "Closable examples using delete button"
-
-  - id: "progress"
-    name: "Progress"
-    file: "https://github.com/goodidea-kp/lbc/blob/main/lbc_catalog/src/elements/progress_example_page.rs"
-    route: "/elements/progress"
-    requires_css: ["bulma"]
-    requires_js: []
-
-  - id: "sizes"
-    name: "Helpers: Sizes"
-    file: "https://github.com/goodidea-kp/lbc/blob/main/lbc_catalog/src/elements/sizes_example_page.rs"
-    route: "/helpers/sizes"
-    requires_css: ["bulma"]
-    requires_js: []
-
-  - id: "table"
-    name: "Table"
-    file: "https://github.com/goodidea-kp/lbc/blob/main/lbc_catalog/src/elements/table_example_page.rs"
-    route: "/elements/table"
-    requires_css: ["bulma"]
-    requires_js: []
-    props_summary:
-      - "Modifiers: is-striped, is-bordered, is-hoverable, is-fullwidth, is-narrow"
+    props:
+      toast: "Signal<bool>"
+      open: "Signal<bool>"
+      set_open: "Option<Callback<bool>>"
+      auto_hide_ms: "Signal<i32>"
+      classes: "Signal<String>"
+    usage: |
+      view! { 
+        <Notification classes=Signal::derive(move || "is-info".into())> "Msg" </Notification>
+        <Notification toast=true open=open set_open=cb auto_hide_ms=5000> "Toast" </Notification>
+      }
 
   - id: "tag"
     name: "Tag"
-    file: "https://github.com/goodidea-kp/lbc/blob/main/lbc_catalog/src/elements/tag_example_page.rs"
-    route: "/elements/tag"
-    requires_css: ["bulma"]
-    requires_js: []
-    props_summary:
-      - "Colors: is-primary, is-link, is-info, is-success, is-warning, is-danger"
-      - "Sizes: is-normal | is-medium | is-large"
+    props:
+      color: "Option<TagColor>"
+      size: "Option<Size>"
+      light: "bool"
+      rounded: "bool"
+      classes: "Option<Signal<String>>"
+    usage: |
+      view! { <Tag color=TagColor::Success rounded=true>"Active"</Tag> }
 
-  - id: "title"
-    name: "Title & Subtitle"
-    file: "https://github.com/goodidea-kp/lbc/blob/main/lbc_catalog/src/elements/title_example_page.rs"
-    route: "/elements/title"
-    requires_css: ["bulma"]
-    requires_js: []
+  - id: "icon"
+    name: "Icon"
+    notes: "Wraps FontAwesome. Requires <link> to FA in index.html."
+    usage: |
+      view! { <span class="icon"><i class="fas fa-home"></i></span> }
 
-  # COMPONENTS
-  - id: "accordion"
-    name: "Accordion"
-    file: "https://github.com/goodidea-kp/lbc/blob/main/lbc_catalog/src/components/accordion_example_page.rs"
-    route: "/components/accordion"
-    requires_css: ["bulma", "bulma-accordion"]
-    requires_js: ["bulma-accordion"]
-    props_summary:
-      - "Accordions(children: Items); Item(title: &str, open: bool, on_toggle: Callback)"
-    additional_rules: "bulma-accordion JS must be loaded before WASM (done in index.html)."
+  - id: "progress"
+    name: "Progress"
+    props:
+      value: "Signal<Option<u32>>"
+      max: "Signal<u32>"
+      color: "Option<TagColor>"
+      size: "Option<Size>"
+    usage: |
+      view! { <Progress value=Signal::derive(move || Some(45)) max=100.into() /> }
 
-  - id: "calendar"
-    name: "Calendar"
-    file: "https://github.com/goodidea-kp/lbc/blob/main/lbc_catalog/src/components/calendar_example_page.rs"
-    route: "/components/calendar"
-    requires_css: ["bulma", "bulma-calendar"]
-    requires_js: ["bulma-calendar"]
-    props_summary:
-      - "Props: id (unique), date_format, time_format, date, on_date_changed"
-    additional_rules: "bulma-calendar JS must be available globally (included in index.html). Supported date formats: yyyy-MM-dd, yyyy-MM-dd HH:mm:ss"
+  - id: "table"
+    name: "Table"
+    props:
+      striped: "bool"
+      bordered: "bool"
+      hoverable: "bool"
+      fullwidth: "bool"
+      narrow: "bool"
+    usage: |
+      view! { <Table striped=true><thead>...</thead><tbody>...</tbody></Table> }
 
-  - id: "card"
-    name: "Card"
-    file: "https://github.com/goodidea-kp/lbc/blob/main/lbc_catalog/src/components/card_example_page.rs"
-    route: "/components/card"
-    requires_css: ["bulma"]
-    requires_js: []
-    props_summary:
-      - "Composed of CardHeader, CardContent, CardFooter"
-
-  - id: "dropdown"
-    name: "Dropdown"
-    file: "https://github.com/goodidea-kp/lbc/blob/main/lbc_catalog/src/components/dropdown_example_page.rs"
-    route: "/components/dropdown"
-    requires_css: ["bulma"]
-    requires_js: []
-    props_summary:
-      - "Active state, alignment, hoverable vs click, right alignment"
-
-  - id: "menu"
-    name: "Menu"
-    file: "https://github.com/goodidea-kp/lbc/blob/main/lbc_catalog/src/components/menu_example_page.rs"
-    route: "/components/menu"
-    requires_css: ["bulma"]
-    requires_js: []
-
-  - id: "message"
-    name: "Message"
-    file: "https://github.com/goodidea-kp/lbc/blob/main/lbc_catalog/src/components/message_example_page.rs"
-    route: "/components/message"
-    requires_css: ["bulma"]
-    requires_js: []
-    props_summary:
-      - "Message, MessageHeader(title, delete), MessageBody"
-
+  # --- COMPONENTS ---
   - id: "modal"
-    name: "Modal"
-    file: "https://github.com/goodidea-kp/lbc/blob/main/lbc_catalog/src/components/modal_example_page.rs"
-    route: "/components/modal"
-    requires_css: ["bulma"]
-    requires_js: []
-    props_summary:
-      - "Controlled modal open/close via signals; close buttons and background"
+    name: "Modal / ModalCard"
+    props:
+      id: "String (unique)"
+      open: "Option<Signal<bool>>"
+      set_open: "Option<WriteSignal<bool>>"
+      trigger: "Children (button to open)"
+    usage: |
+      view! { 
+        <ModalCard id="m1".into() title="Title".into() trigger=|| view! { <Button>"Open"</Button> } footer=|| ()>
+          "Body content"
+        </ModalCard> 
+      }
 
   - id: "navbar"
     name: "Navbar"
-    file: "https://github.com/goodidea-kp/lbc/blob/main/lbc_catalog/src/components/navbar_example_page.rs"
-    route: "/components/navbar"
-    requires_css: ["bulma", "font-awesome"]
-    requires_js: []
-    props_summary:
-      - "Props: brand: Html, start: Html, end: Html, fixed: Option<Top|Bottom>, transparent: bool, spaced: bool, padded: bool"
-      - "Burger toggles the menu state"
-    additional_rules: "Ensure navbar burger controls the menu on mobile; Font Awesome used for sample icons."
+    props:
+      fixed: "Option<NavbarFixed::Top|Bottom>"
+      transparent: "Signal<bool>"
+      brand: "Option<Children>"
+      start: "Option<Children>"
+      end: "Option<Children>"
+    usage: |
+      view! { <Navbar brand=|| view! { <NavbarItem href="/".into()>"Home"</NavbarItem> } /> }
 
   - id: "pagination"
     name: "Pagination"
-    file: "https://github.com/goodidea-kp/lbc/blob/main/lbc_catalog/src/components/pagination_example_page.rs"
-    route: "/components/pagination"
-    requires_css: ["bulma"]
-    requires_js: []
-    props_summary:
-      - "Props: size: Option<is-small|is-medium|is-large>, alignment: Option<is-centered|is-right>, rounded: bool"
-      - "Items: previous, next, PaginationItem(current), PaginationEllipsis"
-
-  - id: "panel"
-    name: "Panel"
-    file: "https://github.com/goodidea-kp/lbc/blob/main/lbc_catalog/src/components/panel_example_page.rs"
-    route: "/components/panel"
-    requires_css: ["bulma"]
-    requires_js: []
-    props_summary:
-      - "Panel(heading, children), PanelTabs, PanelBlock(active, onclick)"
+    props:
+      size: "Option<Size>"
+      alignment: "Option<Alignment>"
+      rounded: "Signal<bool>"
+      on_previous: "Option<Callback<()>>"
+      on_next: "Option<Callback<()>>"
+    usage: |
+      view! { 
+        <Pagination>
+          <PaginationItem item_type=PaginationItemType::Link label="1".into() current=true.into() />
+        </Pagination> 
+      }
 
   - id: "tabs"
     name: "Tabs"
-    file: "https://github.com/goodidea-kp/lbc/blob/main/lbc_catalog/src/components/tabs_example_page.rs"
-    route: "/components/tabs"
-    requires_css: ["bulma"]
-    requires_js: []
-    props_summary:
-      - "Alignment: left|centered|right; size: small|normal|medium|large; boxed, toggle, rounded, fullwidth"
+    props:
+      alignment: "Option<Alignment>"
+      size: "Option<Size>"
+      boxed: "Signal<bool>"
+      toggle: "Signal<bool>"
+      rounded: "Signal<bool>"
+      fullwidth: "Signal<bool>"
+    usage: |
+      view! { <Tabs boxed=true.into()><ul><li class="is-active"><a>"Tab 1"</a></li></ul></Tabs> }
 
-  # FORM
-  - id: "autocomplete"
-    name: "Autocomplete (TagsInput)"
-    file: "https://github.com/goodidea-kp/lbc/blob/main/lbc_catalog/src/form/form_autocomplete_example_page.rs"
-    route: "/form/autocomplete"
-    requires_css: ["bulma", "bulma-tagsinput"]
-    requires_js: ["bulma-tagsinput"]
-    props_summary:
-      - "Static list and remote fetch modes; on_update & on_remove callbacks"
-    additional_rules: "bulma-tagsinput JS must be loaded before WASM (done in index.html)."
+  - id: "dropdown"
+    name: "Dropdown"
+    props:
+      hoverable: "Signal<bool>"
+      button: "Children (trigger)"
+    usage: |
+      view! { <Dropdown button=|| view! { "Click" }> <a class="dropdown-item">"Item"</a> </Dropdown> }
 
-  - id: "form_controls"
-    name: "Form Controls"
-    file: "https://github.com/goodidea-kp/lbc/blob/main/lbc_catalog/src/form/form_control_example_page.rs"
-    route: "/form/controls"
-    requires_css: ["bulma"]
-    requires_js: []
-    props_summary:
-      - "Field, Control, Label, Help with validation classes"
+  - id: "card"
+    name: "Card"
+    usage: |
+      view! { <Card><CardHeader>"Title"</CardHeader><CardContent>"Content"</CardContent></Card> }
 
-  - id: "form_file"
-    name: "Form File Upload"
-    file: "https://github.com/goodidea-kp/lbc/blob/main/lbc_catalog/src/form/form_file_example_page.rs"
-    route: "/form/file"
-    requires_css: ["bulma"]
-    requires_js: []
+  - id: "message"
+    name: "Message"
+    props:
+      closable: "Signal<bool>"
+    usage: |
+      view! { <Message><MessageHeader>"Hi"</MessageHeader><MessageBody>"Text"</MessageBody></Message> }
+
+  - id: "panel"
+    name: "Panel"
+    props:
+      heading: "Option<Signal<String>>"
+    usage: |
+      view! { <Panel heading=Some("Title".into())><PanelBlock>"Item"</PanelBlock></Panel> }
+
+  - id: "breadcrumb"
+    name: "Breadcrumb"
+    props:
+      separator: "Option<Arrow|Bullet|Dot|Succeeds>"
+    usage: |
+      view! { <Breadcrumb><ul><li><a>"Home"</a></li></ul></Breadcrumb> }
+
+  - id: "accordion"
+    name: "Accordion"
+    usage: |
+      view! { <Accordions><AccordionItem title="Title" open=true on_toggle=cb> "Body" </AccordionItem></Accordions> }
+
+  - id: "calendar"
+    name: "Calendar"
+    props:
+      date: "Signal<String>"
+      update: "Callback<String>"
+      date_format: "Signal<String>"
+    usage: |
+      view! { <Calendar id="c1".into() date=date set_date=cb /> }
+
+  # --- FORM ---
+  - id: "form_field"
+    name: "Field"
+    props:
+      label: "Option<Signal<String>>"
+      help: "Option<Signal<String>>"
+      help_has_error: "Signal<bool>"
+      horizontal: "Signal<bool>"
+      addons: "Signal<bool>"
+      grouped: "Signal<bool>"
+    usage: |
+      view! { <Field label=Some("Name".into())><Input ... /></Field> }
 
   - id: "form_input"
-    name: "Form Input"
-    file: "https://github.com/goodidea-kp/lbc/blob/main/lbc_catalog/src/form/form_input_example_page.rs"
-    route: "/form/input"
-    requires_css: ["bulma"]
-    requires_js: []
-    props_summary:
-      - "Controlled input: value signal + on:input update; sizes and colors"
+    name: "Input"
+    props:
+      name: "Signal<String>"
+      value: "Signal<String>"
+      update: "Callback<String>"
+      r#type: "Option<InputType::Text|Password|Email|Tel|Number>"
+      placeholder: "Signal<String>"
+      size: "Option<Size>"
+      rounded: "Signal<bool>"
+      loading: "Signal<bool>"
+      disabled: "Signal<bool>"
+      readonly: "Signal<bool>"
+      r#static: "Signal<bool>"
+    usage: |
+      view! { <Input value=name set_name=cb placeholder="Type here...".into() /> }
 
-  - id: "form_radio"
-    name: "Form Radio"
-    file: "https://github.com/goodidea-kp/lbc/blob/main/lbc_catalog/src/form/form_radio_example_page.rs"
-    route: "/form/radio"
-    requires_css: ["bulma"]
-    requires_js: []
+  - id: "form_checkbox"
+    name: "Checkbox"
+    props:
+      checked: "Signal<bool>"
+      update: "Option<Callback<bool>>"
+    usage: |
+      view! { <Checkbox checked=agreed update=set_agreed>"I agree"</Checkbox> }
 
   - id: "form_select"
-    name: "Form Select"
-    file: "https://github.com/goodidea-kp/lbc/blob/main/lbc_catalog/src/form/form_select_example_page.rs"
-    route: "/form/select"
-    requires_css: ["bulma"]
-    requires_js: []
+    name: "Select"
+    usage: |
+      view! { <div class="select"><select><option>"1"</option></select></div> }
 
-  - id: "form_textarea"
-    name: "Form Textarea"
-    file: "https://github.com/goodidea-kp/lbc/blob/main/lbc_catalog/src/form/form_text_area_example_page.rs"
-    route: "/form/textarea"
-    requires_css: ["bulma"]
-    requires_js: []
+  - id: "form_autocomplete"
+    name: "Autocomplete"
+    notes: "Requires bulma-tagsinput JS."
+    usage: |
+      view! { <Autocomplete on_update=cb /> }
 
-  # LAYOUT
+  # --- LAYOUT ---
   - id: "columns"
     name: "Columns"
-    file: "https://github.com/goodidea-kp/lbc/blob/main/lbc_catalog/src/columns_example_page.rs"
-    route: "/layout/columns"
-    requires_css: ["bulma"]
-    requires_js: []
-    props_summary:
-      - "Sizes: is-one-quarter..is-three-quarters; responsiveness; gap control"
+    usage: |
+      view! { <div class="columns"><div class="column">"1"</div><div class="column">"2"</div></div> }
 
   - id: "container"
     name: "Container"
-    file: "https://github.com/goodidea-kp/lbc/blob/main/lbc_catalog/src/container_example_page.rs"
-    route: "/layout/container"
-    requires_css: ["bulma"]
-    requires_js: []
-
-  - id: "footer"
-    name: "Footer"
-    file: "https://github.com/goodidea-kp/lbc/blob/main/lbc_catalog/src/footer_example_page.rs"
-    route: "/layout/footer"
-    requires_css: ["bulma"]
-    requires_js: []
+    usage: |
+      view! { <div class="container">...</div> }
 
   - id: "hero"
     name: "Hero"
-    file: "https://github.com/goodidea-kp/lbc/blob/main/lbc_catalog/src/hero_example_page.rs"
-    route: "/layout/hero"
-    requires_css: ["bulma"]
-    requires_js: []
-
-  - id: "level"
-    name: "Level"
-    file: "https://github.com/goodidea-kp/lbc/blob/main/lbc_catalog/src/level_example_page.rs"
-    route: "/layout/level"
-    requires_css: ["bulma"]
-    requires_js: []
-
-  - id: "media"
-    name: "Media"
-    file: "https://github.com/goodidea-kp/lbc/blob/main/lbc_catalog/src/media_example_page.rs"
-    route: "/layout/media"
-    requires_css: ["bulma"]
-    requires_js: []
-
-  - id: "section"
-    name: "Section"
-    file: "https://github.com/goodidea-kp/lbc/blob/main/lbc_catalog/src/section_example_page.rs"
-    route: "/layout/section"
-    requires_css: ["bulma"]
-    requires_js: []
-
-  - id: "tile"
-    name: "Tile"
-    file: "https://github.com/goodidea-kp/lbc/blob/main/lbc_catalog/src/tile_example_page.rs"
-    route: "/layout/tile"
-    requires_css: ["bulma"]
-    requires_js: []
+    usage: |
+      view! { <section class="hero is-primary"><div class="hero-body"><p class="title">"Hero"</p></div></section> }
