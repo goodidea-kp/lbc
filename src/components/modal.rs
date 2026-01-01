@@ -189,15 +189,25 @@ fn DialogShell(
                 r#"
                 /* Neutralize native <dialog> chrome so Bulma's inner markup controls appearance. */
                 dialog.modal {
-                    border: 1px solid transparent; /* makes the default dark border transparent */
-                    outline: none;
-                    box-shadow: none;
+                    border: 0 !important;
+                    outline: 0 !important;
+                    box-shadow: none !important;
                     padding: 0;
                     margin: 0;
                     background: transparent;
                     color: inherit;
                     max-width: none;
                     max-height: none;
+
+                    /* Some browsers apply native styling via appearance. */
+                    -webkit-appearance: none;
+                    appearance: none;
+                }
+
+                dialog.modal:focus,
+                dialog.modal:focus-visible {
+                    outline: 0 !important;
+                    box-shadow: none !important;
                 }
 
                 /* Optional: native backdrop (Bulma also renders .modal-background inside). */
