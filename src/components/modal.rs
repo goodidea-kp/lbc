@@ -60,12 +60,21 @@ impl ModalController {
 /// Context type for the modal controller.
 pub type ModalControllerContext = ModalController;
 
-fn base_class(extra: &str) -> String {
-    if extra.trim().is_empty() {
+fn base_class(extra: &str, is_active: bool) -> String {
+    // Bulma's modal CSS expects `.modal.is-active` to be visible.
+    // When using <dialog>, we still apply Bulma classes for styling, but we must
+    // also add `is-active` while open so Bulma doesn't hide it.
+    let mut base = if extra.trim().is_empty() {
         "modal".to_string()
     } else {
         format!("modal {}", extra)
+    };
+
+    if is_active {
+        base.push_str(" is-active");
     }
+
+    base
 }
 
 /// Try to focus a preferred element inside the dialog for accessibility:
@@ -99,7 +108,8 @@ fn DialogShell(
 ) -> impl IntoView {
     let class = {
         let classes = classes.clone();
-        move || base_class(&classes.get())
+        let is_active = is_active.clone();
+        move || base_class(&classes.get(), is_active.get())
     };
 
     // Keep the actual <dialog> open/closed in sync with is_active (client-side).
@@ -156,7 +166,6 @@ fn DialogShell(
     });
 
     let on_click_setter = set_is_active.clone();
-    let on_cancel_setter = set_is_active.clone();
     let on_close_setter = set_is_active.clone();
 
     let id_for_click = id.clone();
@@ -178,10 +187,10 @@ fn DialogShell(
                     }
                 }
             }
-            on:cancel=move |ev: web_sys::Event| {
-                crate::lbc_debug_log!("[DialogShell:{}] cancel (Escape) -> close", id_for_cancel);
-                ev.prevent_default();
-                (on_cancel_setter)(false);
+            // Let the browser handle Escape-to-close. We only log here.
+            // We'll sync state in `on:close`.
+            on:cancel=move |_ev: web_sys::Event| {
+                crate::lbc_debug_log!("[DialogShell:{}] cancel (Escape) observed", id_for_cancel);
             }
             on:close=move |_ev: web_sys::Event| {
                 crate::lbc_debug_log!("[DialogShell:{}] close event -> state false", id_for_close);
@@ -276,10 +285,6 @@ pub fn Modal(
 
     view! {
         <>
-            // IMPORTANT:
-            // Do NOT wrap the trigger in an extra clickable <div>.
-            // The trigger itself should handle opening (e.g., via ModalControllerContext),
-            // otherwise we end up with double click handlers and confusing behavior.
             {trigger()}
 
             <DialogShell
@@ -292,9 +297,6 @@ pub fn Modal(
                 <div class="modal-background" on:click=move |_ev: web_sys::MouseEvent| (bg_close)()></div>
 
                 <div class="modal-content">
-                    // Optional focus target pattern (WCAG H102):
-                    // If the consumer wants a specific element focused, they can add
-                    // `data-lbc-dialog-focus` + `tabindex="-1"` to it.
                     {children()}
                 </div>
 
@@ -406,7 +408,6 @@ pub fn ModalCard(
 
                 <div class="modal-card">
                     <header class="modal-card-head">
-                        // Focus target (WCAG H102-style): focus the title when opened.
                         <p class="modal-card-title" tabindex="-1" data-lbc-dialog-focus="true">{title.clone()}</p>
                         <button
                             class="delete"
