@@ -1,4 +1,5 @@
 use leptos::callback::Callback;
+use leptos::prelude::Callable;
 use leptos::prelude::CustomAttribute;
 use leptos::prelude::{
     component, view, Children, ClassAttribute, Effect, ElementChild, Get, GetUntracked,
