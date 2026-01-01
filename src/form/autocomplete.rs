@@ -14,11 +14,11 @@ Notes
 - SSR tests only verify the rendered HTML structure.
 */
 
+use leptos::callback::Callback;
 use leptos::prelude::{
-    ClassAttribute, CustomAttribute, ElementChild, Get, GlobalAttributes, IntoAny, IntoView,
-    Signal, component, view,
+    Callable, ClassAttribute, CustomAttribute, ElementChild, Get, GlobalAttributes, IntoAny,
+    IntoView, Signal, component, view,
 };
-use std::sync::Arc;
 
 #[cfg(target_arch = "wasm32")]
 use leptos::wasm_bindgen::JsCast;
@@ -50,10 +50,10 @@ pub fn AutoComplete(
     items: Option<Vec<String>>,
 
     /// Called when a tag is added.
-    _on_update: Arc<dyn Fn(String) + Send + Sync>,
+    _on_update: Callback<String>,
 
     /// Called when a tag is removed.
-    _on_remove: Arc<dyn Fn(String) + Send + Sync>,
+    _on_remove: Callback<String>,
 
     /// Currently selected single tag (for initial value).
     #[prop(optional, into)]
@@ -224,9 +224,9 @@ pub fn AutoComplete(
                                 let value_str = value.split(':').nth(1).unwrap_or("").trim();
                                 let value_clean = value_str.trim_matches('"').to_string();
                                 if op_is_add {
-                                    (on_update)(value_clean);
+                                    on_update.run(value_clean);
                                 } else {
-                                    (on_remove)(value_clean);
+                                    on_remove.run(value_clean);
                                 }
                             }
                         }
@@ -363,8 +363,8 @@ mod tests {
     use super::*;
     use leptos::prelude::RenderHtml;
 
-    fn noop() -> Arc<dyn Fn(String) + Send + Sync> {
-        Arc::new(|_| {})
+    fn noop() -> Callback<String> {
+        Callback::new(|_v: String| {})
     }
 
     #[test]
@@ -439,11 +439,10 @@ mod wasm_tests {
     use super::*;
     use crate::util::TestAttr;
     use leptos::prelude::*;
-    use std::sync::Arc;
     use wasm_bindgen_test::*;
 
-    fn noop() -> Arc<dyn Fn(String) + Send + Sync> {
-        Arc::new(|_| {})
+    fn noop() -> Callback<String> {
+        Callback::new(|_v: String| {})
     }
 
     wasm_bindgen_test_configure!(run_in_browser);
