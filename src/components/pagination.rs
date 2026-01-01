@@ -1,3 +1,4 @@
+use crate::util::{Size, TestAttr};
 use leptos::callback::Callback;
 #[allow(unused_imports)]
 use leptos::prelude::Effect;
@@ -6,7 +7,6 @@ use leptos::prelude::{
     GlobalAttributes, IntoView, OnAttribute, Signal, component, view,
 };
 use leptos::web_sys;
-use crate::util::{Size, TestAttr};
 
 fn size_class(size: Size) -> &'static str {
     match size {

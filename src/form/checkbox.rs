@@ -1,7 +1,7 @@
 use crate::util::TestAttr;
 use leptos::callback::Callback;
-use leptos::prelude::*;
 use leptos::prelude::Callable;
+use leptos::prelude::*;
 #[allow(unused_imports)]
 use std::cell::Cell;
 #[allow(unused_imports)]

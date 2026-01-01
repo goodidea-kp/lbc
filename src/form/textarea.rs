@@ -1,7 +1,7 @@
 use leptos::callback::Callback;
-use leptos::prelude::event_target_value;
 use leptos::prelude::Callable;
 use leptos::prelude::OnAttribute;
+use leptos::prelude::event_target_value;
 use leptos::prelude::{
     ClassAttribute, CustomAttribute, ElementChild, Get, GetUntracked, GlobalAttributes, IntoAny,
     IntoView, Signal, StyleAttribute, component, view,

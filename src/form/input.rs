@@ -180,7 +180,9 @@ pub fn Input(
                 input.set_custom_validity("");
                 let is_valid = input.check_validity();
                 if !new_value.trim().is_empty() && !is_valid {
-                    input.set_custom_validity("Please enter a number with up to two decimal places.");
+                    input.set_custom_validity(
+                        "Please enter a number with up to two decimal places.",
+                    );
                 }
                 lbc_log!(
                     "<Input> on:input (number) name='{}' -> '{}' | valid={}",
@@ -200,7 +202,9 @@ pub fn Input(
                 if input.value().is_empty() {
                     input.set_custom_validity("");
                 } else {
-                    input.set_custom_validity("Please enter a number with up to two decimal places.");
+                    input.set_custom_validity(
+                        "Please enter a number with up to two decimal places.",
+                    );
                 }
                 lbc_log!(
                     "<Input> on:invalid name='{}' current='{}'",

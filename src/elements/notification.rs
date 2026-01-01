@@ -35,8 +35,7 @@ use js_sys::{Array, Function, Reflect};
 /// - A dismiss button is always rendered (required).
 #[component]
 pub fn Notification(
-    #[prop(optional, into)]
-    classes: Signal<String>,
+    #[prop(optional, into)] classes: Signal<String>,
 
     /// When true, render as a toast using the Popover API.
     #[prop(optional, into)]
@@ -161,11 +160,7 @@ pub fn Notification(
     let toast_now = toast.get_untracked();
     let auto_hide_defaulted = {
         let v = auto_hide_ms.get_untracked();
-        if v == 0 {
-            5000
-        } else {
-            v
-        }
+        if v == 0 { 5000 } else { v }
     };
 
     if toast_now {
@@ -283,7 +278,10 @@ mod tests {
             html.contains(r#"class="button delete""#) || html.contains(r#"class="button delete "#),
             "expected Bulma delete button (via Button component) in toast mode; got: {html}"
         );
-        assert!(html.contains("Toast content"), "expected toast content; got: {html}");
+        assert!(
+            html.contains("Toast content"),
+            "expected toast content; got: {html}"
+        );
     }
 }
 
