@@ -1,3 +1,4 @@
+use crate::elements::button::Button;
 use leptos::callback::Callback;
 use leptos::prelude::Callable;
 use leptos::prelude::CustomAttribute;
@@ -379,12 +380,13 @@ pub fn Modal(
                     {children()}
                 </div>
 
-                <button
-                    class="modal-close is-large"
-                    aria_labelledby-label="close"
-                    type="button"
-                    on:click=move |_ev: web_sys::MouseEvent| close_btn_close.run(())
-                ></button>
+                <Button
+                    classes="modal-close is-large"
+                    r#type="button"
+                    on_click=Callback::new(move |_| close_btn_close.run(()))
+                >
+                    ""
+                </Button>
             </DialogShell>
         </>
     }
@@ -491,12 +493,14 @@ pub fn ModalCard(
                 <div class="modal-card">
                     <header class="modal-card-head">
                         <p class="modal-card-title" tabindex="-1" data-lbc-dialog-focus="true">{title.clone()}</p>
-                        <button
-                            class="delete"
-                            aria_labelledby-label="close"
-                            type="button"
-                            on:click=move |_ev: web_sys::MouseEvent| delete_btn_close.run(())
-                        ></button>
+
+                        <Button
+                            classes="delete"
+                            r#type="button"
+                            on_click=Callback::new(move |_| delete_btn_close.run(()))
+                        >
+                            ""
+                        </Button>
                     </header>
 
                     <section class="modal-card-body">
@@ -508,12 +512,13 @@ pub fn ModalCard(
                     </footer>
                 </div>
 
-                <button
-                    class="modal-close is-large"
-                    aria_labelledby-label="close"
-                    type="button"
-                    on:click=move |_ev: web_sys::MouseEvent| close_btn_close.run(())
-                ></button>
+                <Button
+                    classes="modal-close is-large"
+                    r#type="button"
+                    on_click=Callback::new(move |_| close_btn_close.run(()))
+                >
+                    ""
+                </Button>
             </DialogShell>
         </>
     }
