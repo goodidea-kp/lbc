@@ -1,7 +1,7 @@
 use leptos::prelude::CustomAttribute;
 use leptos::prelude::{
     component, view, Children, ClassAttribute, Effect, ElementChild, Get, GlobalAttributes,
-    IntoView, NodeRef, NodeRefAttribute, OnAttribute, Set, Signal, WriteSignal,
+    IntoView, NodeRef, NodeRefAttribute, OnAttribute, Set, Signal, Update, With, WriteSignal,
 };
 use leptos::web_sys;
 use std::collections::HashSet;
@@ -26,13 +26,13 @@ impl ModalController {
 
     /// Returns true if the modal with `id` is currently open.
     pub fn is_open(&self, id: &str) -> bool {
-        self.open_ids.with(|set| set.contains(id))
+        self.open_ids.with(|set: &HashSet<String>| set.contains(id))
     }
 
     /// Open a modal by id.
     pub fn open(&self, id: impl Into<String>) {
         let id = id.into();
-        self.open_ids.update(|set| {
+        self.open_ids.update(|set: &mut HashSet<String>| {
             set.insert(id);
         });
     }
@@ -40,7 +40,7 @@ impl ModalController {
     /// Close a modal by id.
     pub fn close(&self, id: impl AsRef<str>) {
         let id = id.as_ref();
-        self.open_ids.update(|set| {
+        self.open_ids.update(|set: &mut HashSet<String>| {
             set.remove(id);
         });
     }
@@ -113,6 +113,11 @@ fn DialogShell(
         }
     });
 
+    // Clone the Arc for each handler to avoid move errors.
+    let on_click_setter = set_is_active.clone();
+    let on_cancel_setter = set_is_active.clone();
+    let on_close_setter = set_is_active.clone();
+
     view! {
         <dialog
             node_ref=dialog_ref
@@ -123,7 +128,7 @@ fn DialogShell(
                 if let Some(target) = ev.target() {
                     if let Ok(el) = target.dyn_into::<web_sys::Element>() {
                         if el.tag_name().to_ascii_lowercase() == "dialog" {
-                            (set_is_active)(false);
+                            (on_click_setter)(false);
                         }
                     }
                 }
@@ -131,11 +136,11 @@ fn DialogShell(
             // Escape key: close on cancel.
             on:cancel=move |ev: web_sys::Event| {
                 ev.prevent_default();
-                (set_is_active)(false);
+                (on_cancel_setter)(false);
             }
             // If something else closes the dialog, sync state.
             on:close=move |_ev: web_sys::Event| {
-                (set_is_active)(false);
+                (on_close_setter)(false);
             }
         >
             {children()}
@@ -230,9 +235,14 @@ pub fn Modal(
         });
     }
 
+    // Clone for each closure to avoid move errors.
+    let trigger_setter = set_is_active.clone();
+    let bg_setter = set_is_active.clone();
+    let close_btn_setter = set_is_active.clone();
+
     view! {
         <>
-            <div on:click=move |_| (set_is_active)(true)>{trigger()}</div>
+            <div on:click=move |_| (trigger_setter)(true)>{trigger()}</div>
 
             <DialogShell
                 id=id
@@ -240,7 +250,7 @@ pub fn Modal(
                 is_active=is_active
                 set_is_active=set_is_active.clone()
             >
-                <div class="modal-background" on:click=move |_ev: web_sys::MouseEvent| (set_is_active)(false)></div>
+                <div class="modal-background" on:click=move |_ev: web_sys::MouseEvent| (bg_setter)(false)></div>
 
                 <div class="modal-content">
                     {children()}
@@ -250,7 +260,7 @@ pub fn Modal(
                     class="modal-close is-large"
                     aria_labelledby-label="close"
                     type="button"
-                    on:click=move |_ev: web_sys::MouseEvent| (set_is_active)(false)
+                    on:click=move |_ev: web_sys::MouseEvent| (close_btn_setter)(false)
                 ></button>
             </DialogShell>
         </>
@@ -344,9 +354,15 @@ pub fn ModalCard(
         });
     }
 
+    // Clone for each closure to avoid move errors.
+    let trigger_setter = set_is_active.clone();
+    let bg_setter = set_is_active.clone();
+    let delete_btn_setter = set_is_active.clone();
+    let close_btn_setter = set_is_active.clone();
+
     view! {
         <>
-            <div on:click=move |_| (set_is_active)(true)>{trigger()}</div>
+            <div on:click=move |_| (trigger_setter)(true)>{trigger()}</div>
 
             <DialogShell
                 id=id
@@ -354,7 +370,7 @@ pub fn ModalCard(
                 is_active=is_active
                 set_is_active=set_is_active.clone()
             >
-                <div class="modal-background" on:click=move |_ev: web_sys::MouseEvent| (set_is_active)(false)></div>
+                <div class="modal-background" on:click=move |_ev: web_sys::MouseEvent| (bg_setter)(false)></div>
 
                 <div class="modal-card">
                     <header class="modal-card-head">
@@ -363,7 +379,7 @@ pub fn ModalCard(
                             class="delete"
                             aria_labelledby-label="close"
                             type="button"
-                            on:click=move |_ev: web_sys::MouseEvent| (set_is_active)(false)
+                            on:click=move |_ev: web_sys::MouseEvent| (delete_btn_setter)(false)
                         ></button>
                     </header>
 
@@ -380,7 +396,7 @@ pub fn ModalCard(
                     class="modal-close is-large"
                     aria_labelledby-label="close"
                     type="button"
-                    on:click=move |_ev: web_sys::MouseEvent| (set_is_active)(false)
+                    on:click=move |_ev: web_sys::MouseEvent| (close_btn_setter)(false)
                 ></button>
             </DialogShell>
         </>

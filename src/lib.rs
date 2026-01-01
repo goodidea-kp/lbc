@@ -34,8 +34,8 @@ pub mod prelude {
     pub use crate::components::{
         AccordionItem, Accordions, Alignment, Breadcrumb, BreadcrumbSeparator, BreadcrumbSize,
         Calendar, Card, CardContent, CardFooter, CardHeader, CardImage, Dropdown, Menu, MenuLabel,
-        MenuList, Message, MessageBody, MessageHeader, Modal, ModalCard, ModalCloserContext,
-        ModalCloserProvider, Navbar, NavbarDivider, NavbarDropdown, NavbarFixed, NavbarItem,
+        MenuList, Message, MessageBody, MessageHeader, Modal, ModalCard, ModalControllerContext,
+        ModalControllerProvider, Navbar, NavbarDivider, NavbarDropdown, NavbarFixed, NavbarItem,
         NavbarMenuContext, Pagination, PaginationEllipsis, PaginationItem, PaginationItemType,
         Panel, PanelBlock, PanelTabs, Tabs,
     };
