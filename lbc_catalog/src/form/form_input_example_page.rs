@@ -1,8 +1,8 @@
 use lbc::prelude::*;
 use lbc::util::TestAttr;
+use leptos::callback::Callback;
 use leptos::prelude::*;
 use leptos::prelude::{ClassAttribute, ElementChild, Get, IntoView, Set, component, signal, view};
-use std::sync::Arc;
 
 #[cfg(target_arch = "wasm32")]
 fn console_log(message: &str) {
@@ -48,7 +48,7 @@ pub fn FormInputPage() -> impl IntoView {
                             name="name"
                             value=text_value
                             placeholder="Your name"
-                            update=Arc::new(move |value| {
+                            update=Callback::new(move |value| {
                                 console_log(&format!("[FormInputPage] update(name) -> '{value}'"));
                                 lbc::lbc_log!("[Page] update(name) -> '{}'", value);
                                 set_text_value.set(value);
@@ -72,7 +72,7 @@ pub fn FormInputPage() -> impl IntoView {
                             value=small_value
                             placeholder="Small"
                             size=Size::Small
-                            update=Arc::new(move |value| {
+                            update=Callback::new(move |value| {
                                 console_log(&format!("[FormInputPage] update(small) -> '{value}'"));
                                 lbc::lbc_log!("[Page] update(small) -> '{}'", value);
                                 set_small_value.set(value);
@@ -86,7 +86,7 @@ pub fn FormInputPage() -> impl IntoView {
                             value=normal_value
                             placeholder="Normal"
                             size=Size::Normal
-                            update=Arc::new(move |value| {
+                            update=Callback::new(move |value| {
                                 console_log(&format!("[FormInputPage] update(normal) -> '{value}'"));
                                 lbc::lbc_log!("[Page] update(normal) -> '{}'", value);
                                 set_normal_value.set(value);
@@ -100,7 +100,7 @@ pub fn FormInputPage() -> impl IntoView {
                             value=medium_value
                             placeholder="Medium"
                             size=Size::Medium
-                            update=Arc::new(move |value| {
+                            update=Callback::new(move |value| {
                                 console_log(&format!("[FormInputPage] update(medium) -> '{value}'"));
                                 lbc::lbc_log!("[Page] update(medium) -> '{}'", value);
                                 set_medium_value.set(value);
@@ -114,7 +114,7 @@ pub fn FormInputPage() -> impl IntoView {
                             value=large_value
                             placeholder="Large"
                             size=Size::Large
-                            update=Arc::new(move |value| {
+                            update=Callback::new(move |value| {
                                 console_log(&format!("[FormInputPage] update(large) -> '{value}'"));
                                 lbc::lbc_log!("[Page] update(large) -> '{}'", value);
                                 set_large_value.set(value);
@@ -128,7 +128,7 @@ pub fn FormInputPage() -> impl IntoView {
                             value=rounded_value
                             placeholder="Rounded"
                             rounded=true
-                            update=Arc::new(move |value| {
+                            update=Callback::new(move |value| {
                                 console_log(&format!("[FormInputPage] update(rounded) -> '{value}'"));
                                 lbc::lbc_log!("[Page] update(rounded) -> '{}'", value);
                                 set_rounded_value.set(value);
@@ -141,7 +141,7 @@ pub fn FormInputPage() -> impl IntoView {
                             name="readonly"
                             value=readonly_value
                             readonly=true
-                            update=Arc::new(move |value| {
+                            update=Callback::new(move |value| {
                                 console_log(&format!("[FormInputPage] update(readonly) -> '{value}'"));
                                 lbc::lbc_log!("[Page] update(readonly) -> '{}'", value);
                                 set_readonly_value.set(value);
@@ -154,7 +154,7 @@ pub fn FormInputPage() -> impl IntoView {
                             name="disabled"
                             value=disabled_value
                             disabled=true
-                            update=Arc::new(move |value| {
+                            update=Callback::new(move |value| {
                                 console_log(&format!("[FormInputPage] update(disabled) -> '{value}'"));
                                 lbc::lbc_log!("[Page] update(disabled) -> '{}'", value);
                                 set_disabled_value.set(value);
@@ -167,7 +167,7 @@ pub fn FormInputPage() -> impl IntoView {
                             name="static"
                             value=static_value
                             r#static=true
-                            update=Arc::new(move |value| {
+                            update=Callback::new(move |value| {
                                 console_log(&format!("[FormInputPage] update(static) -> '{value}'"));
                                 lbc::lbc_log!("[Page] update(static) -> '{}'", value);
                                 set_static_value.set(value);
@@ -186,7 +186,7 @@ pub fn FormInputPage() -> impl IntoView {
                             r#type=InputType::Number
                             step=1.0
                             placeholder="123.45"
-                            update=Arc::new(move |value| {
+                            update=Callback::new(move |value| {
                                 console_log(&format!("[FormInputPage] update(amount) -> '{value}'"));
                                 lbc::lbc_log!("[Page] update(amount) -> '{}'", value);
                                 set_number_value.set(value);
@@ -220,7 +220,7 @@ mod tests {
                         name="name"
                         value=text_value.get_untracked()
                         placeholder="Your name"
-                        update=Arc::new({
+                        update=Callback::new({
                             let set_text_value = set_text_value.clone();
                             move |value| set_text_value.set(value)
                         })
@@ -252,7 +252,7 @@ mod tests {
                         name="name"
                         value=text_value.get_untracked()
                         placeholder="Your name"
-                        update=Arc::new({
+                        update=Callback::new({
                             let set_text_value = set_text_value.clone();
                             move |value| set_text_value.set(value)
                         })
