@@ -13,8 +13,9 @@ use wasm_bindgen::JsCast;
 /// This avoids the "single command slot" problem (commands being overwritten).
 /// Internally it tracks a set of open modal IDs.
 ///
-/// NOTE: This controller enforces a "single modal open at a time" policy:
-/// calling `open(id)` will close any other open modals.
+/// This controller allows multiple modals to be open at the same time.
+/// If you want "only one modal open globally", implement that policy in your app
+/// (e.g., call `close_all()` before `open(id)`), or add a separate controller type.
 #[derive(Clone)]
 pub struct ModalController {
     open_ids: leptos::prelude::RwSignal<HashSet<String>>,
@@ -36,13 +37,10 @@ impl ModalController {
     }
 
     /// Open a modal by id.
-    ///
-    /// This enforces a single-open-modal policy by clearing any existing open ids.
     pub fn open(&self, id: impl Into<String>) {
         let id = id.into();
         crate::lbc_debug_log!("[ModalController] open({})", id);
         self.open_ids.update(|set: &mut HashSet<String>| {
-            set.clear();
             set.insert(id);
         });
     }
@@ -171,12 +169,19 @@ fn DialogShell(
         }
     });
 
+    let controller = leptos::prelude::use_context::<ModalControllerContext>();
+
     let on_click_setter = set_is_active.clone();
     let on_close_setter = set_is_active.clone();
 
     let id_for_click = id.clone();
     let id_for_cancel = id.clone();
     let id_for_close = id.clone();
+
+    // When the dialog closes, also clear the controller state for this id (if present),
+    // so we don't keep stale "open" ids around.
+    let controller_for_close = controller.clone();
+    let id_for_controller_close = id.clone();
 
     view! {
         <dialog
@@ -201,6 +206,10 @@ fn DialogShell(
             on:close=move |_ev: web_sys::Event| {
                 crate::lbc_debug_log!("[DialogShell:{}] close event -> state false", id_for_close);
                 (on_close_setter)(false);
+
+                if let Some(controller) = controller_for_close.as_ref() {
+                    controller.close(&id_for_controller_close);
+                }
             }
         >
             {children()}
