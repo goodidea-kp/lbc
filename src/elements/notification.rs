@@ -1,3 +1,4 @@
+use crate::elements::button::Button;
 use crate::util::TestAttr;
 use leptos::callback::Callback;
 use leptos::children::Children;
@@ -177,6 +178,15 @@ pub fn Notification(
             );
         }
 
+        let dismiss_on_click = {
+            let close_cb = close_cb.clone();
+            Callback::new(move |_| {
+                if let Some(cb) = &close_cb {
+                    cb.run(());
+                }
+            })
+        };
+
         // Toast styling: Bulma doesn't define a toast layout, so we provide minimal positioning.
         // Consumers can override via `classes`.
         view! {
@@ -194,15 +204,13 @@ pub fn Notification(
                 attr:data-testid=move || data_testid.clone()
                 attr:data-cy=move || data_cy.clone()
             >
-                <button
-                    class="delete"
-                    type="button"
-                    on:click=move |_| {
-                        if let Some(cb) = &close_cb {
-                            cb.run(());
-                        }
-                    }
-                ></button>
+                <Button
+                    classes="delete"
+                    r#type="button"
+                    on_click=dismiss_on_click
+                >
+                    ""
+                </Button>
 
                 {children()}
 
@@ -272,8 +280,8 @@ mod tests {
             "expected popover attribute in toast mode; got: {html}"
         );
         assert!(
-            html.contains(r#"class="delete""#),
-            "expected dismiss button in toast mode; got: {html}"
+            html.contains(r#"class="button delete""#) || html.contains(r#"class="button delete "#),
+            "expected Bulma delete button (via Button component) in toast mode; got: {html}"
         );
         assert!(html.contains("Toast content"), "expected toast content; got: {html}");
     }
