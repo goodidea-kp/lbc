@@ -1,7 +1,8 @@
 use leptos::prelude::CustomAttribute;
 use leptos::prelude::{
-    component, view, Children, ClassAttribute, Effect, ElementChild, Get, GlobalAttributes,
-    IntoView, NodeRef, NodeRefAttribute, OnAttribute, Set, Signal, Update, WriteSignal,
+    component, view, Children, ClassAttribute, Effect, ElementChild, Get, GetUntracked,
+    GlobalAttributes, IntoView, NodeRef, NodeRefAttribute, OnAttribute, Set, Signal, Update,
+    WriteSignal,
 };
 use leptos::web_sys;
 use std::collections::HashSet;
@@ -96,7 +97,7 @@ fn focus_dialog(dialog: &web_sys::HtmlDialogElement) {
 
 fn close_dialog(dialog_ref: &NodeRef<leptos::html::Dialog>) {
     if let Some(dialog_el) = dialog_ref.get_untracked() {
-        let dialog: web_sys::HtmlDialogElement = dialog_el.unchecked_into();
+        let dialog: web_sys::HtmlDialogElement = dialog_el.unchecked_into::<web_sys::HtmlDialogElement>();
         if dialog.open() {
             dialog.close();
         }
