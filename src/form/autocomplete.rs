@@ -29,6 +29,9 @@ use leptos::wasm_bindgen::closure::Closure;
 #[cfg(target_arch = "wasm32")]
 use leptos::web_sys::Element;
 
+#[cfg(target_arch = "wasm32")]
+use js_sys::JSON;
+
 use crate::util::TestAttr;
 
 /// A tags autocomplete input based on Bulma TagsInput.
@@ -215,20 +218,33 @@ pub fn AutoComplete(
                     let on_update = _on_update.clone();
                     let on_remove = _on_remove.clone();
                     Closure::wrap(Box::new(move |json: JsValue| {
-                        if let Some(s) = json.as_string() {
-                            if let Some((op, value)) =
-                                s.trim_matches(|c| c == '{' || c == '}').split_once(",")
-                            {
-                                // naive parse: "op":"add","value":"X"
-                                let op_is_add = op.contains(r#""add""#);
-                                let value_str = value.split(':').nth(1).unwrap_or("").trim();
-                                let value_clean = value_str.trim_matches('"').to_string();
-                                if op_is_add {
-                                    on_update.run(value_clean);
-                                } else {
-                                    on_remove.run(value_clean);
-                                }
-                            }
+                        let Some(s) = json.as_string() else {
+                            return;
+                        };
+
+                        // Expect: {"op":"add","value":"Rust"} or {"op":"remove","value":"Rust"}
+                        let Ok(obj) = JSON::parse(&s) else {
+                            return;
+                        };
+
+                        let op = js_sys::Reflect::get(&obj, &JsValue::from_str("op"))
+                            .ok()
+                            .and_then(|v| v.as_string())
+                            .unwrap_or_default();
+
+                        let value = js_sys::Reflect::get(&obj, &JsValue::from_str("value"))
+                            .ok()
+                            .and_then(|v| v.as_string())
+                            .unwrap_or_default();
+
+                        if value.trim().is_empty() {
+                            return;
+                        }
+
+                        if op == "add" {
+                            on_update.run(value);
+                        } else if op == "remove" {
+                            on_remove.run(value);
                         }
                     }) as Box<dyn FnMut(JsValue)>)
                 };
