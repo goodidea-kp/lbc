@@ -2,17 +2,19 @@ use crate::util::TestAttr;
 use leptos::callback::Callback;
 use leptos::children::Children;
 use leptos::prelude::{
-    Callable, ClassAttribute, CustomAttribute, ElementChild, Get, GetUntracked, GlobalAttributes,
-    IntoView, OnAttribute, Signal, component, view,
+    Callable, ClassAttribute, CustomAttribute, ElementChild, Get, GetUntracked, IntoView,
+    OnAttribute, Signal, StyleAttribute, component, view,
 };
 
 #[cfg(target_arch = "wasm32")]
 use leptos::wasm_bindgen::JsCast;
 #[cfg(target_arch = "wasm32")]
+use leptos::wasm_bindgen::JsValue;
+#[cfg(target_arch = "wasm32")]
 use leptos::web_sys;
 
 #[cfg(target_arch = "wasm32")]
-use gloo_timers::callback::Timeout;
+use js_sys::{Array, Function, Reflect};
 
 /// Bold notification blocks, to alert your users of something.
 ///
@@ -90,7 +92,6 @@ pub fn Notification(
 
     // In toast mode, we use a popover element and imperatively show/hide it.
     // We also schedule auto-hide when opened.
-    #[cfg(target_arch = "wasm32")]
     let popover_ref: leptos::prelude::NodeRef<leptos::html::Div> = leptos::prelude::NodeRef::new();
 
     #[cfg(target_arch = "wasm32")]
@@ -116,35 +117,38 @@ pub fn Notification(
             if open.get() {
                 // showPopover() is available on HTMLElement in modern browsers.
                 // If not available, this will no-op via JS reflection.
-                let _ = js_sys::Reflect::apply(
-                    &js_sys::Reflect::get(&el, &wasm_bindgen::JsValue::from_str("showPopover"))
-                        .unwrap_or(wasm_bindgen::JsValue::UNDEFINED)
-                        .unchecked_into::<js_sys::Function>(),
-                    &el,
-                    &js_sys::Array::new(),
-                );
+                if let Ok(v) = Reflect::get(&el, &JsValue::from_str("showPopover")) {
+                    if let Some(f) = v.dyn_ref::<Function>() {
+                        let _ = Reflect::apply(f, &el, &Array::new());
+                    }
+                }
 
                 // schedule auto-hide if configured
                 let ms = auto_hide_ms.get();
                 if ms >= 0 {
                     if let Some(set_open) = set_open.as_ref() {
                         let set_open = set_open.clone();
-                        let _t = Timeout::new(ms as u32, move || {
+                        let cb = Closure::wrap(Box::new(move || {
                             set_open.run(false);
-                        });
-                        // Intentionally leak the timeout handle; it will fire once.
-                        // (If you want cancellation on close/reopen, we can store it in state.)
-                        _t.forget();
+                        }) as Box<dyn FnMut()>);
+
+                        if let Some(window) = web_sys::window() {
+                            let _ = window.set_timeout_with_callback_and_timeout_and_arguments_0(
+                                cb.as_ref().unchecked_ref(),
+                                ms,
+                            );
+                        }
+
+                        // Let the browser own the callback until it fires.
+                        cb.forget();
                     }
                 }
             } else {
-                let _ = js_sys::Reflect::apply(
-                    &js_sys::Reflect::get(&el, &wasm_bindgen::JsValue::from_str("hidePopover"))
-                        .unwrap_or(wasm_bindgen::JsValue::UNDEFINED)
-                        .unchecked_into::<js_sys::Function>(),
-                    &el,
-                    &js_sys::Array::new(),
-                );
+                if let Ok(v) = Reflect::get(&el, &JsValue::from_str("hidePopover")) {
+                    if let Some(f) = v.dyn_ref::<Function>() {
+                        let _ = Reflect::apply(f, &el, &Array::new());
+                    }
+                }
             }
         });
     }
@@ -175,7 +179,6 @@ pub fn Notification(
         // Consumers can override via `classes`.
         view! {
             <div
-                #[cfg(target_arch = "wasm32")]
                 node_ref=popover_ref
                 class=move || {
                     // Base toast positioning + Bulma notification styling
