@@ -4,9 +4,7 @@ use lbc::prelude::{
 };
 use leptos::callback::Callback;
 use leptos::prelude::Set;
-use leptos::prelude::{
-    component, signal, view, ClassAttribute, ElementChild, Get, IntoAny, IntoView,
-};
+use leptos::prelude::{component, signal, view, ClassAttribute, ElementChild, Get, IntoAny, IntoView};
 
 #[component]
 #[allow(non_snake_case)]
@@ -135,9 +133,18 @@ fn ModalPageInner() -> impl IntoView {
 
                 {move || {
                     if show_toast.get() {
-                        view! { <Notification classes="is-success mt-3"
-                            auto_hide_ms=5000
-                            toast=true>"Saved successfully."</Notification> }.into_any()
+                        view! {
+                            <Notification
+                                classes="is-success mt-3"
+                                toast=true
+                                open=show_toast
+                                set_open=Callback::new(move |v| set_show_toast.set(v))
+                                auto_hide_ms=5000
+                            >
+                                "Saved successfully."
+                            </Notification>
+                        }
+                        .into_any()
                     } else {
                         view! { <></> }.into_any()
                     }
