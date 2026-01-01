@@ -1,8 +1,7 @@
 use leptos::prelude::CustomAttribute;
 use leptos::prelude::{
-    component, view, Children, ClassAttribute, Effect, ElementChild, Get, GetUntracked,
-    GlobalAttributes, IntoView, NodeRef, NodeRefAttribute, OnAttribute, Set, Signal, Update,
-    WriteSignal,
+    Children, ClassAttribute, Effect, ElementChild, Get, GetUntracked, GlobalAttributes, IntoView,
+    NodeRef, NodeRefAttribute, OnAttribute, Set, Signal, Update, WriteSignal, component, view,
 };
 use leptos::web_sys;
 use std::collections::HashSet;
@@ -113,8 +112,7 @@ fn close_dialog(dialog_ref: &NodeRef<leptos::html::Dialog>) {
 #[component]
 fn DialogShell(
     id: String,
-    #[prop(optional, into)]
-    classes: Signal<String>,
+    #[prop(optional, into)] classes: Signal<String>,
     is_active: Signal<bool>,
     set_is_active: Arc<dyn Fn(bool) + Send + Sync>,
     dialog_ref: NodeRef<leptos::html::Dialog>,
@@ -283,12 +281,9 @@ pub fn Modal(
     id: String,
     children: Children,
     trigger: Children,
-    #[prop(optional, into)]
-    classes: Signal<String>,
-    #[prop(optional, into)]
-    open: Option<Signal<bool>>,
-    #[prop(optional)]
-    set_open: Option<WriteSignal<bool>>,
+    #[prop(optional, into)] classes: Signal<String>,
+    #[prop(optional, into)] open: Option<Signal<bool>>,
+    #[prop(optional)] set_open: Option<WriteSignal<bool>>,
 ) -> impl IntoView {
     let (internal_open, set_internal_open) = leptos::prelude::signal(false);
     let is_controlled = open.is_some() && set_open.is_some();
@@ -398,12 +393,9 @@ pub fn ModalCard(
     body: Children,
     footer: Children,
     trigger: Children,
-    #[prop(optional, into)]
-    classes: Signal<String>,
-    #[prop(optional, into)]
-    open: Option<Signal<bool>>,
-    #[prop(optional)]
-    set_open: Option<WriteSignal<bool>>,
+    #[prop(optional, into)] classes: Signal<String>,
+    #[prop(optional, into)] open: Option<Signal<bool>>,
+    #[prop(optional)] set_open: Option<WriteSignal<bool>>,
 ) -> impl IntoView {
     let (internal_open, set_internal_open) = leptos::prelude::signal(false);
     let is_controlled = open.is_some() && set_open.is_some();
