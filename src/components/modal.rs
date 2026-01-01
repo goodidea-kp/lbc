@@ -184,36 +184,58 @@ fn DialogShell(
     let id_for_controller_close = id.clone();
 
     view! {
-        <dialog
-            node_ref=dialog_ref
-            id=id
-            class=move || class()
-            on:click=move |ev: web_sys::MouseEvent| {
-                if let Some(target) = ev.target() {
-                    if let Ok(el) = target.dyn_into::<web_sys::Element>() {
-                        if el.tag_name().to_ascii_lowercase() == "dialog" {
-                            crate::lbc_debug_log!("[DialogShell:{}] backdrop click -> close", id_for_click);
-                            (on_click_setter)(false);
+        <>
+            // Default browser <dialog> styles include a border/padding/background.
+            // Since we use Bulma's modal layout inside, we neutralize the native dialog chrome.
+            <style>
+                r#"
+                dialog.modal {
+                    border: 0;
+                    padding: 0;
+                    margin: 0;
+                    background: transparent;
+                    color: inherit;
+                    max-width: none;
+                    max-height: none;
+                }
+
+                dialog.modal::backdrop {
+                    background: rgba(10, 10, 10, 0.86);
+                }
+                "#
+            </style>
+
+            <dialog
+                node_ref=dialog_ref
+                id=id
+                class=move || class()
+                on:click=move |ev: web_sys::MouseEvent| {
+                    if let Some(target) = ev.target() {
+                        if let Ok(el) = target.dyn_into::<web_sys::Element>() {
+                            if el.tag_name().to_ascii_lowercase() == "dialog" {
+                                crate::lbc_debug_log!("[DialogShell:{}] backdrop click -> close", id_for_click);
+                                (on_click_setter)(false);
+                            }
                         }
                     }
                 }
-            }
-            // Let the browser handle Escape-to-close. We only log here.
-            // We'll sync state in `on:close`.
-            on:cancel=move |_ev: web_sys::Event| {
-                crate::lbc_debug_log!("[DialogShell:{}] cancel (Escape) observed", id_for_cancel);
-            }
-            on:close=move |_ev: web_sys::Event| {
-                crate::lbc_debug_log!("[DialogShell:{}] close event -> state false", id_for_close);
-                (on_close_setter)(false);
-
-                if let Some(controller) = controller_for_close.as_ref() {
-                    controller.close(&id_for_controller_close);
+                // Let the browser handle Escape-to-close. We only log here.
+                // We'll sync state in `on:close`.
+                on:cancel=move |_ev: web_sys::Event| {
+                    crate::lbc_debug_log!("[DialogShell:{}] cancel (Escape) observed", id_for_cancel);
                 }
-            }
-        >
-            {children()}
-        </dialog>
+                on:close=move |_ev: web_sys::Event| {
+                    crate::lbc_debug_log!("[DialogShell:{}] close event -> state false", id_for_close);
+                    (on_close_setter)(false);
+
+                    if let Some(controller) = controller_for_close.as_ref() {
+                        controller.close(&id_for_controller_close);
+                    }
+                }
+            >
+                {children()}
+            </dialog>
+        </>
     }
 }
 
