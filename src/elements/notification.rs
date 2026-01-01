@@ -3,7 +3,7 @@ use leptos::callback::Callback;
 use leptos::children::Children;
 use leptos::prelude::{
     Callable, ClassAttribute, CustomAttribute, ElementChild, Get, GetUntracked, GlobalAttributes,
-    IntoView, NodeRefAttribute, OnAttribute, Signal, StyleAttribute, component, view,
+    IntoAny, IntoView, NodeRefAttribute, OnAttribute, Signal, StyleAttribute, component, view,
 };
 
 #[cfg(target_arch = "wasm32")]
@@ -210,7 +210,7 @@ pub fn Notification(
                 <span style="display:none">{auto_hide_defaulted.to_string()}</span>
             </div>
         }
-        .into_view()
+        .into_any()
     } else {
         // Inline mode: original behavior, no popover, no dismiss button.
         view! {
@@ -222,7 +222,7 @@ pub fn Notification(
                 {children()}
             </div>
         }
-        .into_view()
+        .into_any()
     }
 }
 
