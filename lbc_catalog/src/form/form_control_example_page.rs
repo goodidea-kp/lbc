@@ -1,7 +1,7 @@
 use lbc::prelude::Input;
 use lbc::prelude::{Block, Content, Control, HeaderSize, Subtitle, Tag, TagColor, Title};
+use leptos::callback::Callback;
 use leptos::prelude::*;
-use std::sync::Arc;
 
 /// Example page showcasing the Control form component.
 #[allow(non_snake_case)]
@@ -17,14 +17,25 @@ pub fn FormControlPage() -> impl IntoView {
             <Content>
                 <Subtitle size=HeaderSize::Is6>"Basic Control"</Subtitle>
                 <Control>
-                    <Input name="name1" value=typed_text placeholder="Your name" update=Arc::new(move |value| set_typed_text.set(value))/>
+                    <Input
+                        name="name1"
+                        value=typed_text
+                        placeholder="Your name"
+                        update=Callback::new(move |value| set_typed_text.set(value))
+                    />
                 </Control>
 
                 <div class="mt-4"></div>
 
                 <Subtitle size=HeaderSize::Is6>"Interactive Control (on input)"</Subtitle>
                 <Control>
-                    <Input readonly={true} name="name1" value=typed_text2 placeholder="Your name" update=Arc::new(move |value| set_typed_text2.set(value))/>
+                    <Input
+                        readonly={true}
+                        name="name1"
+                        value=typed_text2
+                        placeholder="Your name"
+                        update=Callback::new(move |value| set_typed_text2.set(value))
+                    />
                 </Control>
                 <p class="mt-2">
                     <strong>"You typed: "</strong>

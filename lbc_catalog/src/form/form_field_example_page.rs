@@ -1,7 +1,7 @@
 use lbc::prelude::{Block, Content, Control, Field, HeaderSize, Subtitle, Title};
 use lbc::prelude::{Input, InputType};
+use leptos::callback::Callback;
 use leptos::prelude::*;
-use std::sync::Arc;
 
 /// Example page showcasing the Field form container component.
 #[allow(non_snake_case)]
@@ -20,7 +20,7 @@ pub fn FormFieldPage() -> impl IntoView {
                             name="name"
                             value=text_value
                             placeholder="Your name"
-                            update=Arc::new(move |value| {
+                            update=Callback::new(move |value| {
                                 set_text_value.set(value);
                             })
                         />
@@ -37,7 +37,7 @@ pub fn FormFieldPage() -> impl IntoView {
                             name="email"
                             value=email_value
                             placeholder="you@example.com"
-                            update=Arc::new(move |value| {
+                            update=Callback::new(move |value| {
                                 set_email_value.set(value);
                             })
                         />
