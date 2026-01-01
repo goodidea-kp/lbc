@@ -185,26 +185,6 @@ fn DialogShell(
 
     view! {
         <>
-            // Default browser <dialog> styles include a border/padding/background.
-            // Since we use Bulma's modal layout inside, we neutralize the native dialog chrome.
-            <style>
-                r#"
-                dialog.modal {
-                    border: 0;
-                    padding: 0;
-                    margin: 0;
-                    background: transparent;
-                    color: inherit;
-                    max-width: none;
-                    max-height: none;
-                }
-
-                dialog.modal::backdrop {
-                    background: rgba(10, 10, 10, 0.86);
-                }
-                "#
-            </style>
-
             <dialog
                 node_ref=dialog_ref
                 id=id
