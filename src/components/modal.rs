@@ -1,7 +1,7 @@
 use leptos::prelude::CustomAttribute;
 use leptos::prelude::{
     component, view, Children, ClassAttribute, Effect, ElementChild, Get, GlobalAttributes,
-    IntoView, NodeRef, NodeRefAttribute, OnAttribute, Set, Signal, Update, With, WriteSignal,
+    IntoView, NodeRef, NodeRefAttribute, OnAttribute, Set, Signal, Update, WriteSignal,
 };
 use leptos::web_sys;
 use std::collections::HashSet;
@@ -80,33 +80,13 @@ fn DialogShell(
     classes: Signal<String>,
     is_active: Signal<bool>,
     set_is_active: Arc<dyn Fn(bool) + Send + Sync>,
-    /// Optional hook to expose the dialog NodeRef to the parent (for direct showModal on click).
-    #[prop(optional)]
-    dialog_ref_out: Option<leptos::prelude::RwSignal<Option<web_sys::HtmlDialogElement>>>,
+    dialog_ref: NodeRef<leptos::html::Dialog>,
     children: Children,
 ) -> impl IntoView {
     let class = {
         let classes = classes.clone();
         move || base_class(&classes.get())
     };
-
-    let dialog_ref: NodeRef<leptos::html::Dialog> = NodeRef::new();
-
-    // Expose the dialog element to the parent if requested.
-    if let Some(out) = dialog_ref_out.clone() {
-        Effect::new({
-            let out = out.clone();
-            let id_for_log = id.clone();
-            move |_| {
-                let Some(dialog_el) = dialog_ref.get() else {
-                    return;
-                };
-                let dialog: web_sys::HtmlDialogElement = dialog_el.unchecked_into();
-                crate::lbc_debug_log!("[DialogShell:{}] mounted; exporting dialog ref", id_for_log);
-                out.set(Some(dialog));
-            }
-        });
-    }
 
     // Keep the actual <dialog> open/closed in sync with is_active (client-side).
     Effect::new({
@@ -118,7 +98,10 @@ fn DialogShell(
             crate::lbc_debug_log!("[DialogShell:{}] effect: is_active={}", id_for_log, active);
 
             let Some(dialog_el) = dialog_ref.get() else {
-                crate::lbc_debug_log!("[DialogShell:{}] effect: dialog_ref not mounted yet", id_for_log);
+                crate::lbc_debug_log!(
+                    "[DialogShell:{}] effect: dialog_ref not mounted yet",
+                    id_for_log
+                );
                 return;
             };
 
@@ -135,7 +118,10 @@ fn DialogShell(
                     crate::lbc_debug_log!("[DialogShell:{}] calling showModal()", id_for_log);
                     let res = dialog.show_modal();
                     if res.is_err() {
-                        crate::lbc_debug_log!("[DialogShell:{}] showModal() returned Err", id_for_log);
+                        crate::lbc_debug_log!(
+                            "[DialogShell:{}] showModal() returned Err",
+                            id_for_log
+                        );
                     }
                 }
             } else if dialog.open() {
@@ -248,26 +234,26 @@ pub fn Modal(
         });
     }
 
-    // Capture dialog element so we can call showModal() directly in the click handler (user gesture).
-    let dialog_el: leptos::prelude::RwSignal<Option<web_sys::HtmlDialogElement>> =
-        leptos::prelude::RwSignal::new(None);
+    // NodeRef so we can call showModal() directly in the click handler (user gesture).
+    let dialog_ref: NodeRef<leptos::html::Dialog> = NodeRef::new();
 
     let open_action: Arc<dyn Fn() + Send + Sync> = {
         let id = id.clone();
         let controller = controller.clone();
         let set_local_open = set_local_open.clone();
-        let dialog_el = dialog_el.clone();
+        let dialog_ref = dialog_ref.clone();
         Arc::new(move || {
             crate::lbc_debug_log!("[Modal:{}] open_action()", id);
 
             // Try to open immediately (user gesture) if dialog is mounted.
-            if let Some(d) = dialog_el.get_untracked() {
-                if !d.open() {
+            if let Some(dialog_el) = dialog_ref.get_untracked() {
+                let dialog: web_sys::HtmlDialogElement = dialog_el.unchecked_into();
+                if !dialog.open() {
                     crate::lbc_debug_log!("[Modal:{}] open_action: direct showModal()", id);
-                    let _ = d.show_modal();
+                    let _ = dialog.show_modal();
                 }
             } else {
-                crate::lbc_debug_log!("[Modal:{}] open_action: dialog_el not available yet", id);
+                crate::lbc_debug_log!("[Modal:{}] open_action: dialog_ref not available yet", id);
             }
 
             if !is_controlled {
@@ -316,7 +302,7 @@ pub fn Modal(
                 classes=classes
                 is_active=is_active
                 set_is_active=set_local_open.clone()
-                dialog_ref_out=dialog_el
+                dialog_ref=dialog_ref
             >
                 <div class="modal-background" on:click=move |_ev: web_sys::MouseEvent| (bg_close)()></div>
 
@@ -392,24 +378,27 @@ pub fn ModalCard(
         });
     }
 
-    let dialog_el: leptos::prelude::RwSignal<Option<web_sys::HtmlDialogElement>> =
-        leptos::prelude::RwSignal::new(None);
+    let dialog_ref: NodeRef<leptos::html::Dialog> = NodeRef::new();
 
     let open_action: Arc<dyn Fn() + Send + Sync> = {
         let id = id.clone();
         let controller = controller.clone();
         let set_local_open = set_local_open.clone();
-        let dialog_el = dialog_el.clone();
+        let dialog_ref = dialog_ref.clone();
         Arc::new(move || {
             crate::lbc_debug_log!("[ModalCard:{}] open_action()", id);
 
-            if let Some(d) = dialog_el.get_untracked() {
-                if !d.open() {
+            if let Some(dialog_el) = dialog_ref.get_untracked() {
+                let dialog: web_sys::HtmlDialogElement = dialog_el.unchecked_into();
+                if !dialog.open() {
                     crate::lbc_debug_log!("[ModalCard:{}] open_action: direct showModal()", id);
-                    let _ = d.show_modal();
+                    let _ = dialog.show_modal();
                 }
             } else {
-                crate::lbc_debug_log!("[ModalCard:{}] open_action: dialog_el not available yet", id);
+                crate::lbc_debug_log!(
+                    "[ModalCard:{}] open_action: dialog_ref not available yet",
+                    id
+                );
             }
 
             if !is_controlled {
@@ -459,7 +448,7 @@ pub fn ModalCard(
                 classes=classes
                 is_active=is_active
                 set_is_active=set_local_open.clone()
-                dialog_ref_out=dialog_el
+                dialog_ref=dialog_ref
             >
                 <div class="modal-background" on:click=move |_ev: web_sys::MouseEvent| (bg_close)()></div>
 
