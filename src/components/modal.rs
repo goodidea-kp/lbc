@@ -198,9 +198,8 @@ pub fn Modal(
 
     let controller = leptos::prelude::use_context::<ModalControllerContext>();
 
-    let set_is_active: Arc<dyn Fn(bool) + Send + Sync> = {
-        let id = id.clone();
-        let controller = controller.clone();
+    // Local-only setter: updates controlled prop or internal signal, but does NOT touch controller.
+    let set_local_open: Arc<dyn Fn(bool) + Send + Sync> = {
         let set_open = set_open;
         Arc::new(move |v: bool| {
             if is_controlled {
@@ -210,47 +209,78 @@ pub fn Modal(
             } else {
                 set_internal_open.set(v);
             }
-
-            // Keep controller in sync if present.
-            if let Some(controller) = controller.as_ref() {
-                if v {
-                    controller.open(id.clone());
-                } else {
-                    controller.close(&id);
-                }
-            }
         })
     };
 
-    // If a controller exists, let it drive the open state (unless controlled by props).
+    // If a controller exists and we're uncontrolled, the controller is the source of truth.
+    // Sync local state from controller.
     if let Some(controller) = controller.clone() {
         let id_clone = id.clone();
-        let set_is_active = set_is_active.clone();
+        let set_local_open = set_local_open.clone();
         Effect::new(move |_| {
             if is_controlled {
                 return;
             }
             let should_be_open = controller.is_open(&id_clone);
-            (set_is_active)(should_be_open);
+            (set_local_open)(should_be_open);
         });
     }
 
+    // Event handlers:
+    // - If uncontrolled + controller: operate on controller only.
+    // - Otherwise: operate on local state (and optionally mirror to controller).
+    let open_action: Arc<dyn Fn() + Send + Sync> = {
+        let id = id.clone();
+        let controller = controller.clone();
+        let set_local_open = set_local_open.clone();
+        Arc::new(move || {
+            if !is_controlled {
+                if let Some(controller) = controller.as_ref() {
+                    controller.open(id.clone());
+                    return;
+                }
+            }
+            (set_local_open)(true);
+            if let Some(controller) = controller.as_ref() {
+                controller.open(id.clone());
+            }
+        })
+    };
+
+    let close_action: Arc<dyn Fn() + Send + Sync> = {
+        let id = id.clone();
+        let controller = controller.clone();
+        let set_local_open = set_local_open.clone();
+        Arc::new(move || {
+            if !is_controlled {
+                if let Some(controller) = controller.as_ref() {
+                    controller.close(&id);
+                    return;
+                }
+            }
+            (set_local_open)(false);
+            if let Some(controller) = controller.as_ref() {
+                controller.close(&id);
+            }
+        })
+    };
+
     // Clone for each closure to avoid move errors.
-    let trigger_setter = set_is_active.clone();
-    let bg_setter = set_is_active.clone();
-    let close_btn_setter = set_is_active.clone();
+    let trigger_open = open_action.clone();
+    let bg_close = close_action.clone();
+    let close_btn_close = close_action.clone();
 
     view! {
         <>
-            <div on:click=move |_| (trigger_setter)(true)>{trigger()}</div>
+            <div on:click=move |_| (trigger_open)()>{trigger()}</div>
 
             <DialogShell
                 id=id
                 classes=classes
                 is_active=is_active
-                set_is_active=set_is_active.clone()
+                set_is_active=set_local_open.clone()
             >
-                <div class="modal-background" on:click=move |_ev: web_sys::MouseEvent| (bg_setter)(false)></div>
+                <div class="modal-background" on:click=move |_ev: web_sys::MouseEvent| (bg_close)()></div>
 
                 <div class="modal-content">
                     {children()}
@@ -260,7 +290,7 @@ pub fn Modal(
                     class="modal-close is-large"
                     aria_labelledby-label="close"
                     type="button"
-                    on:click=move |_ev: web_sys::MouseEvent| (close_btn_setter)(false)
+                    on:click=move |_ev: web_sys::MouseEvent| (close_btn_close)()
                 ></button>
             </DialogShell>
         </>
@@ -319,9 +349,8 @@ pub fn ModalCard(
 
     let controller = leptos::prelude::use_context::<ModalControllerContext>();
 
-    let set_is_active: Arc<dyn Fn(bool) + Send + Sync> = {
-        let id = id.clone();
-        let controller = controller.clone();
+    // Local-only setter: updates controlled prop or internal signal, but does NOT touch controller.
+    let set_local_open: Arc<dyn Fn(bool) + Send + Sync> = {
         let set_open = set_open;
         Arc::new(move |v: bool| {
             if is_controlled {
@@ -331,46 +360,74 @@ pub fn ModalCard(
             } else {
                 set_internal_open.set(v);
             }
-
-            if let Some(controller) = controller.as_ref() {
-                if v {
-                    controller.open(id.clone());
-                } else {
-                    controller.close(&id);
-                }
-            }
         })
     };
 
     if let Some(controller) = controller.clone() {
         let id_clone = id.clone();
-        let set_is_active = set_is_active.clone();
+        let set_local_open = set_local_open.clone();
         Effect::new(move |_| {
             if is_controlled {
                 return;
             }
             let should_be_open = controller.is_open(&id_clone);
-            (set_is_active)(should_be_open);
+            (set_local_open)(should_be_open);
         });
     }
 
+    let open_action: Arc<dyn Fn() + Send + Sync> = {
+        let id = id.clone();
+        let controller = controller.clone();
+        let set_local_open = set_local_open.clone();
+        Arc::new(move || {
+            if !is_controlled {
+                if let Some(controller) = controller.as_ref() {
+                    controller.open(id.clone());
+                    return;
+                }
+            }
+            (set_local_open)(true);
+            if let Some(controller) = controller.as_ref() {
+                controller.open(id.clone());
+            }
+        })
+    };
+
+    let close_action: Arc<dyn Fn() + Send + Sync> = {
+        let id = id.clone();
+        let controller = controller.clone();
+        let set_local_open = set_local_open.clone();
+        Arc::new(move || {
+            if !is_controlled {
+                if let Some(controller) = controller.as_ref() {
+                    controller.close(&id);
+                    return;
+                }
+            }
+            (set_local_open)(false);
+            if let Some(controller) = controller.as_ref() {
+                controller.close(&id);
+            }
+        })
+    };
+
     // Clone for each closure to avoid move errors.
-    let trigger_setter = set_is_active.clone();
-    let bg_setter = set_is_active.clone();
-    let delete_btn_setter = set_is_active.clone();
-    let close_btn_setter = set_is_active.clone();
+    let trigger_open = open_action.clone();
+    let bg_close = close_action.clone();
+    let delete_btn_close = close_action.clone();
+    let close_btn_close = close_action.clone();
 
     view! {
         <>
-            <div on:click=move |_| (trigger_setter)(true)>{trigger()}</div>
+            <div on:click=move |_| (trigger_open)()>{trigger()}</div>
 
             <DialogShell
                 id=id
                 classes=classes
                 is_active=is_active
-                set_is_active=set_is_active.clone()
+                set_is_active=set_local_open.clone()
             >
-                <div class="modal-background" on:click=move |_ev: web_sys::MouseEvent| (bg_setter)(false)></div>
+                <div class="modal-background" on:click=move |_ev: web_sys::MouseEvent| (bg_close)()></div>
 
                 <div class="modal-card">
                     <header class="modal-card-head">
@@ -379,7 +436,7 @@ pub fn ModalCard(
                             class="delete"
                             aria_labelledby-label="close"
                             type="button"
-                            on:click=move |_ev: web_sys::MouseEvent| (delete_btn_setter)(false)
+                            on:click=move |_ev: web_sys::MouseEvent| (delete_btn_close)()
                         ></button>
                     </header>
 
@@ -396,7 +453,7 @@ pub fn ModalCard(
                     class="modal-close is-large"
                     aria_labelledby-label="close"
                     type="button"
-                    on:click=move |_ev: web_sys::MouseEvent| (close_btn_setter)(false)
+                    on:click=move |_ev: web_sys::MouseEvent| (close_btn_close)()
                 ></button>
             </DialogShell>
         </>
