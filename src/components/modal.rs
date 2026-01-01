@@ -94,9 +94,17 @@ fn focus_dialog(dialog: &web_sys::HtmlDialogElement) {
     let _ = dialog.focus();
 }
 
+fn close_dialog(dialog_ref: &NodeRef<leptos::html::Dialog>) {
+    if let Some(dialog_el) = dialog_ref.get_untracked() {
+        let dialog: web_sys::HtmlDialogElement = dialog_el.unchecked_into();
+        if dialog.open() {
+            dialog.close();
+        }
+    }
+}
+
 /// Shared dialog behavior:
 /// - sync `is_active` <-> `<dialog>` open state using showModal()/close()
-/// - close on backdrop click
 /// - close on Escape (cancel)
 /// - close on close event
 /// - focus management on open (WCAG H102-friendly)
@@ -171,10 +179,8 @@ fn DialogShell(
 
     let controller = leptos::prelude::use_context::<ModalControllerContext>();
 
-    let on_click_setter = set_is_active.clone();
     let on_close_setter = set_is_active.clone();
 
-    let id_for_click = id.clone();
     let id_for_cancel = id.clone();
     let id_for_close = id.clone();
 
@@ -182,6 +188,12 @@ fn DialogShell(
     // so we don't keep stale "open" ids around.
     let controller_for_close = controller.clone();
     let id_for_controller_close = id.clone();
+
+    // For cancel we explicitly close the dialog and sync state/controller.
+    let dialog_ref_for_cancel = dialog_ref.clone();
+    let set_is_active_for_cancel = set_is_active.clone();
+    let controller_for_cancel = controller.clone();
+    let id_for_controller_cancel = id.clone();
 
     view! {
         <>
@@ -232,20 +244,15 @@ fn DialogShell(
                 node_ref=dialog_ref
                 id=id
                 class=move || class()
-                on:click=move |ev: web_sys::MouseEvent| {
-                    if let Some(target) = ev.target() {
-                        if let Ok(el) = target.dyn_into::<web_sys::Element>() {
-                            if el.tag_name().to_ascii_lowercase() == "dialog" {
-                                crate::lbc_debug_log!("[DialogShell:{}] backdrop click -> close", id_for_click);
-                                (on_click_setter)(false);
-                            }
-                        }
+                // Escape: close the dialog and sync state/controller.
+                on:cancel=move |ev: web_sys::Event| {
+                    crate::lbc_debug_log!("[DialogShell:{}] cancel (Escape) -> close", id_for_cancel);
+                    ev.prevent_default();
+                    close_dialog(&dialog_ref_for_cancel);
+                    (set_is_active_for_cancel)(false);
+                    if let Some(controller) = controller_for_cancel.as_ref() {
+                        controller.close(&id_for_controller_cancel);
                     }
-                }
-                // Let the browser handle Escape-to-close. We only log here.
-                // We'll sync state in `on:close`.
-                on:cancel=move |_ev: web_sys::Event| {
-                    crate::lbc_debug_log!("[DialogShell:{}] cancel (Escape) observed", id_for_cancel);
                 }
                 on:close=move |_ev: web_sys::Event| {
                     crate::lbc_debug_log!("[DialogShell:{}] close event -> state false", id_for_close);
@@ -319,12 +326,17 @@ pub fn Modal(
         });
     }
 
+    let dialog_ref: NodeRef<leptos::html::Dialog> = NodeRef::new();
+
     let close_action: Arc<dyn Fn() + Send + Sync> = {
         let id = id.clone();
         let controller = controller.clone();
         let set_local_open = set_local_open.clone();
+        let dialog_ref = dialog_ref.clone();
         Arc::new(move || {
             crate::lbc_debug_log!("[Modal:{}] close_action()", id);
+            close_dialog(&dialog_ref);
+
             if !is_controlled {
                 if let Some(controller) = controller.as_ref() {
                     controller.close(&id);
@@ -337,8 +349,6 @@ pub fn Modal(
             }
         })
     };
-
-    let dialog_ref: NodeRef<leptos::html::Dialog> = NodeRef::new();
 
     let bg_close = close_action.clone();
     let close_btn_close = close_action.clone();
@@ -354,6 +364,7 @@ pub fn Modal(
                 set_is_active=set_local_open.clone()
                 dialog_ref=dialog_ref
             >
+                // Backdrop click should close reliably.
                 <div class="modal-background" on:click=move |_ev: web_sys::MouseEvent| (bg_close)()></div>
 
                 <div class="modal-content">
@@ -428,12 +439,17 @@ pub fn ModalCard(
         });
     }
 
+    let dialog_ref: NodeRef<leptos::html::Dialog> = NodeRef::new();
+
     let close_action: Arc<dyn Fn() + Send + Sync> = {
         let id = id.clone();
         let controller = controller.clone();
         let set_local_open = set_local_open.clone();
+        let dialog_ref = dialog_ref.clone();
         Arc::new(move || {
             crate::lbc_debug_log!("[ModalCard:{}] close_action()", id);
+            close_dialog(&dialog_ref);
+
             if !is_controlled {
                 if let Some(controller) = controller.as_ref() {
                     controller.close(&id);
@@ -446,8 +462,6 @@ pub fn ModalCard(
             }
         })
     };
-
-    let dialog_ref: NodeRef<leptos::html::Dialog> = NodeRef::new();
 
     let bg_close = close_action.clone();
     let delete_btn_close = close_action.clone();
