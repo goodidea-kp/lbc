@@ -2,8 +2,8 @@ use leptos::callback::Callback;
 #[allow(unused_imports)]
 use leptos::prelude::Effect;
 use leptos::prelude::{
-    AriaAttributes, Children, ClassAttribute, CustomAttribute, ElementChild, Get, GlobalAttributes,
-    IntoView, Signal, component, view,
+    AriaAttributes, Callable, Children, ClassAttribute, CustomAttribute, ElementChild, Get,
+    GlobalAttributes, IntoView, OnAttribute, Signal, component, view,
 };
 #[allow(unused_imports)]
 use std::cell::Cell;
