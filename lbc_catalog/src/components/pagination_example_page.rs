@@ -2,32 +2,29 @@ use lbc::prelude::{
     Alignment, Block, Content, HeaderSize, Pagination, PaginationEllipsis, PaginationItem,
     PaginationItemType, Size, Subtitle, Title,
 };
+use leptos::callback::Callback;
 use leptos::prelude::{
     ClassAttribute, ElementChild, Get, GetUntracked, IntoView, Set, Signal, component, signal, view,
 };
-use std::sync::Arc;
 
 #[component]
 pub fn PaginationPage() -> impl IntoView {
     let (current_page, set_current_page) = signal(1usize);
     let total_pages = 5usize;
 
-    let on_prev = {
-        Arc::new(move || {
-            let page = current_page.get_untracked();
-            if page > 1 {
-                set_current_page.set(page - 1);
-            }
-        })
-    };
-    let on_next = {
-        Arc::new(move || {
-            let page = current_page.get_untracked();
-            if page < total_pages {
-                set_current_page.set(page + 1);
-            }
-        })
-    };
+    let on_prev = Callback::new(move |_| {
+        let page = current_page.get_untracked();
+        if page > 1 {
+            set_current_page.set(page - 1);
+        }
+    });
+
+    let on_next = Callback::new(move |_| {
+        let page = current_page.get_untracked();
+        if page < total_pages {
+            set_current_page.set(page + 1);
+        }
+    });
 
     view! {
         <Block>
@@ -41,17 +38,15 @@ pub fn PaginationPage() -> impl IntoView {
                     alignment=Alignment::Centered
                     size=Size::Small
                     rounded=true
-                    on_previous=on_prev.clone()
-                    on_next=on_next.clone()
+                    on_previous=on_prev
+                    on_next=on_next
                 >
                     <li>
                         <PaginationItem
                             item_type=PaginationItemType::Link
                             label="Page 1"
                             current=Signal::derive(move || current_page.get() == 1)
-                            on_click={
-                                Arc::new(move || set_current_page.set(1))
-                            }
+                            on_click=Callback::new(move |_| set_current_page.set(1))
                         >{"1"}</PaginationItem>
                     </li>
                     <li>
@@ -59,9 +54,7 @@ pub fn PaginationPage() -> impl IntoView {
                             item_type=PaginationItemType::Link
                             label="Page 2"
                             current=Signal::derive(move || current_page.get() == 2)
-                            on_click={
-                                Arc::new(move || set_current_page.set(2))
-                            }
+                            on_click=Callback::new(move |_| set_current_page.set(2))
                         >{"2"}</PaginationItem>
                     </li>
                     <li>
@@ -69,9 +62,7 @@ pub fn PaginationPage() -> impl IntoView {
                             item_type=PaginationItemType::Link
                             label="Page 3"
                             current=Signal::derive(move || current_page.get() == 3)
-                            on_click={
-                                Arc::new(move || set_current_page.set(3))
-                            }
+                            on_click=Callback::new(move |_| set_current_page.set(3))
                         >{"3"}</PaginationItem>
                     </li>
                     <li>
@@ -79,9 +70,7 @@ pub fn PaginationPage() -> impl IntoView {
                             item_type=PaginationItemType::Link
                             label="Page 4"
                             current=Signal::derive(move || current_page.get() == 4)
-                            on_click={
-                                Arc::new(move || set_current_page.set(4))
-                            }
+                            on_click=Callback::new(move |_| set_current_page.set(4))
                         >{"4"}</PaginationItem>
                     </li>
                     <li>
@@ -89,11 +78,7 @@ pub fn PaginationPage() -> impl IntoView {
                             item_type=PaginationItemType::Link
                             label="Page 5"
                             current=Signal::derive(move || current_page.get() == 5)
-                            on_click={
-                                Arc::new({
-                                    move || set_current_page.set(5)
-                                })
-                            }
+                            on_click=Callback::new(move |_| set_current_page.set(5))
                         >{"5"}</PaginationItem>
                     </li>
                     <li><PaginationEllipsis character="…"/></li>
