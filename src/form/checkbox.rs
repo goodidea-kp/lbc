@@ -1,7 +1,7 @@
-use std::sync::Arc;
-
 use crate::util::TestAttr;
+use leptos::callback::Callback;
 use leptos::prelude::*;
+use leptos::prelude::Callable;
 #[allow(unused_imports)]
 use std::cell::Cell;
 #[allow(unused_imports)]
@@ -29,7 +29,7 @@ pub fn Checkbox(
 
     /// Optional callback to propagate changes to the parent with the new value.
     #[prop(optional)]
-    update: Option<Arc<dyn Fn(bool) + Send + Sync>>,
+    update: Option<Callback<bool>>,
 
     /// Additional CSS classes to append to Bulma's "checkbox".
     #[prop(optional, into)]
@@ -80,7 +80,7 @@ pub fn Checkbox(
                 // Notify parent about user interaction
                 on:change=move |ev| {
                     if let Some(cb) = &update {
-                        cb(event_target_checked(&ev));
+                        cb.run(event_target_checked(&ev));
                     }
                 }
             />
