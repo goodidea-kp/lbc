@@ -1,15 +1,12 @@
+use crate::util::{Size, TestAttr};
+use leptos::callback::Callback;
 #[allow(unused_imports)]
 use leptos::prelude::Effect;
 use leptos::prelude::{
-    AriaAttributes, Children, ClassAttribute, CustomAttribute, ElementChild, Get, GlobalAttributes,
-    IntoView, Signal, component, view,
+    AriaAttributes, Callable, Children, ClassAttribute, CustomAttribute, ElementChild, Get,
+    GlobalAttributes, IntoView, OnAttribute, Signal, component, view,
 };
-#[allow(unused_imports)]
-use std::cell::Cell;
-#[allow(unused_imports)]
-use std::rc::Rc;
-
-use crate::util::{Size, TestAttr};
+use leptos::web_sys;
 
 fn size_class(size: Size) -> &'static str {
     match size {
@@ -76,11 +73,11 @@ pub fn Pagination(
 
     /// Click handler for the previous control.
     #[prop(optional)]
-    on_previous: Option<std::sync::Arc<dyn Fn() + Send + Sync>>,
+    on_previous: Option<Callback<()>>,
 
     /// Click handler for the next control.
     #[prop(optional)]
-    on_next: Option<std::sync::Arc<dyn Fn() + Send + Sync>>,
+    on_next: Option<Callback<()>>,
 
     /// Optional test attribute for the root <nav>.
     ///
@@ -123,6 +120,20 @@ pub fn Pagination(
         _ => (None, None),
     };
 
+    let on_prev_click = move |ev: web_sys::MouseEvent| {
+        ev.prevent_default();
+        if let Some(cb) = on_previous.as_ref() {
+            cb.run(());
+        }
+    };
+
+    let on_next_click = move |ev: web_sys::MouseEvent| {
+        ev.prevent_default();
+        if let Some(cb) = on_next.as_ref() {
+            cb.run(());
+        }
+    };
+
     view! {
         <nav
             class=move || class()
@@ -135,12 +146,14 @@ pub fn Pagination(
             <a
                 class="pagination-previous"
                 href="#"
+                on:click=on_prev_click
             >
                 {previous_label.get()}
             </a>
             <a
                 class="pagination-next"
                 href="#"
+                on:click=on_next_click
             >
                 {next_label.get()}
             </a>
@@ -171,7 +184,7 @@ pub fn PaginationItem(
 
     /// Click handler for this item.
     #[prop(optional)]
-    on_click: Option<std::sync::Arc<dyn Fn() + Send + Sync>>,
+    on_click: Option<Callback<()>>,
 
     /// Optional test attribute for the <a>.
     ///
@@ -198,11 +211,19 @@ pub fn PaginationItem(
         _ => (None, None),
     };
 
+    let on_item_click = move |ev: web_sys::MouseEvent| {
+        ev.prevent_default();
+        if let Some(cb) = on_click.as_ref() {
+            cb.run(());
+        }
+    };
+
     view! {
         <a
             class=move || class()
             aria-label=label.get()
             href="#"
+            on:click=on_item_click
             attr:data-testid=move || data_testid.clone()
             attr:data-cy=move || data_cy.clone()
         >
@@ -306,11 +327,10 @@ mod wasm_tests {
     use crate::components::tabs::Alignment;
     use crate::util::{Size, TestAttr};
     use leptos::prelude::*;
-    use std::sync::Arc;
     use wasm_bindgen_test::*;
 
-    fn noop() -> Arc<dyn Fn() + Send + Sync> {
-        Arc::new(|| {})
+    fn noop() -> Callback<()> {
+        Callback::new(|_| {})
     }
 
     wasm_bindgen_test_configure!(run_in_browser);

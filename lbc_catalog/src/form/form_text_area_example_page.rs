@@ -1,6 +1,6 @@
 use lbc::prelude::{Block, Content, Control, Field, HeaderSize, Size, Subtitle, TextArea, Title};
+use leptos::callback::Callback;
 use leptos::prelude::{ClassAttribute, ElementChild, Get, IntoView, Set, component, signal, view};
-use std::sync::Arc;
 
 /// Example page showcasing the TextArea form component.
 #[component]
@@ -9,9 +9,9 @@ pub fn FormTextAreaPage() -> impl IntoView {
     let (bio, set_bio) = signal(String::from("Once upon a time..."));
     let (ai_text, set_ai_text) = signal(String::new());
 
-    let update_notes = Arc::new(move |v: String| set_notes.set(v));
-    let update_bio = Arc::new(move |v: String| set_bio.set(v));
-    let update_ai = Arc::new(move |v: String| set_ai_text.set(v));
+    let update_notes = Callback::new(move |v: String| set_notes.set(v));
+    let update_bio = Callback::new(move |v: String| set_bio.set(v));
+    let update_ai = Callback::new(move |v: String| set_ai_text.set(v));
 
     view! {
         <Block>
@@ -26,7 +26,7 @@ pub fn FormTextAreaPage() -> impl IntoView {
                             value=notes
                             rows=4
                             placeholder="Type some notes…"
-                            update=update_notes.clone()
+                            update=update_notes
                         />
                     </Control>
                 </Field>
@@ -43,7 +43,7 @@ pub fn FormTextAreaPage() -> impl IntoView {
                             placeholder="Tell us your story…"
                             loading=false
                             fixed_size=true
-                            update=update_bio.clone()
+                            update=update_bio
                         />
                     </Control>
                 </Field>
@@ -57,7 +57,7 @@ pub fn FormTextAreaPage() -> impl IntoView {
                             rows=3
                             is_genai=true
                             placeholder="Generated text…"
-                            update=update_ai.clone()
+                            update=update_ai
                         />
                     </Control>
                 </Field>

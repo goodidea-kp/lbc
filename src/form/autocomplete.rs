@@ -14,11 +14,11 @@ Notes
 - SSR tests only verify the rendered HTML structure.
 */
 
+use leptos::callback::Callback;
 use leptos::prelude::{
-    ClassAttribute, CustomAttribute, ElementChild, Get, GlobalAttributes, IntoAny, IntoView,
-    Signal, component, view,
+    Callable, ClassAttribute, CustomAttribute, ElementChild, Get, GlobalAttributes, IntoAny,
+    IntoView, Signal, component, view,
 };
-use std::sync::Arc;
 
 #[cfg(target_arch = "wasm32")]
 use leptos::wasm_bindgen::JsCast;
@@ -28,6 +28,9 @@ use leptos::wasm_bindgen::JsValue;
 use leptos::wasm_bindgen::closure::Closure;
 #[cfg(target_arch = "wasm32")]
 use leptos::web_sys::Element;
+
+#[cfg(target_arch = "wasm32")]
+use js_sys::JSON;
 
 use crate::util::TestAttr;
 
@@ -50,10 +53,10 @@ pub fn AutoComplete(
     items: Option<Vec<String>>,
 
     /// Called when a tag is added.
-    _on_update: Arc<dyn Fn(String) + Send + Sync>,
+    _on_update: Callback<String>,
 
     /// Called when a tag is removed.
-    _on_remove: Arc<dyn Fn(String) + Send + Sync>,
+    _on_remove: Callback<String>,
 
     /// Currently selected single tag (for initial value).
     #[prop(optional, into)]
@@ -215,20 +218,33 @@ pub fn AutoComplete(
                     let on_update = _on_update.clone();
                     let on_remove = _on_remove.clone();
                     Closure::wrap(Box::new(move |json: JsValue| {
-                        if let Some(s) = json.as_string() {
-                            if let Some((op, value)) =
-                                s.trim_matches(|c| c == '{' || c == '}').split_once(",")
-                            {
-                                // naive parse: "op":"add","value":"X"
-                                let op_is_add = op.contains(r#""add""#);
-                                let value_str = value.split(':').nth(1).unwrap_or("").trim();
-                                let value_clean = value_str.trim_matches('"').to_string();
-                                if op_is_add {
-                                    (on_update)(value_clean);
-                                } else {
-                                    (on_remove)(value_clean);
-                                }
-                            }
+                        let Some(s) = json.as_string() else {
+                            return;
+                        };
+
+                        // Expect: {"op":"add","value":"Rust"} or {"op":"remove","value":"Rust"}
+                        let Ok(obj) = JSON::parse(&s) else {
+                            return;
+                        };
+
+                        let op = js_sys::Reflect::get(&obj, &JsValue::from_str("op"))
+                            .ok()
+                            .and_then(|v| v.as_string())
+                            .unwrap_or_default();
+
+                        let value = js_sys::Reflect::get(&obj, &JsValue::from_str("value"))
+                            .ok()
+                            .and_then(|v| v.as_string())
+                            .unwrap_or_default();
+
+                        if value.trim().is_empty() {
+                            return;
+                        }
+
+                        if op == "add" {
+                            on_update.run(value);
+                        } else if op == "remove" {
+                            on_remove.run(value);
                         }
                     }) as Box<dyn FnMut(JsValue)>)
                 };
@@ -363,8 +379,8 @@ mod tests {
     use super::*;
     use leptos::prelude::RenderHtml;
 
-    fn noop() -> Arc<dyn Fn(String) + Send + Sync> {
-        Arc::new(|_| {})
+    fn noop() -> Callback<String> {
+        Callback::new(|_v: String| {})
     }
 
     #[test]
@@ -439,11 +455,10 @@ mod wasm_tests {
     use super::*;
     use crate::util::TestAttr;
     use leptos::prelude::*;
-    use std::sync::Arc;
     use wasm_bindgen_test::*;
 
-    fn noop() -> Arc<dyn Fn(String) + Send + Sync> {
-        Arc::new(|_| {})
+    fn noop() -> Callback<String> {
+        Callback::new(|_v: String| {})
     }
 
     wasm_bindgen_test_configure!(run_in_browser);

@@ -1,8 +1,9 @@
+use leptos::callback::Callback;
 #[allow(unused_imports)]
 use leptos::prelude::Effect;
 use leptos::prelude::{
-    ClassAttribute, CustomAttribute, ElementChild, GetUntracked, IntoAny, IntoView, Signal,
-    component, view,
+    Callable, ClassAttribute, CustomAttribute, ElementChild, GetUntracked, IntoAny, IntoView,
+    OnAttribute, Signal, component, view,
 };
 #[allow(unused_imports)]
 use std::cell::Cell;
@@ -37,7 +38,7 @@ pub fn File(
     _files: Signal<Vec<LbcSysFile>>,
 
     /// Callback to propagate the selected files to the parent.
-    _update: std::sync::Arc<dyn Fn(Vec<LbcSysFile>) + Send + Sync>,
+    _update: Callback<Vec<LbcSysFile>>,
 
     /// The display text for the file selector.
     #[prop(default = "Choose a file...".to_string().into(), into)]
@@ -120,6 +121,20 @@ pub fn File(
         _ => (None, None),
     };
 
+    // NOTE:
+    // This crate currently aliases `LbcSysFile` to `()` for both wasm32 and non-wasm builds.
+    // Also, `HtmlInputElement::files()` requires enabling specific `web-sys` features; without
+    // them the method does not exist and the build fails.
+    //
+    // Until a real cross-platform file type is introduced (and web-sys features are enabled),
+    // we simply notify the parent that a change occurred with an empty Vec.
+    let on_change = {
+        let update = _update.clone();
+        move |_ev: leptos::web_sys::Event| {
+            update.run(Vec::<LbcSysFile>::new());
+        }
+    };
+
     view! {
         <div
             class=class
@@ -132,6 +147,7 @@ pub fn File(
                     class="file-input"
                     name=name.clone()
                     multiple=is_multiple
+                    on:change=on_change
                 />
                 <span class="file-cta">
                     <span class="file-icon"></span>
@@ -157,10 +173,9 @@ mod tests {
     use super::*;
     use crate::util::Size;
     use leptos::prelude::RenderHtml;
-    use std::sync::Arc;
 
-    fn noop_update() -> Arc<dyn Fn(Vec<super::LbcSysFile>) + Send + Sync> {
-        Arc::new(|_files| {})
+    fn noop_update() -> Callback<Vec<super::LbcSysFile>> {
+        Callback::new(|_files: Vec<super::LbcSysFile>| {})
     }
 
     #[test]
@@ -229,11 +244,10 @@ mod wasm_tests {
     use super::*;
     use crate::util::{Size, TestAttr};
     use leptos::prelude::*;
-    use std::sync::Arc;
     use wasm_bindgen_test::*;
 
-    fn noop_update() -> Arc<dyn Fn(Vec<super::LbcSysFile>) + Send + Sync> {
-        Arc::new(|_files| {})
+    fn noop_update() -> Callback<Vec<super::LbcSysFile>> {
+        Callback::new(|_files: Vec<super::LbcSysFile>| {})
     }
 
     wasm_bindgen_test_configure!(run_in_browser);

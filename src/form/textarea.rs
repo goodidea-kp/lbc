@@ -1,5 +1,7 @@
-use std::sync::Arc;
-
+use leptos::callback::Callback;
+use leptos::prelude::Callable;
+use leptos::prelude::OnAttribute;
+use leptos::prelude::event_target_value;
 use leptos::prelude::{
     ClassAttribute, CustomAttribute, ElementChild, Get, GetUntracked, GlobalAttributes, IntoAny,
     IntoView, Signal, StyleAttribute, component, view,
@@ -9,10 +11,6 @@ use crate::elements::icon::Icon;
 use crate::util::{Size, TestAttr};
 #[allow(unused_imports)]
 use leptos::prelude::Effect;
-#[allow(unused_imports)]
-use std::cell::Cell;
-#[allow(unused_imports)]
-use std::rc::Rc;
 
 fn size_class(size: Size) -> &'static str {
     match size {
@@ -40,7 +38,7 @@ pub fn TextArea(
     value: Signal<String>,
 
     /// The callback to be used for propagating changes to this element's value.
-    update: Arc<dyn Fn(String) + Send + Sync>,
+    update: Callback<String>,
 
     /// Extra classes to apply to the textarea.
     #[prop(optional, into)]
@@ -162,6 +160,9 @@ pub fn TextArea(
                         disabled=is_disabled
                         readonly=is_readonly
                         rows=rows_value.clone()
+                        on:input=move |ev| {
+                            update.run(event_target_value(&ev));
+                        }
                     >
                         {initial_value.clone()}
                     </textarea>
@@ -179,6 +180,9 @@ pub fn TextArea(
                     rows=rows_value.clone()
                     attr:data-testid=move || data_testid.clone()
                     attr:data-cy=move || data_cy.clone()
+                    on:input=move |ev| {
+                        update.run(event_target_value(&ev));
+                    }
                 >
                     {initial_value.clone()}
                 </textarea>
@@ -194,10 +198,8 @@ mod tests {
     use crate::util::Size;
     use leptos::prelude::RenderHtml;
 
-    use std::sync::Arc;
-
-    fn noop() -> Arc<dyn Fn(String) + Send + Sync> {
-        Arc::new(|_v| {})
+    fn noop() -> Callback<String> {
+        Callback::new(|_v: String| {})
     }
 
     #[test]
@@ -297,11 +299,10 @@ mod wasm_tests {
     use super::*;
     use crate::util::{Size, TestAttr};
     use leptos::prelude::*;
-    use std::sync::Arc;
     use wasm_bindgen_test::*;
 
-    fn noop() -> Arc<dyn Fn(String) + Send + Sync> {
-        Arc::new(|_v| {})
+    fn noop() -> Callback<String> {
+        Callback::new(|_v: String| {})
     }
 
     wasm_bindgen_test_configure!(run_in_browser);

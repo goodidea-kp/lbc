@@ -1,15 +1,15 @@
 use crate::lbc_log;
 use crate::util::{Size, TestAttr};
+use leptos::callback::Callback;
 use leptos::html;
 use leptos::prelude::PropAttribute;
 use leptos::prelude::{
-    ClassAttribute, CustomAttribute, Get, GetUntracked, IntoAny, IntoView, NodeRef,
+    Callable, ClassAttribute, CustomAttribute, Get, GetUntracked, IntoAny, IntoView, NodeRef,
     NodeRefAttribute, Signal, component, view,
 };
 use leptos::prelude::{OnAttribute, event_target_value};
 
 use std::fmt;
-use std::sync::Arc;
 
 /// The 5 allowed types for an input component (Bulma-focused).
 /// https://bulma.io/documentation/form/input/
@@ -58,7 +58,7 @@ pub fn Input(
     value: Signal<String>,
 
     /// The callback used to propagate changes to the parent.
-    update: Arc<dyn Fn(String) + Send + Sync + 'static>,
+    update: Callback<String>,
 
     /// Extra classes to apply to the input.
     #[prop(optional, into)]
@@ -166,7 +166,7 @@ pub fn Input(
                 name.get_untracked(),
                 new_value
             );
-            (update)(new_value);
+            update.run(new_value);
         }
     };
 
@@ -191,7 +191,7 @@ pub fn Input(
                     is_valid
                 );
             }
-            (update)(new_value);
+            update.run(new_value);
         }
     };
 
@@ -264,10 +264,8 @@ mod tests {
     use super::*;
     use leptos::prelude::RenderHtml;
 
-    use std::sync::Arc;
-
-    fn noop() -> Arc<dyn Fn(String) + Send + Sync + 'static> {
-        Arc::new(|_value: String| {})
+    fn noop() -> Callback<String> {
+        Callback::new(|_value: String| {})
     }
 
     #[test]
@@ -357,11 +355,10 @@ mod wasm_tests {
     use super::*;
     use crate::util::TestAttr;
     use leptos::prelude::*;
-    use std::sync::Arc;
     use wasm_bindgen_test::*;
 
-    fn noop() -> Arc<dyn Fn(String) + Send + Sync + 'static> {
-        Arc::new(|_value: String| {})
+    fn noop() -> Callback<String> {
+        Callback::new(|_value: String| {})
     }
 
     wasm_bindgen_test_configure!(run_in_browser);

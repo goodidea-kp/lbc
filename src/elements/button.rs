@@ -56,6 +56,14 @@ pub fn Button(
     #[prop(optional, into)] disabled: Signal<bool>,
     #[prop(optional, into)] classes: Option<Signal<String>>,
     #[prop(optional)] on_click: Option<Callback<MouseEvent>>,
+    /// Optional `type` attribute for the underlying `<button>`.
+    ///
+    /// Common values:
+    /// - `"button"` (recommended for buttons inside forms that should not submit)
+    /// - `"submit"`
+    /// - `"reset"`
+    #[prop(optional, into)]
+    r#type: Option<Signal<String>>,
     /// Optional test attribute (renders as data-* attribute)
     ///
     /// When provided as a &str or String, this becomes `data-testid="value"`.
@@ -105,6 +113,7 @@ pub fn Button(
     view! {
         <button
             class=class
+            type=move || r#type.as_ref().map(|t| t.get()).unwrap_or_default()
             disabled=move || disabled.get()
             attr:data-testid=move || data_testid.clone()
             attr:data-cy=move || data_cy.clone()
@@ -182,6 +191,16 @@ mod tests {
         assert!(
             html.contains(r#"data-cy="button-cy""#),
             "expected custom data-cy attribute; got: {}",
+            html
+        );
+    }
+
+    #[test]
+    fn button_renders_type_attribute() {
+        let html = view! { <Button r#type="button">"X"</Button> }.to_html();
+        assert!(
+            html.contains(r#"type="button""#),
+            "expected type attribute; got: {}",
             html
         );
     }

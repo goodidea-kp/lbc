@@ -18,7 +18,7 @@ pub use card::{Card, CardContent, CardFooter, CardHeader, CardImage};
 pub use dropdown::Dropdown;
 pub use menu::{Menu, MenuLabel, MenuList};
 pub use message::{Message, MessageBody, MessageHeader};
-pub use modal::{Modal, ModalCard, ModalCloserContext, ModalCloserProvider};
+pub use modal::{Modal, ModalCard, ModalControllerContext, ModalControllerProvider};
 pub use navbar::{
     Navbar, NavbarDivider, NavbarDropdown, NavbarFixed, NavbarItem, NavbarMenuContext,
 };

@@ -1,3 +1,4 @@
+#![allow(clippy::needless_doctest_main)]
 //! LBC: Leptos + Bulma Components
 //!
 //! This crate provides a collection of Leptos components that render
@@ -28,14 +29,38 @@ macro_rules! lbc_log {
     ($($t:tt)*) => {{ /* logging disabled */ }};
 }
 
+/// Debug logging that works without any crate features.
+///
+/// - On wasm32: logs to the browser console via `leptos::logging::log!`.
+/// - On non-wasm: logs to stderr.
+///
+/// This is intentionally always enabled so debugging UI issues in `trunk serve`
+/// doesn't require feature flags.
+///
+/// Note: This macro must not reference crates that the *calling crate* may not
+/// depend on (e.g., `wasm-bindgen`), because macros expand in the caller.
+#[macro_export]
+macro_rules! lbc_debug_log {
+    ($($t:tt)*) => {{
+        #[cfg(target_arch = "wasm32")]
+        {
+            ::leptos::logging::log!($($t)*);
+        }
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            eprintln!($($t)*);
+        }
+    }};
+}
+
 pub mod prelude {
     //! Commonly used re-exports for building UIs with LBC.
     //! Import this to bring the most frequently used components into scope.
     pub use crate::components::{
         AccordionItem, Accordions, Alignment, Breadcrumb, BreadcrumbSeparator, BreadcrumbSize,
         Calendar, Card, CardContent, CardFooter, CardHeader, CardImage, Dropdown, Menu, MenuLabel,
-        MenuList, Message, MessageBody, MessageHeader, Modal, ModalCard, ModalCloserContext,
-        ModalCloserProvider, Navbar, NavbarDivider, NavbarDropdown, NavbarFixed, NavbarItem,
+        MenuList, Message, MessageBody, MessageHeader, Modal, ModalCard, ModalControllerContext,
+        ModalControllerProvider, Navbar, NavbarDivider, NavbarDropdown, NavbarFixed, NavbarItem,
         NavbarMenuContext, Pagination, PaginationEllipsis, PaginationItem, PaginationItemType,
         Panel, PanelBlock, PanelTabs, Tabs,
     };

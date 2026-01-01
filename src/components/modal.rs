@@ -1,250 +1,498 @@
+use crate::elements::button::Button;
+use leptos::callback::Callback;
+use leptos::prelude::Callable;
+use leptos::prelude::CustomAttribute;
 use leptos::prelude::{
-    Children, ClassAttribute, CustomAttribute, Effect, ElementChild, Get, GlobalAttributes,
-    IntoView, OnAttribute, Set, Signal, component, view,
+    Children, ClassAttribute, Effect, ElementChild, Get, GetUntracked, GlobalAttributes, IntoView,
+    NodeRef, NodeRefAttribute, OnAttribute, Set, Signal, Update, WriteSignal, component, view,
 };
+use leptos::web_sys;
+use std::collections::HashSet;
+use wasm_bindgen::JsCast;
 
-use crate::util::TestAttr;
+/// A controller for opening/closing modals from anywhere in the component tree.
+///
+/// This avoids the "single command slot" problem (commands being overwritten).
+/// Internally it tracks a set of open modal IDs.
+///
+/// This controller allows multiple modals to be open at the same time.
+/// If you want "only one modal open globally", implement that policy in your app
+/// (e.g., call `close_all()` before `open(id)`), or add a separate controller type.
+#[derive(Clone)]
+pub struct ModalController {
+    open_ids: leptos::prelude::RwSignal<HashSet<String>>,
+}
 
-/// Context signal used to close modals by ID from anywhere in the component tree.
-/// Convention: write "<id>-close" to request closing a modal with id = <id>.
-pub type ModalCloserContext = leptos::prelude::RwSignal<String>;
-
-fn is_valid_modal_id(id: &str) -> bool {
-    if let Some(rest) = id.strip_prefix("id") {
-        !rest.is_empty() && rest.chars().all(|ch| ch.is_ascii_digit())
-    } else {
-        false
+impl ModalController {
+    pub fn new() -> Self {
+        Self {
+            open_ids: leptos::prelude::RwSignal::new(HashSet::new()),
+        }
     }
-}
 
-fn closer_key(id: &str) -> String {
-    format!("{}-close", id)
-}
-
-fn base_class(extra: &str) -> String {
-    if extra.trim().is_empty() {
-        "modal".to_string()
-    } else {
-        format!("modal {}", extra)
-    }
-}
-
-/// A classic modal overlay. Content is placed inside the "modal-content" div.
-///
-/// ID format requirement:
-/// - The `id` must match the pattern `id[0-9]+`, for example: "id1", "id99".
-/// - To close a modal via context, write "<id>-close" (e.g., "id1-close") into ModalCloserContext.
-///
-/// https://bulma.io/documentation/components/modal/
-///
-#[component]
-pub fn Modal(
-    /// A unique ID for this modal used together with ModalCloserContext ("<id>-close").
-    id: String,
-
-    /// Modal body content rendered inside "modal-content".
-    children: Children,
-
-    /// Trigger content; clicking it opens the modal.
-    trigger: Children,
-
-    /// Extra classes for the modal root.
-    #[prop(optional, into)]
-    classes: Signal<String>,
-
-    /// Optional test attribute (renders as data-* attribute) on the modal root.
+    /// Returns true if the modal with `id` is currently open.
     ///
-    /// When provided as a &str or String, this becomes `data-testid="value"`.
-    /// You can also pass a full `TestAttr` to override the attribute key.
-    #[prop(optional, into)]
-    test_attr: Option<TestAttr>,
-) -> impl IntoView {
-    assert!(
-        is_valid_modal_id(&id),
-        "Modal id must match 'id[0-9]+' (e.g., id1, id99); got '{}'",
-        id
-    );
+    /// IMPORTANT: this must be a *reactive* read so Effects that call it re-run when the set changes.
+    pub fn is_open(&self, id: &str) -> bool {
+        let set = self.open_ids.get();
+        set.contains(id)
+    }
 
-    let (is_active, set_is_active) = leptos::prelude::signal(false);
-
-    // Optional closer context support
-    let closer = leptos::prelude::use_context::<ModalCloserContext>();
-
-    // Watch for external close requests
-    if let Some(closer_signal) = closer.clone() {
-        let id_clone = id.clone();
-        Effect::new(move |_| {
-            let action = closer_signal.get();
-            if action.is_empty() {
-                return;
-            }
-
-            if let Some((target_id, op)) = action.split_once('-') {
-                if target_id == id_clone {
-                    if op == "close" {
-                        set_is_active.set(false);
-                    } else if op == "open" {
-                        set_is_active.set(true);
-                    }
-                    closer_signal.set(String::new());
-                }
-            }
+    /// Open a modal by id.
+    pub fn open(&self, id: impl Into<String>) {
+        let id = id.into();
+        crate::lbc_debug_log!("[ModalController] open({})", id);
+        self.open_ids.update(|set: &mut HashSet<String>| {
+            set.insert(id);
         });
     }
 
+    /// Close a modal by id.
+    pub fn close(&self, id: impl AsRef<str>) {
+        let id = id.as_ref();
+        crate::lbc_debug_log!("[ModalController] close({})", id);
+        self.open_ids.update(|set: &mut HashSet<String>| {
+            set.remove(id);
+        });
+    }
+
+    /// Close all modals.
+    pub fn close_all(&self) {
+        crate::lbc_debug_log!("[ModalController] close_all()");
+        self.open_ids.set(HashSet::new());
+    }
+}
+
+/// Context type for the modal controller.
+pub type ModalControllerContext = ModalController;
+
+fn base_class(extra: &str, is_active: bool) -> String {
+    // Bulma's modal CSS expects `.modal.is-active` to be visible.
+    // When using <dialog>, we still apply Bulma classes for styling, but we must
+    // also add `is-active` while open so Bulma doesn't hide it.
+    let mut base = if extra.trim().is_empty() {
+        "modal".to_string()
+    } else {
+        format!("modal {}", extra)
+    };
+
+    if is_active {
+        base.push_str(" is-active");
+    }
+
+    base
+}
+
+/// Try to focus a preferred element inside the dialog for accessibility:
+/// - first element with `[data-lbc-dialog-focus]`
+/// - otherwise focus the dialog itself
+fn focus_dialog(dialog: &web_sys::HtmlDialogElement) {
+    if let Ok(Some(el)) = dialog.query_selector("[data-lbc-dialog-focus]") {
+        if let Ok(html) = el.dyn_into::<web_sys::HtmlElement>() {
+            let _ = html.focus();
+            return;
+        }
+    }
+    let _ = dialog.focus();
+}
+
+fn close_dialog(dialog_ref: &NodeRef<leptos::html::Dialog>) {
+    if let Some(dialog_el) = dialog_ref.get_untracked() {
+        let dialog: web_sys::HtmlDialogElement =
+            dialog_el.unchecked_into::<web_sys::HtmlDialogElement>();
+        if dialog.open() {
+            dialog.close();
+        }
+    }
+}
+
+/// Shared dialog behavior:
+/// - sync `is_active` <-> `<dialog>` open state using showModal()/close()
+/// - close on Escape (cancel)
+/// - close on close event
+/// - focus management on open (WCAG H102-friendly)
+#[component]
+fn DialogShell(
+    id: String,
+    #[prop(optional, into)] classes: Signal<String>,
+    is_active: Signal<bool>,
+    set_is_active: Callback<bool>,
+    dialog_ref: NodeRef<leptos::html::Dialog>,
+    children: Children,
+) -> impl IntoView {
     let class = {
         let classes = classes.clone();
-        move || {
-            let mut cls = base_class(&classes.get());
-            if is_active.get() {
-                cls.push_str(" is-active");
-            }
-            cls
-        }
+        let is_active = is_active.clone();
+        move || base_class(&classes.get(), is_active.get())
     };
 
-    let (data_testid, data_cy) = match &test_attr {
-        Some(attr) if attr.key == "data-testid" => (Some(attr.value.clone()), None),
-        Some(attr) if attr.key == "data-cy" => (None, Some(attr.value.clone())),
-        _ => (None, None),
-    };
-    let open = set_is_active.clone();
-    let close = set_is_active.clone();
+    // Keep the actual <dialog> open/closed in sync with is_active (client-side).
+    Effect::new({
+        let dialog_ref = dialog_ref.clone();
+        let set_is_active = set_is_active.clone();
+        let id_for_log = id.clone();
+        move |_| {
+            let active = is_active.get();
+            crate::lbc_debug_log!("[DialogShell:{}] effect: is_active={}", id_for_log, active);
+
+            let Some(dialog_el) = dialog_ref.get() else {
+                crate::lbc_debug_log!(
+                    "[DialogShell:{}] effect: dialog_ref not mounted yet",
+                    id_for_log
+                );
+                return;
+            };
+
+            let dialog: web_sys::HtmlDialogElement = dialog_el.unchecked_into();
+
+            crate::lbc_debug_log!(
+                "[DialogShell:{}] effect: dialog.open() currently={}",
+                id_for_log,
+                dialog.open()
+            );
+
+            if active {
+                if !dialog.open() {
+                    crate::lbc_debug_log!("[DialogShell:{}] calling showModal()", id_for_log);
+                    let res = dialog.show_modal();
+                    if res.is_err() {
+                        crate::lbc_debug_log!(
+                            "[DialogShell:{}] showModal() returned Err",
+                            id_for_log
+                        );
+                    }
+                }
+                // Ensure focus is moved into the dialog (WCAG H102).
+                focus_dialog(&dialog);
+            } else if dialog.open() {
+                crate::lbc_debug_log!("[DialogShell:{}] calling close()", id_for_log);
+                dialog.close();
+            }
+
+            if !dialog.open() && active {
+                crate::lbc_debug_log!(
+                    "[DialogShell:{}] dialog is not open but state says active; forcing state false",
+                    id_for_log
+                );
+                set_is_active.run(false);
+            }
+        }
+    });
+
+    let controller = leptos::prelude::use_context::<ModalControllerContext>();
+
+    let id_for_cancel = id.clone();
+    let id_for_close = id.clone();
+
+    // When the dialog closes, also clear the controller state for this id (if present),
+    // so we don't keep stale "open" ids around.
+    let controller_for_close = controller.clone();
+    let id_for_controller_close = id.clone();
+
+    // For cancel we explicitly close the dialog and sync state/controller.
+    let dialog_ref_for_cancel = dialog_ref.clone();
+    let set_is_active_for_cancel = set_is_active.clone();
+    let controller_for_cancel = controller.clone();
+    let id_for_controller_cancel = id.clone();
+
     view! {
         <>
-            <div on:click=move |_| set_is_active.set(true)>{trigger()}</div>
+            <style>
+                r#"
+                /* IMPORTANT:
+                   Only show the dialog overlay when the native dialog is actually open.
+                   This prevents "ghost" overlays when state says closed. */
+                dialog.modal:not([open]) {
+                    display: none !important;
+                }
 
-            <div
-                id=id.clone()
+                /* Make <dialog class="modal"> behave like Bulma's full-screen modal container. */
+                dialog.modal[open] {
+                    position: fixed !important;
+                    inset: 0 !important;
+                    width: 100vw !important;
+                    height: 100vh !important;
+
+                    /* Center the inner Bulma modal content/card. */
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+
+                    /* Neutralize native <dialog> chrome so Bulma's inner markup controls appearance. */
+                    border: 0 !important;
+                    outline: 0 !important;
+                    box-shadow: none !important;
+                    padding: 0 !important;
+                    margin: 0 !important;
+                    background: transparent !important;
+                    color: inherit !important;
+                    max-width: none !important;
+                    max-height: none !important;
+
+                    /* Some browsers apply native styling via appearance. */
+                    -webkit-appearance: none;
+                    appearance: none;
+                }
+
+                dialog.modal:focus,
+                dialog.modal:focus-visible {
+                    outline: 0 !important;
+                    box-shadow: none !important;
+                }
+
+                /* Native backdrop (Bulma also renders .modal-background inside). */
+                dialog.modal::backdrop {
+                    background: rgba(10, 10, 10, 0.86);
+                }
+                "#
+            </style>
+
+            <dialog
+                node_ref=dialog_ref
+                id=id
                 class=move || class()
-                attr:data-testid=move || data_testid.clone()
-                attr:data-cy=move || data_cy.clone()
+                // Escape: close the dialog and sync state/controller.
+                on:cancel=move |ev: web_sys::Event| {
+                    crate::lbc_debug_log!("[DialogShell:{}] cancel (Escape) -> close", id_for_cancel);
+                    ev.prevent_default();
+                    close_dialog(&dialog_ref_for_cancel);
+                    set_is_active_for_cancel.run(false);
+                    if let Some(controller) = controller_for_cancel.as_ref() {
+                        controller.close(&id_for_controller_cancel);
+                    }
+                }
+                on:close=move |_ev: web_sys::Event| {
+                    crate::lbc_debug_log!("[DialogShell:{}] close event -> state false", id_for_close);
+                    set_is_active.run(false);
+
+                    if let Some(controller) = controller_for_close.as_ref() {
+                        controller.close(&id_for_controller_close);
+                    }
+                }
             >
-                <div class="modal-background" on:click=move |_| set_is_active.set(false)></div>
+                {children()}
+            </dialog>
+        </>
+    }
+}
+
+#[component]
+pub fn Modal(
+    id: String,
+    children: Children,
+    trigger: Children,
+    #[prop(optional, into)] classes: Signal<String>,
+    #[prop(optional, into)] open: Option<Signal<bool>>,
+    #[prop(optional)] set_open: Option<WriteSignal<bool>>,
+) -> impl IntoView {
+    let (internal_open, set_internal_open) = leptos::prelude::signal(false);
+    let is_controlled = open.is_some() && set_open.is_some();
+
+    let is_active: Signal<bool> = if let Some(open) = open {
+        open
+    } else {
+        internal_open.into()
+    };
+
+    let controller = leptos::prelude::use_context::<ModalControllerContext>();
+
+    // Local-only setter: updates controlled prop or internal signal, but does NOT touch controller.
+    let set_local_open: Callback<bool> = {
+        let set_open = set_open;
+        let id_for_log = id.clone();
+        Callback::new(move |v: bool| {
+            crate::lbc_debug_log!("[Modal:{}] set_local_open({})", id_for_log, v);
+            if is_controlled {
+                if let Some(set_open) = set_open {
+                    set_open.set(v);
+                }
+            } else {
+                set_internal_open.set(v);
+            }
+        })
+    };
+
+    // If a controller exists and we're uncontrolled, the controller is the source of truth.
+    if let Some(controller) = controller.clone() {
+        let id_clone = id.clone();
+        let set_local_open = set_local_open.clone();
+        Effect::new(move |_| {
+            if is_controlled {
+                return;
+            }
+            let should_be_open = controller.is_open(&id_clone);
+            crate::lbc_debug_log!(
+                "[Modal:{}] controller sync effect: should_be_open={}",
+                id_clone,
+                should_be_open
+            );
+            set_local_open.run(should_be_open);
+        });
+    }
+
+    let dialog_ref: NodeRef<leptos::html::Dialog> = NodeRef::new();
+
+    let close_action: Callback<()> = {
+        let id = id.clone();
+        let controller = controller.clone();
+        let set_local_open = set_local_open.clone();
+        let dialog_ref = dialog_ref.clone();
+        Callback::new(move |_| {
+            crate::lbc_debug_log!("[Modal:{}] close_action()", id);
+            close_dialog(&dialog_ref);
+
+            if !is_controlled {
+                if let Some(controller) = controller.as_ref() {
+                    controller.close(&id);
+                    return;
+                }
+            }
+            set_local_open.run(false);
+            if let Some(controller) = controller.as_ref() {
+                controller.close(&id);
+            }
+        })
+    };
+
+    let bg_close = close_action.clone();
+    let close_btn_close = close_action.clone();
+
+    view! {
+        <>
+            {trigger()}
+
+            <DialogShell
+                id=id
+                classes=classes
+                is_active=is_active
+                set_is_active=set_local_open.clone()
+                dialog_ref=dialog_ref
+            >
+                // Backdrop click should close reliably.
+                <div class="modal-background" on:click=move |_ev: web_sys::MouseEvent| bg_close.run(())></div>
 
                 <div class="modal-content">
                     {children()}
                 </div>
 
-                <button
-                    class="modal-close is-large"
-                    aria_labelledby-label="close"
-                    type="button"
-                    on:click=move |_| set_is_active.set(false)
-                ></button>
-            </div>
+                <Button
+                    classes="modal-close is-large"
+                    r#type="button"
+                    on_click=Callback::new(move |_| close_btn_close.run(()))
+                >
+                    ""
+                </Button>
+            </DialogShell>
         </>
     }
 }
 
-/// A modal with header, body and footer sections ("modal-card" variant).
-///
-/// ID format requirement:
-/// - The `id` must match the pattern `id[0-9]+`, for example: "id1", "id99".
-/// - To close a modal via context, write "<id>-close" (e.g., "id1-close") into ModalCloserContext.
-///
-/// https://bulma.io/documentation/components/modal/
-///
 #[component]
 pub fn ModalCard(
-    /// A unique ID for this modal used together with ModalCloserContext ("<id>-close").
     id: String,
-
-    /// Title text shown in the modal-card header.
     title: String,
-
-    /// Content placed in the modal-card body.
     body: Children,
-
-    /// Content placed into the modal-card footer.
     footer: Children,
-
-    /// Trigger content; clicking it opens the modal.
     trigger: Children,
-
-    /// Extra classes for the modal root.
-    #[prop(optional, into)]
-    classes: Signal<String>,
-
-    /// Optional test attribute (renders as data-* attribute) on the modal root.
-    ///
-    /// When provided as a &str or String, this becomes `data-testid="value"`.
-    /// You can also pass a full `TestAttr` to override the attribute key.
-    #[prop(optional, into)]
-    test_attr: Option<TestAttr>,
+    #[prop(optional, into)] classes: Signal<String>,
+    #[prop(optional, into)] open: Option<Signal<bool>>,
+    #[prop(optional)] set_open: Option<WriteSignal<bool>>,
 ) -> impl IntoView {
-    assert!(
-        is_valid_modal_id(&id),
-        "Modal id must match 'id[0-9]+' (e.g., id1, id99); got '{}'",
-        id
-    );
+    let (internal_open, set_internal_open) = leptos::prelude::signal(false);
+    let is_controlled = open.is_some() && set_open.is_some();
 
-    let (is_active, set_is_active) = leptos::prelude::signal(false);
+    let is_active: Signal<bool> = if let Some(open) = open {
+        open
+    } else {
+        internal_open.into()
+    };
 
-    // Optional closer context support
-    let closer = leptos::prelude::use_context::<ModalCloserContext>();
+    let controller = leptos::prelude::use_context::<ModalControllerContext>();
 
-    if let Some(closer_signal) = closer.clone() {
+    let set_local_open: Callback<bool> = {
+        let set_open = set_open;
+        let id_for_log = id.clone();
+        Callback::new(move |v: bool| {
+            crate::lbc_debug_log!("[ModalCard:{}] set_local_open({})", id_for_log, v);
+            if is_controlled {
+                if let Some(set_open) = set_open {
+                    set_open.set(v);
+                }
+            } else {
+                set_internal_open.set(v);
+            }
+        })
+    };
+
+    if let Some(controller) = controller.clone() {
         let id_clone = id.clone();
+        let set_local_open = set_local_open.clone();
         Effect::new(move |_| {
-            let action = closer_signal.get();
-            if action.is_empty() {
+            if is_controlled {
                 return;
             }
-
-            if let Some((target_id, op)) = action.split_once('-') {
-                if target_id == id_clone {
-                    if op == "close" {
-                        set_is_active.set(false);
-                    } else if op == "open" {
-                        set_is_active.set(true);
-                    }
-                    closer_signal.set(String::new());
-                }
-            }
+            let should_be_open = controller.is_open(&id_clone);
+            crate::lbc_debug_log!(
+                "[ModalCard:{}] controller sync effect: should_be_open={}",
+                id_clone,
+                should_be_open
+            );
+            set_local_open.run(should_be_open);
         });
     }
 
-    let class = {
-        let classes = classes.clone();
-        move || {
-            let mut cls = base_class(&classes.get());
-            if is_active.get() {
-                cls.push_str(" is-active");
+    let dialog_ref: NodeRef<leptos::html::Dialog> = NodeRef::new();
+
+    let close_action: Callback<()> = {
+        let id = id.clone();
+        let controller = controller.clone();
+        let set_local_open = set_local_open.clone();
+        let dialog_ref = dialog_ref.clone();
+        Callback::new(move |_| {
+            crate::lbc_debug_log!("[ModalCard:{}] close_action()", id);
+            close_dialog(&dialog_ref);
+
+            if !is_controlled {
+                if let Some(controller) = controller.as_ref() {
+                    controller.close(&id);
+                    return;
+                }
             }
-            cls
-        }
+            set_local_open.run(false);
+            if let Some(controller) = controller.as_ref() {
+                controller.close(&id);
+            }
+        })
     };
 
-    let (data_testid, data_cy) = match &test_attr {
-        Some(attr) if attr.key == "data-testid" => (Some(attr.value.clone()), None),
-        Some(attr) if attr.key == "data-cy" => (None, Some(attr.value.clone())),
-        _ => (None, None),
-    };
+    let bg_close = close_action.clone();
+    let delete_btn_close = close_action.clone();
+    let close_btn_close = close_action.clone();
 
-    let open = set_is_active.clone();
-    let close = set_is_active.clone();
     view! {
         <>
-            <div on:click=move |_| set_is_active.set(true)>{trigger()}</div>
+            {trigger()}
 
-            <div
-                id=id.clone()
-                class=move || class()
-                attr:data-testid=move || data_testid.clone()
-                attr:data-cy=move || data_cy.clone()
+            <DialogShell
+                id=id
+                classes=classes
+                is_active=is_active
+                set_is_active=set_local_open.clone()
+                dialog_ref=dialog_ref
             >
-                <div class="modal-background" on:click=move |_| set_is_active.set(false)></div>
+                <div class="modal-background" on:click=move |_ev: web_sys::MouseEvent| bg_close.run(())></div>
 
                 <div class="modal-card">
                     <header class="modal-card-head">
-                        <p class="modal-card-title">{title.clone()}</p>
-                        <button
-                            class="delete"
-                            aria_labelledby-label="close"
-                            type="button"
-                            on:click=move |_| set_is_active.set(false)
-                        ></button>
+                        <p class="modal-card-title" tabindex="-1" data-lbc-dialog-focus="true">{title.clone()}</p>
+
+                        <Button
+                            classes="delete"
+                            r#type="button"
+                            on_click=Callback::new(move |_| delete_btn_close.run(()))
+                        >
+                            ""
+                        </Button>
                     </header>
 
                     <section class="modal-card-body">
@@ -256,28 +504,23 @@ pub fn ModalCard(
                     </footer>
                 </div>
 
-                <button
-                    class="modal-close is-large"
-                    aria_labelledby-label="close"
-                    type="button"
-                    on:click=move |_| set_is_active.set(false)
-                ></button>
-            </div>
+                <Button
+                    classes="modal-close is-large"
+                    r#type="button"
+                    on_click=Callback::new(move |_| close_btn_close.run(()))
+                >
+                    ""
+                </Button>
+            </DialogShell>
         </>
     }
 }
 
-/// Provide a ModalCloserContext to descendants.
-/// Write "<id>-close" to the context to request closing a modal by ID.
 #[component]
-pub fn ModalCloserProvider(
-    /// Initial action value; default empty.
-    #[prop(optional, into)]
-    initial: Signal<String>,
-    children: Children,
-) -> impl IntoView {
-    let signal = leptos::prelude::RwSignal::new(initial.get());
-    leptos::prelude::provide_context::<ModalCloserContext>(signal);
+pub fn ModalControllerProvider(children: Children) -> impl IntoView {
+    let controller = ModalController::new();
+    crate::lbc_debug_log!("[ModalControllerProvider] providing ModalControllerContext");
+    leptos::prelude::provide_context::<ModalControllerContext>(controller);
     view! { {children()} }
 }
 
@@ -290,21 +533,18 @@ mod tests {
     #[test]
     fn modal_renders_base_class_and_children() {
         let html = view! {
-            <Modal id="id1".to_string() trigger=Box::new(|| view!{ <button>"Open"</button> }.into_any())>
+            <Modal id="any-id".to_string() trigger=Box::new(|| view!{ <button>"Open"</button> }.into_any())>
                 <div class="box">"Hello"</div>
             </Modal>
-        }.to_html();
+        }
+        .to_html();
 
         assert!(
-            html.contains(r#"class="modal""#),
-            "expected base 'modal' class; got: {}",
+            html.contains(r#"<dialog"#) && html.contains(r#"class="modal""#),
+            "expected <dialog> with base 'modal' class, got: {}",
             html
         );
-        assert!(
-            html.contains("Hello"),
-            "expected modal children rendered; got: {}",
-            html
-        );
+        assert!(html.contains("Hello"));
     }
 
     #[test]
@@ -318,29 +558,9 @@ mod tests {
         }
         .to_html();
 
-        assert!(
-            html.contains("modal-card"),
-            "expected modal-card structure; got: {}",
-            html
-        );
-        assert!(html.contains("Title"), "expected title; got: {}", html);
-        assert!(html.contains("Body"), "expected body; got: {}", html);
-    }
-
-    #[test]
-    fn closer_key_formats_expected_suffix() {
-        assert_eq!(super::closer_key("id1"), "id1-close");
-    }
-
-    #[test]
-    #[should_panic(expected = "Modal id must match 'id[0-9]+'")]
-    fn modal_rejects_invalid_id_format() {
-        // Using an invalid id like "m1" should panic on creation/SSR render.
-        let _ = view! {
-            <Modal id="m1".to_string() trigger=Box::new(|| view!{ <button>"Open"</button> }.into_any())>
-                <div class="box">"X"</div>
-            </Modal>
-        }.to_html();
+        assert!(html.contains("modal-card"));
+        assert!(html.contains("Title"));
+        assert!(html.contains("Body"));
     }
 }
 
@@ -358,80 +578,18 @@ mod wasm_tests {
     }
 
     #[wasm_bindgen_test]
-    fn modal_renders_test_id() {
+    fn modal_renders_as_dialog() {
         let html = view! {
             <Modal
                 id="id1".to_string()
                 trigger=trigger()
-                classes="is-active"
-                test_attr=TestAttr::test_id("modal-test")
+                classes=""
             >
                 <div class="box">"Hello"</div>
             </Modal>
         }
         .to_html();
 
-        assert!(
-            html.contains(r#"data-testid="modal-test""#),
-            "expected data-testid attribute on Modal; got: {}",
-            html
-        );
-    }
-
-    #[wasm_bindgen_test]
-    fn modal_no_test_attr_when_not_provided() {
-        let html = view! {
-            <Modal id="id1".to_string() trigger=trigger()>
-                <div class="box">"Hello"</div>
-            </Modal>
-        }
-        .to_html();
-
-        assert!(
-            !html.contains("data-testid") && !html.contains("data-cy"),
-            "expected no test attribute on Modal when not provided; got: {}",
-            html
-        );
-    }
-
-    #[wasm_bindgen_test]
-    fn modal_card_renders_test_id() {
-        let html = view! {
-            <ModalCard
-                id="id2".to_string()
-                title="Title".to_string()
-                trigger=trigger()
-                body=Box::new(|| view!{ <p>"Body"</p> }.into_any())
-                footer=Box::new(|| view!{ <button>"OK"</button> }.into_any())
-                test_attr=TestAttr::test_id("modal-card-test")
-            />
-        }
-        .to_html();
-
-        assert!(
-            html.contains(r#"data-testid="modal-card-test""#),
-            "expected data-testid attribute on ModalCard; got: {}",
-            html
-        );
-    }
-
-    #[wasm_bindgen_test]
-    fn modal_card_no_test_attr_when_not_provided() {
-        let html = view! {
-            <ModalCard
-                id="id2".to_string()
-                title="Title".to_string()
-                trigger=trigger()
-                body=Box::new(|| view!{ <p>"Body"</p> }.into_any())
-                footer=Box::new(|| view!{ <button>"OK"</button> }.into_any())
-            />
-        }
-        .to_html();
-
-        assert!(
-            !html.contains("data-testid") && !html.contains("data-cy"),
-            "expected no test attribute on ModalCard when not provided; got: {}",
-            html
-        );
+        assert!(html.contains("<dialog") && html.contains(r#"class="modal""#));
     }
 }
