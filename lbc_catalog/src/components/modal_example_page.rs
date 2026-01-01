@@ -1,16 +1,31 @@
 use lbc::prelude::{
-    Block, Button, Content, HeaderSize, Modal, ModalCard, ModalControllerContext, Notification,
-    Title,
+    Block, Button, Content, HeaderSize, Modal, ModalCard, ModalControllerContext,
+    ModalControllerProvider, Notification, Title,
 };
 use leptos::callback::Callback;
 use leptos::prelude::Set;
-use leptos::prelude::{component, signal, view, ClassAttribute, ElementChild, Get, IntoAny, IntoView};
+use leptos::prelude::{
+    component, signal, view, ClassAttribute, ElementChild, Get, IntoAny, IntoView,
+};
 
 #[component]
 #[allow(non_snake_case)]
 pub fn ModalPage() -> impl IntoView {
-    let controller = leptos::prelude::use_context::<ModalControllerContext>()
-        .expect("ModalControllerContext not found. Wrap the app/page with <ModalControllerProvider>.");
+    // Provide the controller context locally for this page so it doesn't depend on
+    // the catalog app root being wrapped in <ModalControllerProvider>.
+    view! {
+        <ModalControllerProvider>
+            <ModalPageInner />
+        </ModalControllerProvider>
+    }
+}
+
+#[component]
+#[allow(non_snake_case)]
+fn ModalPageInner() -> impl IntoView {
+    let controller = leptos::prelude::use_context::<ModalControllerContext>().expect(
+        "ModalControllerContext not found. This should be provided by <ModalControllerProvider>.",
+    );
 
     #[allow(unused)]
     let (show_toast, set_show_toast) = signal(false);
