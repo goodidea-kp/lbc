@@ -2,8 +2,8 @@ use crate::util::TestAttr;
 use leptos::callback::Callback;
 use leptos::children::Children;
 use leptos::prelude::{
-    Callable, ClassAttribute, CustomAttribute, ElementChild, Get, GetUntracked, IntoView,
-    NodeRefAttribute, OnAttribute, Signal, StyleAttribute, component, view,
+    Callable, ClassAttribute, CustomAttribute, ElementChild, Get, GetUntracked, GlobalAttributes,
+    IntoView, NodeRefAttribute, OnAttribute, Signal, StyleAttribute, component, view,
 };
 
 #[cfg(target_arch = "wasm32")]
