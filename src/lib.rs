@@ -31,17 +31,20 @@ macro_rules! lbc_log {
 
 /// Debug logging that works without any crate features.
 ///
-/// - On wasm32: logs to the browser console.
+/// - On wasm32: logs to the browser console via `leptos::logging::log!`.
 /// - On non-wasm: logs to stderr.
 ///
 /// This is intentionally always enabled so debugging UI issues in `trunk serve`
 /// doesn't require feature flags.
+///
+/// Note: This macro must not reference crates that the *calling crate* may not
+/// depend on (e.g., `wasm-bindgen`), because macros expand in the caller.
 #[macro_export]
 macro_rules! lbc_debug_log {
     ($($t:tt)*) => {{
         #[cfg(target_arch = "wasm32")]
         {
-            ::leptos::web_sys::console::log_1(&::wasm_bindgen::JsValue::from_str(&format!($($t)*)));
+            ::leptos::logging::log!($($t)*);
         }
         #[cfg(not(target_arch = "wasm32"))]
         {
