@@ -185,6 +185,28 @@ fn DialogShell(
 
     view! {
         <>
+            <style>
+                r#"
+                /* Neutralize native <dialog> chrome so Bulma's inner markup controls appearance. */
+                dialog.modal {
+                    border: 1px solid transparent; /* makes the default dark border transparent */
+                    outline: none;
+                    box-shadow: none;
+                    padding: 0;
+                    margin: 0;
+                    background: transparent;
+                    color: inherit;
+                    max-width: none;
+                    max-height: none;
+                }
+
+                /* Optional: native backdrop (Bulma also renders .modal-background inside). */
+                dialog.modal::backdrop {
+                    background: rgba(10, 10, 10, 0.86);
+                }
+                "#
+            </style>
+
             <dialog
                 node_ref=dialog_ref
                 id=id
