@@ -1,7 +1,7 @@
 use lbc::prelude::{Block, Content, HeaderSize, Icon, Panel, PanelBlock, PanelTabs, Subtitle, Title};
 use leptos::prelude::{
-    AriaAttributes, ClassAttribute, ElementChild, Get, IntoView, Set, Signal, component, signal,
-    view,
+    AddAnyAttr, AriaAttributes, ClassAttribute, ElementChild, Get, IntoView, Set, Signal, component,
+    signal, view,
 };
 
 #[component]
@@ -41,7 +41,6 @@ pub fn PanelPage() -> impl IntoView {
                     <PanelBlock
                         tag="a"
                         active=Signal::derive(move || active_block.get() == 0)
-                        href="#"
                         on:click=move |ev| {
                             ev.prevent_default();
                             set_active_block.set(0);
@@ -54,7 +53,6 @@ pub fn PanelPage() -> impl IntoView {
                     <PanelBlock
                         tag="a"
                         active=Signal::derive(move || active_block.get() == 1)
-                        href="#"
                         on:click=move |ev| {
                             ev.prevent_default();
                             set_active_block.set(1);
@@ -67,7 +65,6 @@ pub fn PanelPage() -> impl IntoView {
                     <PanelBlock
                         tag="a"
                         active=Signal::derive(move || active_block.get() == 2)
-                        href="#"
                         on:click=move |ev| {
                             ev.prevent_default();
                             set_active_block.set(2);
