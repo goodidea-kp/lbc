@@ -1,8 +1,6 @@
 use lbc::prelude::{AutoComplete, Block, Content, HeaderSize, Subtitle, Title};
-use leptos::prelude::{
-    ClassAttribute, ElementChild, Get, IntoView, Update, component, signal, view,
-};
-use std::sync::Arc;
+use leptos::callback::Callback;
+use leptos::prelude::{ClassAttribute, ElementChild, Get, IntoView, Update, component, signal, view};
 
 /// Example page showcasing the AutoComplete component powered by Bulma TagsInput.
 #[component]
@@ -11,24 +9,20 @@ pub fn FormAutoCompletePage() -> impl IntoView {
     let (selected, set_selected) = signal::<Vec<String>>(Vec::new());
 
     // Merge new value into the set
-    let on_add = {
-        Arc::new(move |v: String| {
-            set_selected.update(|list| {
-                if !list.iter().any(|item| item == &v) {
-                    list.push(v.clone());
-                }
-            });
-        })
-    };
+    let on_add = Callback::new(move |v: String| {
+        set_selected.update(|list| {
+            if !list.iter().any(|item| item == &v) {
+                list.push(v.clone());
+            }
+        });
+    });
 
     // Remove value from the set
-    let on_remove = {
-        Arc::new(move |v: String| {
-            set_selected.update(|list| {
-                list.retain(|item| item != &v);
-            });
-        })
-    };
+    let on_remove = Callback::new(move |v: String| {
+        set_selected.update(|list| {
+            list.retain(|item| item != &v);
+        });
+    });
 
     let items = vec![
         "Rust".to_string(),
@@ -48,8 +42,8 @@ pub fn FormAutoCompletePage() -> impl IntoView {
                     id="tags-static".to_string()
                     items=items.clone()
                     placeholder="Choose Tags"
-                    _on_update=on_add.clone()
-                    _on_remove=on_remove.clone()
+                    _on_update=on_add
+                    _on_remove=on_remove
                 />
 
                 <p class="help mt-3">
