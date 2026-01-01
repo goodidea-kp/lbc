@@ -1,7 +1,4 @@
 use leptos::callback::Callback;
-use leptos::prelude::event_target_value;
-use leptos::prelude::Callable;
-use leptos::prelude::OnAttribute;
 use leptos::prelude::{
     ClassAttribute, CustomAttribute, ElementChild, Get, GetUntracked, GlobalAttributes, IntoAny,
     IntoView, Signal, StyleAttribute, component, view,
@@ -11,10 +8,6 @@ use crate::elements::icon::Icon;
 use crate::util::{Size, TestAttr};
 #[allow(unused_imports)]
 use leptos::prelude::Effect;
-#[allow(unused_imports)]
-use std::cell::Cell;
-#[allow(unused_imports)]
-use std::rc::Rc;
 
 fn size_class(size: Size) -> &'static str {
     match size {
