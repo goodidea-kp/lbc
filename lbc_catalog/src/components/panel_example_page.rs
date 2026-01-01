@@ -1,11 +1,11 @@
 use lbc::prelude::{
     Block, Content, HeaderSize, Icon, Panel, PanelBlock, PanelTabs, Subtitle, Title,
 };
-use leptos::callback::Callback;
 use leptos::prelude::{
     AriaAttributes, ClassAttribute, ElementChild, Get, IntoView, Set, Signal, component, signal,
     view,
 };
+use std::rc::Rc;
 
 #[component]
 pub fn PanelPage() -> impl IntoView {
@@ -43,14 +43,14 @@ pub fn PanelPage() -> impl IntoView {
 
                     <PanelBlock
                         active=Signal::derive(move || active_block.get() == 0)
-                        on_select=Callback::new(move |_| set_active_block.set(0))
+                        on_click=Rc::new(move || set_active_block.set(0))
                     >
                         <Icon classes="panel-icon"><i class="fas fa-book" aria-hidden="true"></i></Icon>
                         "bulma"
                     </PanelBlock>
                     <PanelBlock
                         active=Signal::derive(move || active_block.get() == 1)
-                        on_select=Callback::new(move |_| set_active_block.set(1))
+                        on_click=Rc::new(move || set_active_block.set(1))
                     >
                         <Icon classes="panel-icon"><i class="fas fa-book" aria-hidden="true"></i></Icon>
                         "leptos"
@@ -58,7 +58,7 @@ pub fn PanelPage() -> impl IntoView {
                     <PanelBlock
                         tag="a"
                         active=Signal::derive(move || active_block.get() == 2)
-                        on_select=Callback::new(move |_| set_active_block.set(2))
+                        on_click=Rc::new(move || set_active_block.set(2))
                     >
                         <Icon classes="panel-icon"><i class="fas fa-book" aria-hidden="true"></i></Icon>
                         "lbc"
