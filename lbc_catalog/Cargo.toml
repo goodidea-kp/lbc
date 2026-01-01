@@ -13,13 +13,13 @@ keywords = ["wasm", "web", "bulma", "leptos", "components"]
 [dependencies]
 console_error_panic_hook = "0.1.7"
 js-sys = "0.3"
-leptos = { version = "0.8.14", features = ["csr"] }
+leptos = { version = "0.8.15", features = ["csr"] }
 leptos_router = "0.8.10"
 lbc = { path = ".." }
 gloo-console = "0.3.0"
 
 [dev-dependencies]
-leptos = { version = "0.8.14", features = ["ssr"] }
+leptos = { version = "0.8.15", features = ["ssr"] }
 
 [[bin]]
 name = "lbc_catalog"
