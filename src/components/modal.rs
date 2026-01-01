@@ -1,11 +1,12 @@
+use leptos::callback::Callback;
 use leptos::prelude::CustomAttribute;
 use leptos::prelude::{
-    Children, ClassAttribute, Effect, ElementChild, Get, GetUntracked, GlobalAttributes, IntoView,
-    NodeRef, NodeRefAttribute, OnAttribute, Set, Signal, Update, WriteSignal, component, view,
+    component, view, Children, ClassAttribute, Effect, ElementChild, Get, GetUntracked,
+    GlobalAttributes, IntoView, NodeRef, NodeRefAttribute, OnAttribute, Set, Signal, Update,
+    WriteSignal,
 };
 use leptos::web_sys;
 use std::collections::HashSet;
-use std::sync::Arc;
 use wasm_bindgen::JsCast;
 
 /// A controller for opening/closing modals from anywhere in the component tree.
@@ -112,9 +113,10 @@ fn close_dialog(dialog_ref: &NodeRef<leptos::html::Dialog>) {
 #[component]
 fn DialogShell(
     id: String,
-    #[prop(optional, into)] classes: Signal<String>,
+    #[prop(optional, into)]
+    classes: Signal<String>,
     is_active: Signal<bool>,
-    set_is_active: Arc<dyn Fn(bool) + Send + Sync>,
+    set_is_active: Callback<bool>,
     dialog_ref: NodeRef<leptos::html::Dialog>,
     children: Children,
 ) -> impl IntoView {
@@ -172,14 +174,12 @@ fn DialogShell(
                     "[DialogShell:{}] dialog is not open but state says active; forcing state false",
                     id_for_log
                 );
-                (set_is_active)(false);
+                set_is_active.call(false);
             }
         }
     });
 
     let controller = leptos::prelude::use_context::<ModalControllerContext>();
-
-    let on_close_setter = set_is_active.clone();
 
     let id_for_cancel = id.clone();
     let id_for_close = id.clone();
@@ -256,14 +256,14 @@ fn DialogShell(
                     crate::lbc_debug_log!("[DialogShell:{}] cancel (Escape) -> close", id_for_cancel);
                     ev.prevent_default();
                     close_dialog(&dialog_ref_for_cancel);
-                    (set_is_active_for_cancel)(false);
+                    set_is_active_for_cancel.call(false);
                     if let Some(controller) = controller_for_cancel.as_ref() {
                         controller.close(&id_for_controller_cancel);
                     }
                 }
                 on:close=move |_ev: web_sys::Event| {
                     crate::lbc_debug_log!("[DialogShell:{}] close event -> state false", id_for_close);
-                    (on_close_setter)(false);
+                    set_is_active.call(false);
 
                     if let Some(controller) = controller_for_close.as_ref() {
                         controller.close(&id_for_controller_close);
@@ -281,9 +281,12 @@ pub fn Modal(
     id: String,
     children: Children,
     trigger: Children,
-    #[prop(optional, into)] classes: Signal<String>,
-    #[prop(optional, into)] open: Option<Signal<bool>>,
-    #[prop(optional)] set_open: Option<WriteSignal<bool>>,
+    #[prop(optional, into)]
+    classes: Signal<String>,
+    #[prop(optional, into)]
+    open: Option<Signal<bool>>,
+    #[prop(optional)]
+    set_open: Option<WriteSignal<bool>>,
 ) -> impl IntoView {
     let (internal_open, set_internal_open) = leptos::prelude::signal(false);
     let is_controlled = open.is_some() && set_open.is_some();
@@ -297,10 +300,10 @@ pub fn Modal(
     let controller = leptos::prelude::use_context::<ModalControllerContext>();
 
     // Local-only setter: updates controlled prop or internal signal, but does NOT touch controller.
-    let set_local_open: Arc<dyn Fn(bool) + Send + Sync> = {
+    let set_local_open: Callback<bool> = {
         let set_open = set_open;
         let id_for_log = id.clone();
-        Arc::new(move |v: bool| {
+        Callback::new(move |v: bool| {
             crate::lbc_debug_log!("[Modal:{}] set_local_open({})", id_for_log, v);
             if is_controlled {
                 if let Some(set_open) = set_open {
@@ -326,18 +329,18 @@ pub fn Modal(
                 id_clone,
                 should_be_open
             );
-            (set_local_open)(should_be_open);
+            set_local_open.call(should_be_open);
         });
     }
 
     let dialog_ref: NodeRef<leptos::html::Dialog> = NodeRef::new();
 
-    let close_action: Arc<dyn Fn() + Send + Sync> = {
+    let close_action: Callback<()> = {
         let id = id.clone();
         let controller = controller.clone();
         let set_local_open = set_local_open.clone();
         let dialog_ref = dialog_ref.clone();
-        Arc::new(move || {
+        Callback::new(move |_| {
             crate::lbc_debug_log!("[Modal:{}] close_action()", id);
             close_dialog(&dialog_ref);
 
@@ -347,7 +350,7 @@ pub fn Modal(
                     return;
                 }
             }
-            (set_local_open)(false);
+            set_local_open.call(false);
             if let Some(controller) = controller.as_ref() {
                 controller.close(&id);
             }
@@ -369,7 +372,7 @@ pub fn Modal(
                 dialog_ref=dialog_ref
             >
                 // Backdrop click should close reliably.
-                <div class="modal-background" on:click=move |_ev: web_sys::MouseEvent| (bg_close)()></div>
+                <div class="modal-background" on:click=move |_ev: web_sys::MouseEvent| bg_close.call(())></div>
 
                 <div class="modal-content">
                     {children()}
@@ -379,7 +382,7 @@ pub fn Modal(
                     class="modal-close is-large"
                     aria_labelledby-label="close"
                     type="button"
-                    on:click=move |_ev: web_sys::MouseEvent| (close_btn_close)()
+                    on:click=move |_ev: web_sys::MouseEvent| close_btn_close.call(())
                 ></button>
             </DialogShell>
         </>
@@ -393,9 +396,12 @@ pub fn ModalCard(
     body: Children,
     footer: Children,
     trigger: Children,
-    #[prop(optional, into)] classes: Signal<String>,
-    #[prop(optional, into)] open: Option<Signal<bool>>,
-    #[prop(optional)] set_open: Option<WriteSignal<bool>>,
+    #[prop(optional, into)]
+    classes: Signal<String>,
+    #[prop(optional, into)]
+    open: Option<Signal<bool>>,
+    #[prop(optional)]
+    set_open: Option<WriteSignal<bool>>,
 ) -> impl IntoView {
     let (internal_open, set_internal_open) = leptos::prelude::signal(false);
     let is_controlled = open.is_some() && set_open.is_some();
@@ -408,10 +414,10 @@ pub fn ModalCard(
 
     let controller = leptos::prelude::use_context::<ModalControllerContext>();
 
-    let set_local_open: Arc<dyn Fn(bool) + Send + Sync> = {
+    let set_local_open: Callback<bool> = {
         let set_open = set_open;
         let id_for_log = id.clone();
-        Arc::new(move |v: bool| {
+        Callback::new(move |v: bool| {
             crate::lbc_debug_log!("[ModalCard:{}] set_local_open({})", id_for_log, v);
             if is_controlled {
                 if let Some(set_open) = set_open {
@@ -436,18 +442,18 @@ pub fn ModalCard(
                 id_clone,
                 should_be_open
             );
-            (set_local_open)(should_be_open);
+            set_local_open.call(should_be_open);
         });
     }
 
     let dialog_ref: NodeRef<leptos::html::Dialog> = NodeRef::new();
 
-    let close_action: Arc<dyn Fn() + Send + Sync> = {
+    let close_action: Callback<()> = {
         let id = id.clone();
         let controller = controller.clone();
         let set_local_open = set_local_open.clone();
         let dialog_ref = dialog_ref.clone();
-        Arc::new(move || {
+        Callback::new(move |_| {
             crate::lbc_debug_log!("[ModalCard:{}] close_action()", id);
             close_dialog(&dialog_ref);
 
@@ -457,7 +463,7 @@ pub fn ModalCard(
                     return;
                 }
             }
-            (set_local_open)(false);
+            set_local_open.call(false);
             if let Some(controller) = controller.as_ref() {
                 controller.close(&id);
             }
@@ -479,7 +485,7 @@ pub fn ModalCard(
                 set_is_active=set_local_open.clone()
                 dialog_ref=dialog_ref
             >
-                <div class="modal-background" on:click=move |_ev: web_sys::MouseEvent| (bg_close)()></div>
+                <div class="modal-background" on:click=move |_ev: web_sys::MouseEvent| bg_close.call(())></div>
 
                 <div class="modal-card">
                     <header class="modal-card-head">
@@ -488,7 +494,7 @@ pub fn ModalCard(
                             class="delete"
                             aria_labelledby-label="close"
                             type="button"
-                            on:click=move |_ev: web_sys::MouseEvent| (delete_btn_close)()
+                            on:click=move |_ev: web_sys::MouseEvent| delete_btn_close.call(())
                         ></button>
                     </header>
 
@@ -505,7 +511,7 @@ pub fn ModalCard(
                     class="modal-close is-large"
                     aria_labelledby-label="close"
                     type="button"
-                    on:click=move |_ev: web_sys::MouseEvent| (close_btn_close)()
+                    on:click=move |_ev: web_sys::MouseEvent| close_btn_close.call(())
                 ></button>
             </DialogShell>
         </>
@@ -537,14 +543,10 @@ mod tests {
 
         assert!(
             html.contains(r#"<dialog"#) && html.contains(r#"class="modal""#),
-            "expected <dialog> with base 'modal' class; got: {}",
+            "expected <dialog> with base 'modal' class, got: {}",
             html
         );
-        assert!(
-            html.contains("Hello"),
-            "expected modal children rendered; got: {}",
-            html
-        );
+        assert!(html.contains("Hello"));
     }
 
     #[test]
@@ -558,13 +560,9 @@ mod tests {
         }
         .to_html();
 
-        assert!(
-            html.contains("modal-card"),
-            "expected modal-card structure; got: {}",
-            html
-        );
-        assert!(html.contains("Title"), "expected title; got: {}", html);
-        assert!(html.contains("Body"), "expected body; got: {}", html);
+        assert!(html.contains("modal-card"));
+        assert!(html.contains("Title"));
+        assert!(html.contains("Body"));
     }
 }
 
@@ -594,10 +592,6 @@ mod wasm_tests {
         }
         .to_html();
 
-        assert!(
-            html.contains("<dialog") && html.contains(r#"class="modal""#),
-            "expected <dialog class=\"modal\">; got: {}",
-            html
-        );
+        assert!(html.contains("<dialog") && html.contains(r#"class="modal""#));
     }
 }
