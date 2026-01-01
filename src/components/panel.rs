@@ -1,13 +1,9 @@
-use std::rc::Rc;
-
 #[allow(unused_imports)]
 use leptos::prelude::Effect;
 use leptos::prelude::{
     Children, ClassAttribute, CustomAttribute, ElementChild, Get, IntoAny, IntoView, Signal,
     component, view,
 };
-#[allow(unused_imports)]
-use std::cell::Cell;
 
 use crate::util::TestAttr;
 
@@ -115,10 +111,6 @@ pub fn PanelBlock(
     /// Make this element highlighted/active.
     #[prop(optional, into)]
     active: Signal<bool>,
-
-    /// Optional click handler for this block.
-    #[prop(optional)]
-    on_click: Option<Rc<dyn Fn()>>,
 
     /// Extra classes to apply to the panel-block element.
     #[prop(optional, into)]
