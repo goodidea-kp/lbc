@@ -174,7 +174,7 @@ fn DialogShell(
                     "[DialogShell:{}] dialog is not open but state says active; forcing state false",
                     id_for_log
                 );
-                set_is_active.call(false);
+                set_is_active(false);
             }
         }
     });
@@ -256,14 +256,14 @@ fn DialogShell(
                     crate::lbc_debug_log!("[DialogShell:{}] cancel (Escape) -> close", id_for_cancel);
                     ev.prevent_default();
                     close_dialog(&dialog_ref_for_cancel);
-                    set_is_active_for_cancel.call(false);
+                    set_is_active_for_cancel(false);
                     if let Some(controller) = controller_for_cancel.as_ref() {
                         controller.close(&id_for_controller_cancel);
                     }
                 }
                 on:close=move |_ev: web_sys::Event| {
                     crate::lbc_debug_log!("[DialogShell:{}] close event -> state false", id_for_close);
-                    set_is_active.call(false);
+                    set_is_active(false);
 
                     if let Some(controller) = controller_for_close.as_ref() {
                         controller.close(&id_for_controller_close);
@@ -329,7 +329,7 @@ pub fn Modal(
                 id_clone,
                 should_be_open
             );
-            set_local_open.call(should_be_open);
+            set_local_open(should_be_open);
         });
     }
 
@@ -350,7 +350,7 @@ pub fn Modal(
                     return;
                 }
             }
-            set_local_open.call(false);
+            set_local_open(false);
             if let Some(controller) = controller.as_ref() {
                 controller.close(&id);
             }
@@ -372,7 +372,7 @@ pub fn Modal(
                 dialog_ref=dialog_ref
             >
                 // Backdrop click should close reliably.
-                <div class="modal-background" on:click=move |_ev: web_sys::MouseEvent| bg_close.call(())></div>
+                <div class="modal-background" on:click=move |_ev: web_sys::MouseEvent| bg_close(())></div>
 
                 <div class="modal-content">
                     {children()}
@@ -382,7 +382,7 @@ pub fn Modal(
                     class="modal-close is-large"
                     aria_labelledby-label="close"
                     type="button"
-                    on:click=move |_ev: web_sys::MouseEvent| close_btn_close.call(())
+                    on:click=move |_ev: web_sys::MouseEvent| close_btn_close(())
                 ></button>
             </DialogShell>
         </>
@@ -442,7 +442,7 @@ pub fn ModalCard(
                 id_clone,
                 should_be_open
             );
-            set_local_open.call(should_be_open);
+            set_local_open(should_be_open);
         });
     }
 
@@ -463,7 +463,7 @@ pub fn ModalCard(
                     return;
                 }
             }
-            set_local_open.call(false);
+            set_local_open(false);
             if let Some(controller) = controller.as_ref() {
                 controller.close(&id);
             }
@@ -485,7 +485,7 @@ pub fn ModalCard(
                 set_is_active=set_local_open.clone()
                 dialog_ref=dialog_ref
             >
-                <div class="modal-background" on:click=move |_ev: web_sys::MouseEvent| bg_close.call(())></div>
+                <div class="modal-background" on:click=move |_ev: web_sys::MouseEvent| bg_close(())></div>
 
                 <div class="modal-card">
                     <header class="modal-card-head">
@@ -494,7 +494,7 @@ pub fn ModalCard(
                             class="delete"
                             aria_labelledby-label="close"
                             type="button"
-                            on:click=move |_ev: web_sys::MouseEvent| delete_btn_close.call(())
+                            on:click=move |_ev: web_sys::MouseEvent| delete_btn_close(())
                         ></button>
                     </header>
 
@@ -511,7 +511,7 @@ pub fn ModalCard(
                     class="modal-close is-large"
                     aria_labelledby-label="close"
                     type="button"
-                    on:click=move |_ev: web_sys::MouseEvent| close_btn_close.call(())
+                    on:click=move |_ev: web_sys::MouseEvent| close_btn_close(())
                 ></button>
             </DialogShell>
         </>
