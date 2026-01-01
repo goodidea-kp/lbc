@@ -3,13 +3,15 @@ use leptos::callback::Callback;
 use leptos::children::Children;
 use leptos::prelude::{
     Callable, ClassAttribute, CustomAttribute, ElementChild, Get, GetUntracked, IntoView,
-    OnAttribute, Signal, StyleAttribute, component, view,
+    NodeRefAttribute, OnAttribute, Signal, StyleAttribute, component, view,
 };
 
 #[cfg(target_arch = "wasm32")]
 use leptos::wasm_bindgen::JsCast;
 #[cfg(target_arch = "wasm32")]
 use leptos::wasm_bindgen::JsValue;
+#[cfg(target_arch = "wasm32")]
+use leptos::wasm_bindgen::closure::Closure;
 #[cfg(target_arch = "wasm32")]
 use leptos::web_sys;
 
