@@ -5,11 +5,7 @@ use leptos::prelude::{
     AriaAttributes, Callable, Children, ClassAttribute, CustomAttribute, ElementChild, Get,
     GlobalAttributes, IntoView, OnAttribute, Signal, component, view,
 };
-#[allow(unused_imports)]
-use std::cell::Cell;
-#[allow(unused_imports)]
-use std::rc::Rc;
-
+use leptos::web_sys;
 use crate::util::{Size, TestAttr};
 
 fn size_class(size: Size) -> &'static str {
