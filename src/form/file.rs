@@ -5,6 +5,10 @@ use leptos::prelude::{
     Callable, ClassAttribute, CustomAttribute, ElementChild, GetUntracked, IntoAny, IntoView,
     OnAttribute, Signal, component, view,
 };
+#[allow(unused_imports)]
+use std::cell::Cell;
+#[allow(unused_imports)]
+use std::rc::Rc;
 
 #[cfg(target_arch = "wasm32")]
 type LbcSysFile = ();
@@ -117,36 +121,17 @@ pub fn File(
         _ => (None, None),
     };
 
-    // NOTE: LbcSysFile is currently `()` in both wasm32 and non-wasm builds in this codebase.
-    // We still wire the change handler so the controlled pattern works and can be upgraded later
-    // when a real file type is introduced.
+    // NOTE:
+    // This crate currently aliases `LbcSysFile` to `()` for both wasm32 and non-wasm builds.
+    // Also, `HtmlInputElement::files()` requires enabling specific `web-sys` features; without
+    // them the method does not exist and the build fails.
+    //
+    // Until a real cross-platform file type is introduced (and web-sys features are enabled),
+    // we simply notify the parent that a change occurred with an empty Vec.
     let on_change = {
         let update = _update.clone();
         move |_ev: leptos::web_sys::Event| {
-            #[cfg(target_arch = "wasm32")]
-            {
-                // We can read the FileList length, but we don't have a stable cross-platform file type
-                // in this crate yet (LbcSysFile is `()`), so we pass a Vec<()> of the same length.
-                use leptos::wasm_bindgen::JsCast;
-                let target = _ev
-                    .target()
-                    .and_then(|t| t.dyn_into::<leptos::web_sys::HtmlInputElement>().ok());
-
-                let mut out: Vec<LbcSysFile> = Vec::new();
-                if let Some(input) = target {
-                    if let Some(files) = input.files() {
-                        let len = files.length() as usize;
-                        out = vec![(); len];
-                    }
-                }
-                update.run(out);
-            }
-
-            #[cfg(not(target_arch = "wasm32"))]
-            {
-                // No DOM / File API available; just notify with empty selection.
-                update.run(Vec::new());
-            }
+            update.run(Vec::<LbcSysFile>::new());
         }
     };
 
