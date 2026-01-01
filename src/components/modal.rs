@@ -68,11 +68,25 @@ fn base_class(extra: &str) -> String {
     }
 }
 
+/// Try to focus a preferred element inside the dialog for accessibility:
+/// - first element with `[data-lbc-dialog-focus]`
+/// - otherwise focus the dialog itself
+fn focus_dialog(dialog: &web_sys::HtmlDialogElement) {
+    if let Ok(Some(el)) = dialog.query_selector("[data-lbc-dialog-focus]") {
+        if let Ok(html) = el.dyn_into::<web_sys::HtmlElement>() {
+            let _ = html.focus();
+            return;
+        }
+    }
+    let _ = dialog.focus();
+}
+
 /// Shared dialog behavior:
 /// - sync `is_active` <-> `<dialog>` open state using showModal()/close()
 /// - close on backdrop click
 /// - close on Escape (cancel)
 /// - close on close event
+/// - focus management on open (WCAG H102-friendly)
 #[component]
 fn DialogShell(
     id: String,
@@ -124,6 +138,8 @@ fn DialogShell(
                         );
                     }
                 }
+                // Ensure focus is moved into the dialog (WCAG H102).
+                focus_dialog(&dialog);
             } else if dialog.open() {
                 crate::lbc_debug_log!("[DialogShell:{}] calling close()", id_for_log);
                 dialog.close();
@@ -234,42 +250,6 @@ pub fn Modal(
         });
     }
 
-    // NodeRef so we can call showModal() directly in the click handler (user gesture).
-    let dialog_ref: NodeRef<leptos::html::Dialog> = NodeRef::new();
-
-    let open_action: Arc<dyn Fn() + Send + Sync> = {
-        let id = id.clone();
-        let controller = controller.clone();
-        let set_local_open = set_local_open.clone();
-        let dialog_ref = dialog_ref.clone();
-        Arc::new(move || {
-            crate::lbc_debug_log!("[Modal:{}] open_action()", id);
-
-            // Try to open immediately (user gesture) if dialog is mounted.
-            if let Some(dialog_el) = dialog_ref.get_untracked() {
-                let dialog: web_sys::HtmlDialogElement = dialog_el.unchecked_into();
-                if !dialog.open() {
-                    crate::lbc_debug_log!("[Modal:{}] open_action: direct showModal()", id);
-                    let _ = dialog.show_modal();
-                }
-            } else {
-                crate::lbc_debug_log!("[Modal:{}] open_action: dialog_ref not available yet", id);
-            }
-
-            if !is_controlled {
-                if let Some(controller) = controller.as_ref() {
-                    controller.open(id.clone());
-                    return;
-                }
-            }
-
-            (set_local_open)(true);
-            if let Some(controller) = controller.as_ref() {
-                controller.open(id.clone());
-            }
-        })
-    };
-
     let close_action: Arc<dyn Fn() + Send + Sync> = {
         let id = id.clone();
         let controller = controller.clone();
@@ -289,13 +269,18 @@ pub fn Modal(
         })
     };
 
-    let trigger_open = open_action.clone();
+    let dialog_ref: NodeRef<leptos::html::Dialog> = NodeRef::new();
+
     let bg_close = close_action.clone();
     let close_btn_close = close_action.clone();
 
     view! {
         <>
-            <div on:click=move |_| (trigger_open)()>{trigger()}</div>
+            // IMPORTANT:
+            // Do NOT wrap the trigger in an extra clickable <div>.
+            // The trigger itself should handle opening (e.g., via ModalControllerContext),
+            // otherwise we end up with double click handlers and confusing behavior.
+            {trigger()}
 
             <DialogShell
                 id=id
@@ -307,6 +292,9 @@ pub fn Modal(
                 <div class="modal-background" on:click=move |_ev: web_sys::MouseEvent| (bg_close)()></div>
 
                 <div class="modal-content">
+                    // Optional focus target pattern (WCAG H102):
+                    // If the consumer wants a specific element focused, they can add
+                    // `data-lbc-dialog-focus` + `tabindex="-1"` to it.
                     {children()}
                 </div>
 
@@ -378,43 +366,6 @@ pub fn ModalCard(
         });
     }
 
-    let dialog_ref: NodeRef<leptos::html::Dialog> = NodeRef::new();
-
-    let open_action: Arc<dyn Fn() + Send + Sync> = {
-        let id = id.clone();
-        let controller = controller.clone();
-        let set_local_open = set_local_open.clone();
-        let dialog_ref = dialog_ref.clone();
-        Arc::new(move || {
-            crate::lbc_debug_log!("[ModalCard:{}] open_action()", id);
-
-            if let Some(dialog_el) = dialog_ref.get_untracked() {
-                let dialog: web_sys::HtmlDialogElement = dialog_el.unchecked_into();
-                if !dialog.open() {
-                    crate::lbc_debug_log!("[ModalCard:{}] open_action: direct showModal()", id);
-                    let _ = dialog.show_modal();
-                }
-            } else {
-                crate::lbc_debug_log!(
-                    "[ModalCard:{}] open_action: dialog_ref not available yet",
-                    id
-                );
-            }
-
-            if !is_controlled {
-                if let Some(controller) = controller.as_ref() {
-                    controller.open(id.clone());
-                    return;
-                }
-            }
-
-            (set_local_open)(true);
-            if let Some(controller) = controller.as_ref() {
-                controller.open(id.clone());
-            }
-        })
-    };
-
     let close_action: Arc<dyn Fn() + Send + Sync> = {
         let id = id.clone();
         let controller = controller.clone();
@@ -434,14 +385,15 @@ pub fn ModalCard(
         })
     };
 
-    let trigger_open = open_action.clone();
+    let dialog_ref: NodeRef<leptos::html::Dialog> = NodeRef::new();
+
     let bg_close = close_action.clone();
     let delete_btn_close = close_action.clone();
     let close_btn_close = close_action.clone();
 
     view! {
         <>
-            <div on:click=move |_| (trigger_open)()>{trigger()}</div>
+            {trigger()}
 
             <DialogShell
                 id=id
@@ -454,7 +406,8 @@ pub fn ModalCard(
 
                 <div class="modal-card">
                     <header class="modal-card-head">
-                        <p class="modal-card-title">{title.clone()}</p>
+                        // Focus target (WCAG H102-style): focus the title when opened.
+                        <p class="modal-card-title" tabindex="-1" data-lbc-dialog-focus="true">{title.clone()}</p>
                         <button
                             class="delete"
                             aria_labelledby-label="close"
