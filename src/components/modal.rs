@@ -28,7 +28,6 @@ impl ModalController {
     ///
     /// IMPORTANT: this must be a *reactive* read so Effects that call it re-run when the set changes.
     pub fn is_open(&self, id: &str) -> bool {
-        // `get()` subscribes reactively; `with()` may not, depending on the reactive graph setup.
         let set = self.open_ids.get();
         set.contains(id)
     }
@@ -36,7 +35,7 @@ impl ModalController {
     /// Open a modal by id.
     pub fn open(&self, id: impl Into<String>) {
         let id = id.into();
-        crate::lbc_log!("[ModalController] open({})", id);
+        crate::lbc_debug_log!("[ModalController] open({})", id);
         self.open_ids.update(|set: &mut HashSet<String>| {
             set.insert(id);
         });
@@ -45,7 +44,7 @@ impl ModalController {
     /// Close a modal by id.
     pub fn close(&self, id: impl AsRef<str>) {
         let id = id.as_ref();
-        crate::lbc_log!("[ModalController] close({})", id);
+        crate::lbc_debug_log!("[ModalController] close({})", id);
         self.open_ids.update(|set: &mut HashSet<String>| {
             set.remove(id);
         });
@@ -53,7 +52,7 @@ impl ModalController {
 
     /// Close all modals.
     pub fn close_all(&self) {
-        crate::lbc_log!("[ModalController] close_all()");
+        crate::lbc_debug_log!("[ModalController] close_all()");
         self.open_ids.set(HashSet::new());
     }
 }
@@ -81,6 +80,9 @@ fn DialogShell(
     classes: Signal<String>,
     is_active: Signal<bool>,
     set_is_active: Arc<dyn Fn(bool) + Send + Sync>,
+    /// Optional hook to expose the dialog NodeRef to the parent (for direct showModal on click).
+    #[prop(optional)]
+    dialog_ref_out: Option<leptos::prelude::RwSignal<Option<web_sys::HtmlDialogElement>>>,
     children: Children,
 ) -> impl IntoView {
     let class = {
@@ -90,6 +92,22 @@ fn DialogShell(
 
     let dialog_ref: NodeRef<leptos::html::Dialog> = NodeRef::new();
 
+    // Expose the dialog element to the parent if requested.
+    if let Some(out) = dialog_ref_out.clone() {
+        Effect::new({
+            let out = out.clone();
+            let id_for_log = id.clone();
+            move |_| {
+                let Some(dialog_el) = dialog_ref.get() else {
+                    return;
+                };
+                let dialog: web_sys::HtmlDialogElement = dialog_el.unchecked_into();
+                crate::lbc_debug_log!("[DialogShell:{}] mounted; exporting dialog ref", id_for_log);
+                out.set(Some(dialog));
+            }
+        });
+    }
+
     // Keep the actual <dialog> open/closed in sync with is_active (client-side).
     Effect::new({
         let dialog_ref = dialog_ref.clone();
@@ -97,37 +115,36 @@ fn DialogShell(
         let id_for_log = id.clone();
         move |_| {
             let active = is_active.get();
-            crate::lbc_log!("[DialogShell:{}] effect: is_active={}", id_for_log, active);
+            crate::lbc_debug_log!("[DialogShell:{}] effect: is_active={}", id_for_log, active);
 
             let Some(dialog_el) = dialog_ref.get() else {
-                crate::lbc_log!("[DialogShell:{}] effect: dialog_ref not mounted yet", id_for_log);
+                crate::lbc_debug_log!("[DialogShell:{}] effect: dialog_ref not mounted yet", id_for_log);
                 return;
             };
 
-            // Cast the underlying DOM element to HtmlDialogElement.
             let dialog: web_sys::HtmlDialogElement = dialog_el.unchecked_into();
 
-            crate::lbc_log!(
+            crate::lbc_debug_log!(
                 "[DialogShell:{}] effect: dialog.open() currently={}",
                 id_for_log,
                 dialog.open()
             );
 
             if active {
-                // Avoid throwing if already open.
                 if !dialog.open() {
-                    crate::lbc_log!("[DialogShell:{}] calling showModal()", id_for_log);
-                    let _ = dialog.show_modal();
+                    crate::lbc_debug_log!("[DialogShell:{}] calling showModal()", id_for_log);
+                    let res = dialog.show_modal();
+                    if res.is_err() {
+                        crate::lbc_debug_log!("[DialogShell:{}] showModal() returned Err", id_for_log);
+                    }
                 }
             } else if dialog.open() {
-                crate::lbc_log!("[DialogShell:{}] calling close()", id_for_log);
+                crate::lbc_debug_log!("[DialogShell:{}] calling close()", id_for_log);
                 dialog.close();
             }
 
-            // If the dialog was closed by the browser (rare here), keep state consistent.
-            // (This is mostly defensive; on:close also handles it.)
             if !dialog.open() && active {
-                crate::lbc_log!(
+                crate::lbc_debug_log!(
                     "[DialogShell:{}] dialog is not open but state says active; forcing state false",
                     id_for_log
                 );
@@ -136,7 +153,6 @@ fn DialogShell(
         }
     });
 
-    // Clone the Arc for each handler to avoid move errors.
     let on_click_setter = set_is_active.clone();
     let on_cancel_setter = set_is_active.clone();
     let on_close_setter = set_is_active.clone();
@@ -150,26 +166,23 @@ fn DialogShell(
             node_ref=dialog_ref
             id=id
             class=move || class()
-            // Backdrop click: if the click target is the <dialog> itself, user clicked outside content.
             on:click=move |ev: web_sys::MouseEvent| {
                 if let Some(target) = ev.target() {
                     if let Ok(el) = target.dyn_into::<web_sys::Element>() {
                         if el.tag_name().to_ascii_lowercase() == "dialog" {
-                            crate::lbc_log!("[DialogShell:{}] backdrop click -> close", id_for_click);
+                            crate::lbc_debug_log!("[DialogShell:{}] backdrop click -> close", id_for_click);
                             (on_click_setter)(false);
                         }
                     }
                 }
             }
-            // Escape key: close on cancel.
             on:cancel=move |ev: web_sys::Event| {
-                crate::lbc_log!("[DialogShell:{}] cancel (Escape) -> close", id_for_cancel);
+                crate::lbc_debug_log!("[DialogShell:{}] cancel (Escape) -> close", id_for_cancel);
                 ev.prevent_default();
                 (on_cancel_setter)(false);
             }
-            // If something else closes the dialog, sync state.
             on:close=move |_ev: web_sys::Event| {
-                crate::lbc_log!("[DialogShell:{}] close event -> state false", id_for_close);
+                crate::lbc_debug_log!("[DialogShell:{}] close event -> state false", id_for_close);
                 (on_close_setter)(false);
             }
         >
@@ -178,46 +191,19 @@ fn DialogShell(
     }
 }
 
-/// A classic modal overlay implemented with `<dialog>` (modern browsers).
-///
-/// Content is placed inside the "modal-content" div.
-///
-/// Notes:
-/// - SSR renders the dialog closed (no `open` attribute).
-/// - On the client, we call `showModal()` / `close()` to control visibility.
-/// - Click outside closes (backdrop click).
-/// - Escape closes (via `cancel` event).
-/// - External open/close is supported via `ModalController` context.
-/// - Can be controlled via `open`/`set_open` props; otherwise uses internal state.
-///
-/// https://bulma.io/documentation/components/modal/
-///
 #[component]
 pub fn Modal(
-    /// A unique ID for this modal (used by ModalController).
     id: String,
-
-    /// Modal body content rendered inside "modal-content".
     children: Children,
-
-    /// Trigger content; clicking it opens the modal.
     trigger: Children,
-
-    /// Extra classes for the modal root.
     #[prop(optional, into)]
     classes: Signal<String>,
-
-    /// Controlled open state. If provided together with `set_open`, the modal becomes controlled.
     #[prop(optional, into)]
     open: Option<Signal<bool>>,
-
-    /// Controlled setter. If provided together with `open`, the modal becomes controlled.
     #[prop(optional)]
     set_open: Option<WriteSignal<bool>>,
 ) -> impl IntoView {
-    // Internal state (used when not controlled).
     let (internal_open, set_internal_open) = leptos::prelude::signal(false);
-
     let is_controlled = open.is_some() && set_open.is_some();
 
     let is_active: Signal<bool> = if let Some(open) = open {
@@ -233,7 +219,7 @@ pub fn Modal(
         let set_open = set_open;
         let id_for_log = id.clone();
         Arc::new(move |v: bool| {
-            crate::lbc_log!("[Modal:{}] set_local_open({})", id_for_log, v);
+            crate::lbc_debug_log!("[Modal:{}] set_local_open({})", id_for_log, v);
             if is_controlled {
                 if let Some(set_open) = set_open {
                     set_open.set(v);
@@ -245,7 +231,6 @@ pub fn Modal(
     };
 
     // If a controller exists and we're uncontrolled, the controller is the source of truth.
-    // Sync local state from controller.
     if let Some(controller) = controller.clone() {
         let id_clone = id.clone();
         let set_local_open = set_local_open.clone();
@@ -254,7 +239,7 @@ pub fn Modal(
                 return;
             }
             let should_be_open = controller.is_open(&id_clone);
-            crate::lbc_log!(
+            crate::lbc_debug_log!(
                 "[Modal:{}] controller sync effect: should_be_open={}",
                 id_clone,
                 should_be_open
@@ -263,21 +248,35 @@ pub fn Modal(
         });
     }
 
-    // Event handlers:
-    // - If uncontrolled + controller: operate on controller only.
-    // - Otherwise: operate on local state (and optionally mirror to controller).
+    // Capture dialog element so we can call showModal() directly in the click handler (user gesture).
+    let dialog_el: leptos::prelude::RwSignal<Option<web_sys::HtmlDialogElement>> =
+        leptos::prelude::RwSignal::new(None);
+
     let open_action: Arc<dyn Fn() + Send + Sync> = {
         let id = id.clone();
         let controller = controller.clone();
         let set_local_open = set_local_open.clone();
+        let dialog_el = dialog_el.clone();
         Arc::new(move || {
-            crate::lbc_log!("[Modal:{}] open_action()", id);
+            crate::lbc_debug_log!("[Modal:{}] open_action()", id);
+
+            // Try to open immediately (user gesture) if dialog is mounted.
+            if let Some(d) = dialog_el.get_untracked() {
+                if !d.open() {
+                    crate::lbc_debug_log!("[Modal:{}] open_action: direct showModal()", id);
+                    let _ = d.show_modal();
+                }
+            } else {
+                crate::lbc_debug_log!("[Modal:{}] open_action: dialog_el not available yet", id);
+            }
+
             if !is_controlled {
                 if let Some(controller) = controller.as_ref() {
                     controller.open(id.clone());
                     return;
                 }
             }
+
             (set_local_open)(true);
             if let Some(controller) = controller.as_ref() {
                 controller.open(id.clone());
@@ -290,7 +289,7 @@ pub fn Modal(
         let controller = controller.clone();
         let set_local_open = set_local_open.clone();
         Arc::new(move || {
-            crate::lbc_log!("[Modal:{}] close_action()", id);
+            crate::lbc_debug_log!("[Modal:{}] close_action()", id);
             if !is_controlled {
                 if let Some(controller) = controller.as_ref() {
                     controller.close(&id);
@@ -304,7 +303,6 @@ pub fn Modal(
         })
     };
 
-    // Clone for each closure to avoid move errors.
     let trigger_open = open_action.clone();
     let bg_close = close_action.clone();
     let close_btn_close = close_action.clone();
@@ -318,6 +316,7 @@ pub fn Modal(
                 classes=classes
                 is_active=is_active
                 set_is_active=set_local_open.clone()
+                dialog_ref_out=dialog_el
             >
                 <div class="modal-background" on:click=move |_ev: web_sys::MouseEvent| (bg_close)()></div>
 
@@ -336,48 +335,21 @@ pub fn Modal(
     }
 }
 
-/// A modal with header, body and footer sections ("modal-card" variant), implemented with `<dialog>`.
-///
-/// Notes:
-/// - SSR renders the dialog closed (no `open` attribute).
-/// - Click outside closes.
-/// - Escape closes.
-/// - External open/close is supported via `ModalController` context.
-/// - Can be controlled via `open`/`set_open` props; otherwise uses internal state.
-///
-/// https://bulma.io/documentation/components/modal/
-///
 #[component]
 pub fn ModalCard(
-    /// A unique ID for this modal (used by ModalController).
     id: String,
-
-    /// Title text shown in the modal-card header.
     title: String,
-
-    /// Content placed in the modal-card body.
     body: Children,
-
-    /// Content placed into the modal-card footer.
     footer: Children,
-
-    /// Trigger content; clicking it opens the modal.
     trigger: Children,
-
-    /// Extra classes for the modal root.
     #[prop(optional, into)]
     classes: Signal<String>,
-
-    /// Controlled open state. If provided together with `set_open`, the modal becomes controlled.
     #[prop(optional, into)]
     open: Option<Signal<bool>>,
-
-    /// Controlled setter. If provided together with `open`, the modal becomes controlled.
     #[prop(optional)]
     set_open: Option<WriteSignal<bool>>,
 ) -> impl IntoView {
     let (internal_open, set_internal_open) = leptos::prelude::signal(false);
-
     let is_controlled = open.is_some() && set_open.is_some();
 
     let is_active: Signal<bool> = if let Some(open) = open {
@@ -388,12 +360,11 @@ pub fn ModalCard(
 
     let controller = leptos::prelude::use_context::<ModalControllerContext>();
 
-    // Local-only setter: updates controlled prop or internal signal, but does NOT touch controller.
     let set_local_open: Arc<dyn Fn(bool) + Send + Sync> = {
         let set_open = set_open;
         let id_for_log = id.clone();
         Arc::new(move |v: bool| {
-            crate::lbc_log!("[ModalCard:{}] set_local_open({})", id_for_log, v);
+            crate::lbc_debug_log!("[ModalCard:{}] set_local_open({})", id_for_log, v);
             if is_controlled {
                 if let Some(set_open) = set_open {
                     set_open.set(v);
@@ -412,7 +383,7 @@ pub fn ModalCard(
                 return;
             }
             let should_be_open = controller.is_open(&id_clone);
-            crate::lbc_log!(
+            crate::lbc_debug_log!(
                 "[ModalCard:{}] controller sync effect: should_be_open={}",
                 id_clone,
                 should_be_open
@@ -421,18 +392,33 @@ pub fn ModalCard(
         });
     }
 
+    let dialog_el: leptos::prelude::RwSignal<Option<web_sys::HtmlDialogElement>> =
+        leptos::prelude::RwSignal::new(None);
+
     let open_action: Arc<dyn Fn() + Send + Sync> = {
         let id = id.clone();
         let controller = controller.clone();
         let set_local_open = set_local_open.clone();
+        let dialog_el = dialog_el.clone();
         Arc::new(move || {
-            crate::lbc_log!("[ModalCard:{}] open_action()", id);
+            crate::lbc_debug_log!("[ModalCard:{}] open_action()", id);
+
+            if let Some(d) = dialog_el.get_untracked() {
+                if !d.open() {
+                    crate::lbc_debug_log!("[ModalCard:{}] open_action: direct showModal()", id);
+                    let _ = d.show_modal();
+                }
+            } else {
+                crate::lbc_debug_log!("[ModalCard:{}] open_action: dialog_el not available yet", id);
+            }
+
             if !is_controlled {
                 if let Some(controller) = controller.as_ref() {
                     controller.open(id.clone());
                     return;
                 }
             }
+
             (set_local_open)(true);
             if let Some(controller) = controller.as_ref() {
                 controller.open(id.clone());
@@ -445,7 +431,7 @@ pub fn ModalCard(
         let controller = controller.clone();
         let set_local_open = set_local_open.clone();
         Arc::new(move || {
-            crate::lbc_log!("[ModalCard:{}] close_action()", id);
+            crate::lbc_debug_log!("[ModalCard:{}] close_action()", id);
             if !is_controlled {
                 if let Some(controller) = controller.as_ref() {
                     controller.close(&id);
@@ -459,7 +445,6 @@ pub fn ModalCard(
         })
     };
 
-    // Clone for each closure to avoid move errors.
     let trigger_open = open_action.clone();
     let bg_close = close_action.clone();
     let delete_btn_close = close_action.clone();
@@ -474,6 +459,7 @@ pub fn ModalCard(
                 classes=classes
                 is_active=is_active
                 set_is_active=set_local_open.clone()
+                dialog_ref_out=dialog_el
             >
                 <div class="modal-background" on:click=move |_ev: web_sys::MouseEvent| (bg_close)()></div>
 
@@ -508,16 +494,10 @@ pub fn ModalCard(
     }
 }
 
-/// Provide a `ModalController` to descendants.
-///
-/// Descendants can call `use_context::<ModalControllerContext>()` and then:
-/// - `controller.open("my-modal")`
-/// - `controller.close("my-modal")`
-/// - `controller.close_all()`
 #[component]
 pub fn ModalControllerProvider(children: Children) -> impl IntoView {
     let controller = ModalController::new();
-    crate::lbc_log!("[ModalControllerProvider] providing ModalControllerContext");
+    crate::lbc_debug_log!("[ModalControllerProvider] providing ModalControllerContext");
     leptos::prelude::provide_context::<ModalControllerContext>(controller);
     view! { {children()} }
 }

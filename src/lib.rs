@@ -1,3 +1,4 @@
+#![allow(clippy::needless_doctest_main)]
 //! LBC: Leptos + Bulma Components
 //!
 //! This crate provides a collection of Leptos components that render
@@ -26,6 +27,27 @@ macro_rules! lbc_log {
 #[macro_export]
 macro_rules! lbc_log {
     ($($t:tt)*) => {{ /* logging disabled */ }};
+}
+
+/// Debug logging that works without any crate features.
+///
+/// - On wasm32: logs to the browser console.
+/// - On non-wasm: logs to stderr.
+///
+/// This is intentionally always enabled so debugging UI issues in `trunk serve`
+/// doesn't require feature flags.
+#[macro_export]
+macro_rules! lbc_debug_log {
+    ($($t:tt)*) => {{
+        #[cfg(target_arch = "wasm32")]
+        {
+            ::leptos::web_sys::console::log_1(&::wasm_bindgen::JsValue::from_str(&format!($($t)*)));
+        }
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            eprintln!($($t)*);
+        }
+    }};
 }
 
 pub mod prelude {

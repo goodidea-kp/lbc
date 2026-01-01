@@ -11,8 +11,6 @@ use leptos::prelude::{
 #[component]
 #[allow(non_snake_case)]
 pub fn ModalPage() -> impl IntoView {
-    // Provide the controller context locally for this page so it doesn't depend on
-    // the catalog app root being wrapped in <ModalControllerProvider>.
     view! {
         <ModalControllerProvider>
             <ModalPageInner />
@@ -27,6 +25,8 @@ fn ModalPageInner() -> impl IntoView {
         "ModalControllerContext not found. This should be provided by <ModalControllerProvider>.",
     );
 
+    lbc::lbc_debug_log!("[ModalPage] ModalControllerContext acquired");
+
     #[allow(unused)]
     let (show_toast, set_show_toast) = signal(false);
 
@@ -36,7 +36,10 @@ fn ModalPageInner() -> impl IntoView {
             view! {
                 <Button
                     color=lbc::elements::button::ButtonColor::Primary
-                    on_click=Callback::new(move |_| controller.open("id2"))
+                    on_click=Callback::new(move |_| {
+                        lbc::lbc_debug_log!("[ModalPage] trigger2 clicked -> controller.open(id2)");
+                        controller.open("id2");
+                    })
                 >
                     "Open Modal"
                 </Button>
@@ -51,7 +54,10 @@ fn ModalPageInner() -> impl IntoView {
             view! {
                 <Button
                     color=lbc::elements::button::ButtonColor::Link
-                    on_click=Callback::new(move |_| controller.open("id1"))
+                    on_click=Callback::new(move |_| {
+                        lbc::lbc_debug_log!("[ModalPage] trigger1 clicked -> controller.open(id1)");
+                        controller.open("id1");
+                    })
                 >
                     "Open Modal Card"
                 </Button>
@@ -100,6 +106,7 @@ fn ModalPageInner() -> impl IntoView {
                                         classes="is-success"
                                         on_click={
                                             Callback::new(move |_| {
+                                                lbc::lbc_debug_log!("[ModalPage] save clicked -> close id1 + toast");
                                                 set_show_toast.set(true);
                                                 controller_save.close("id1");
                                             })
@@ -110,7 +117,10 @@ fn ModalPageInner() -> impl IntoView {
 
                                     <lbc::prelude::Button
                                         classes="is-warning"
-                                        on_click=Callback::new(move |_| controller_cancel.close("id1"))
+                                        on_click=Callback::new(move |_| {
+                                            lbc::lbc_debug_log!("[ModalPage] cancel clicked -> close id1");
+                                            controller_cancel.close("id1")
+                                        })
                                     >
                                         "Cancel"
                                     </lbc::prelude::Button>
