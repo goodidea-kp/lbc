@@ -229,7 +229,7 @@ pub fn Notification(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use leptos::prelude::RenderHtml;
+    use leptos::prelude::{RenderHtml, Set};
 
     #[test]
     fn notification_renders_children() {
