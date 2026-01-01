@@ -187,17 +187,28 @@ fn DialogShell(
         <>
             <style>
                 r#"
-                /* Neutralize native <dialog> chrome so Bulma's inner markup controls appearance. */
+                /* Make <dialog class="modal"> behave like Bulma's full-screen modal container. */
                 dialog.modal {
+                    position: fixed !important;
+                    inset: 0 !important;
+                    width: 100vw !important;
+                    height: 100vh !important;
+
+                    /* Center the inner Bulma modal content/card. */
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+
+                    /* Neutralize native <dialog> chrome so Bulma's inner markup controls appearance. */
                     border: 0 !important;
                     outline: 0 !important;
                     box-shadow: none !important;
-                    padding: 0;
-                    margin: 0;
-                    background: transparent;
-                    color: inherit;
-                    max-width: none;
-                    max-height: none;
+                    padding: 0 !important;
+                    margin: 0 !important;
+                    background: transparent !important;
+                    color: inherit !important;
+                    max-width: none !important;
+                    max-height: none !important;
 
                     /* Some browsers apply native styling via appearance. */
                     -webkit-appearance: none;
@@ -210,7 +221,7 @@ fn DialogShell(
                     box-shadow: none !important;
                 }
 
-                /* Optional: native backdrop (Bulma also renders .modal-background inside). */
+                /* Native backdrop (Bulma also renders .modal-background inside). */
                 dialog.modal::backdrop {
                     background: rgba(10, 10, 10, 0.86);
                 }
