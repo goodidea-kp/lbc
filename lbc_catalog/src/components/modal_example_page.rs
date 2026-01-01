@@ -4,7 +4,7 @@ use lbc::prelude::{
 };
 use leptos::callback::Callback;
 use leptos::prelude::Set;
-use leptos::prelude::{ElementChild, Get, IntoAny, IntoView, component, signal, view};
+use leptos::prelude::{component, signal, view, ClassAttribute, ElementChild, Get, IntoAny, IntoView};
 
 #[component]
 #[allow(non_snake_case)]
