@@ -1,6 +1,5 @@
-use std::sync::Arc;
-
 use lbc::prelude::{Block, Checkbox, Content, HeaderSize, Subtitle, Title};
+use leptos::callback::Callback;
 use leptos::prelude::*;
 
 /// Example page showcasing the Checkbox form component.
@@ -17,7 +16,7 @@ pub fn FormCheckboxPage() -> impl IntoView {
                 <Checkbox
                     name="terms"
                     checked=is_checked
-                    update=Arc::new(move |next| set_is_checked.set(next))
+                    update=Callback::new(move |next| set_is_checked.set(next))
                     classes="mr-2"
                 >
                     {"I agree to the terms and conditions"}
