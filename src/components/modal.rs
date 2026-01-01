@@ -12,6 +12,9 @@ use wasm_bindgen::JsCast;
 ///
 /// This avoids the "single command slot" problem (commands being overwritten).
 /// Internally it tracks a set of open modal IDs.
+///
+/// NOTE: This controller enforces a "single modal open at a time" policy:
+/// calling `open(id)` will close any other open modals.
 #[derive(Clone)]
 pub struct ModalController {
     open_ids: leptos::prelude::RwSignal<HashSet<String>>,
@@ -33,10 +36,13 @@ impl ModalController {
     }
 
     /// Open a modal by id.
+    ///
+    /// This enforces a single-open-modal policy by clearing any existing open ids.
     pub fn open(&self, id: impl Into<String>) {
         let id = id.into();
         crate::lbc_debug_log!("[ModalController] open({})", id);
         self.open_ids.update(|set: &mut HashSet<String>| {
+            set.clear();
             set.insert(id);
         });
     }
