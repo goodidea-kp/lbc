@@ -97,7 +97,8 @@ fn focus_dialog(dialog: &web_sys::HtmlDialogElement) {
 
 fn close_dialog(dialog_ref: &NodeRef<leptos::html::Dialog>) {
     if let Some(dialog_el) = dialog_ref.get_untracked() {
-        let dialog: web_sys::HtmlDialogElement = dialog_el.unchecked_into::<web_sys::HtmlDialogElement>();
+        let dialog: web_sys::HtmlDialogElement =
+            dialog_el.unchecked_into::<web_sys::HtmlDialogElement>();
         if dialog.open() {
             dialog.close();
         }
@@ -200,8 +201,15 @@ fn DialogShell(
         <>
             <style>
                 r#"
+                /* IMPORTANT:
+                   Only show the dialog overlay when the native dialog is actually open.
+                   This prevents "ghost" overlays when state says closed. */
+                dialog.modal:not([open]) {
+                    display: none !important;
+                }
+
                 /* Make <dialog class="modal"> behave like Bulma's full-screen modal container. */
-                dialog.modal {
+                dialog.modal[open] {
                     position: fixed !important;
                     inset: 0 !important;
                     width: 100vw !important;
