@@ -1,6 +1,6 @@
 [package]
 name = "lbc_catalog"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2024"
 authors = ["Konstantin Pupkov <konstantin.pupkov@fromkos.com>"]
 license = "MIT OR Apache-2.0"
@@ -13,13 +13,13 @@ keywords = ["wasm", "web", "bulma", "leptos", "components"]
 [dependencies]
 console_error_panic_hook = "0.1.7"
 js-sys = "0.3"
-leptos = { version = "0.8.15", features = ["csr"] }
+leptos = { version = "0.8.16", features = ["csr"] }
 leptos_router = "0.8.10"
 lbc = { path = ".." }
 gloo-console = "0.3.0"
 
 [dev-dependencies]
-leptos = { version = "0.8.15", features = ["ssr"] }
+leptos = { version = "0.8.16", features = ["ssr"] }
 
 [[bin]]
 name = "lbc_catalog"
