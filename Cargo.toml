@@ -1,6 +1,6 @@
 [package]
 name = "lbc"
-version = "0.1.17"
+version = "0.1.18"
 edition = "2024"
 description = "A Leptos component library based on the Bulma CSS framework."
 authors = ["Konstantin Pupkov <konstantin.pupkov@fromkos.com>"]
@@ -20,8 +20,8 @@ logging = []
 [dependencies]
 console_error_panic_hook = "0.1.7"
 js-sys = "0.3"
-leptos = { version = "=0.8.16" }
-wasm-bindgen = "=0.2.113"
+leptos = { version = "=0.8.17" }
+wasm-bindgen = "=0.2.114"
 gloo-console = "0.3.0"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
@@ -36,8 +36,8 @@ web-sys = { version = "0.3", features = [
 ] }
 
 [dev-dependencies]
-leptos = { version = "=0.8.16", features = ["ssr"] }
-wasm-bindgen-test = "=0.3.63"
+leptos = { version = "=0.8.17", features = ["ssr"] }
+wasm-bindgen-test = "=0.3.64"
 
 [package.metadata.docs.rs]
 all-features = true
