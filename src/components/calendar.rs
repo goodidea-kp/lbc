@@ -22,13 +22,13 @@ Required static assets
 */
 
 use leptos::html;
+#[cfg(target_arch = "wasm32")]
+use leptos::prelude::Callable;
 use leptos::prelude::Callback;
 use leptos::prelude::{
     ClassAttribute, CustomAttribute, Get, GetUntracked, GlobalAttributes, IntoView, NodeRef,
     NodeRefAttribute, Signal, component, view,
 };
-#[cfg(target_arch = "wasm32")]
-use leptos::prelude::Callable;
 #[cfg(target_arch = "wasm32")]
 use leptos::wasm_bindgen::closure::Closure;
 #[cfg(target_arch = "wasm32")]
