@@ -16,17 +16,19 @@ Programmatic control
 
 Required static assets
 - CSS (add in <head>):
-  https://cdn.jsdelivr.net/npm/bulma-calendar@7.1.1/dist/css/bulma-calendar.min.css
+  https://cdn.jsdelivr.net/npm/bulma-calendar@7.1.2/dist/css/bulma-calendar.min.css
 - JS (load before WASM bootstrap so `bulmaCalendar` exists):
-  https://cdn.jsdelivr.net/npm/bulma-calendar@7.1.1/dist/js/bulma-calendar.min.js
+  https://cdn.jsdelivr.net/npm/bulma-calendar@7.1.2/dist/js/bulma-calendar.min.js
 */
 
 use leptos::html;
 use leptos::prelude::Callback;
 use leptos::prelude::{
-    Callable, ClassAttribute, CustomAttribute, Get, GetUntracked, GlobalAttributes, IntoView,
-    NodeRef, NodeRefAttribute, Signal, component, view,
+    ClassAttribute, CustomAttribute, Get, GetUntracked, GlobalAttributes, IntoView, NodeRef,
+    NodeRefAttribute, Signal, component, view,
 };
+#[cfg(target_arch = "wasm32")]
+use leptos::prelude::Callable;
 #[cfg(target_arch = "wasm32")]
 use leptos::wasm_bindgen::closure::Closure;
 #[cfg(target_arch = "wasm32")]
@@ -70,6 +72,10 @@ pub fn Calendar(
     #[prop(optional, into)]
     test_attr: Option<TestAttr>,
 
+    /// Disable this component.
+    #[prop(optional, into)]
+    disabled: Signal<bool>,
+
     #[prop(optional, into)] calendar_type: Signal<String>,
 ) -> impl IntoView {
     let input_ref: NodeRef<html::Input> = NodeRef::new();
@@ -103,7 +109,9 @@ pub fn Calendar(
     let _time_format_sig = time_format.clone();
     let _id_for_cleanup = id.clone();
     let _id_for_effect = id.clone();
+    let _id_for_disabled_effect = id.clone();
     let _date_sig = date.clone();
+    let _disabled_sig = disabled.clone();
     let _calendar_type_sig = if calendar_type.get().trim().is_empty() {
         Signal::from("datetime")
     } else {
@@ -161,6 +169,7 @@ pub fn Calendar(
                     &JsValue::from(df),
                     &JsValue::from(tf),
                     &JsValue::from(picker_type),
+                    &JsValue::from(disabled.get_untracked()),
                 );
                 cb.forget();
             }
@@ -176,6 +185,17 @@ pub fn Calendar(
                     &JsValue::from(_id_for_effect.as_str()),
                     &JsValue::from(current_date),
                 );
+            }
+        });
+
+        leptos::prelude::Effect::new(move |_| {
+            let is_disabled = _disabled_sig.get();
+            sync_disabled_state(
+                &JsValue::from(_id_for_disabled_effect.as_str()),
+                &JsValue::from(is_disabled),
+            );
+            if is_disabled {
+                hide_date_picker(&JsValue::from(_id_for_disabled_effect.as_str()));
             }
         });
     }
@@ -214,6 +234,7 @@ pub fn Calendar(
             class=move || class()
             type=input_type
             value=initial_value
+            disabled=move || disabled.get()
             node_ref=input_ref
             attr:data-testid=move || data_testid.clone()
             attr:data-cy=move || data_cy.clone()
@@ -225,7 +246,46 @@ pub fn Calendar(
 #[cfg(target_arch = "wasm32")]
 #[leptos::wasm_bindgen::prelude::wasm_bindgen(inline_js = r#"
 let init = new Map();
-export function setup_date_picker(element, callback, initial_date, date_format, time_format, picker_type) {
+function findDummy(element) {
+    if (!element) return null;
+    if (element.closest) {
+        const closestDummy = element.closest('.datetimepicker-dummy');
+        if (closestDummy) return closestDummy;
+    }
+    const siblings = [element.previousElementSibling, element.nextElementSibling];
+    for (const sibling of siblings) {
+        if (sibling && sibling.classList && sibling.classList.contains('datetimepicker-dummy')) {
+            return sibling;
+        }
+    }
+    if (element.parentElement) {
+        return element.parentElement.querySelector('.datetimepicker-dummy');
+    }
+    return null;
+}
+function applyDisabledState(element, isDisabled) {
+    const disabled = Boolean(isDisabled);
+    if (element) {
+        element.disabled = disabled;
+        element.setAttribute('aria-disabled', String(disabled));
+    }
+    const dummy = findDummy(element);
+    if (!dummy) return;
+    dummy.classList.toggle('is-disabled', disabled);
+    dummy.setAttribute('aria-disabled', String(disabled));
+    if (disabled) {
+        dummy.setAttribute('tabindex', '-1');
+        dummy.style.pointerEvents = 'none';
+        dummy.style.opacity = '0.5';
+        dummy.style.cursor = 'not-allowed';
+    } else {
+        dummy.removeAttribute('tabindex');
+        dummy.style.pointerEvents = '';
+        dummy.style.opacity = '';
+        dummy.style.cursor = '';
+    }
+}
+export function setup_date_picker(element, callback, initial_date, date_format, time_format, picker_type, is_disabled) {
     if (!init.has(element.id)) {
         let calendarInstances = bulmaCalendar.attach(element, {
             type: picker_type || (String(time_format || '').trim() ? 'datetime' : 'date'),
@@ -233,7 +293,8 @@ export function setup_date_picker(element, callback, initial_date, date_format, 
             lang: 'en',
             dateFormat: date_format,
             timeFormat: time_format,
-            showTodayButton: false
+            showTodayButton: false,
+            toggleOnInputClick: !Boolean(is_disabled)
         });
         init.set(element.id, calendarInstances[0]);
         let calendarInstance = calendarInstances[0];
@@ -248,6 +309,7 @@ export function setup_date_picker(element, callback, initial_date, date_format, 
             calendarInstance.hide();
         });
     }
+    applyDisabledState(element, is_disabled);
     if (initial_date) {
         init.get(element.id).value(initial_date);
     }
@@ -265,6 +327,16 @@ export function update_value(id, value) {
         init.get(id).value(value);
     }
 }
+export function hide_date_picker(id) {
+    if (init.has(id)) {
+        init.get(id).hide();
+    }
+}
+export function sync_disabled_state(id, is_disabled) {
+    const element = document.getElementById(id);
+    if (!element) return;
+    applyDisabledState(element, is_disabled);
+}
 "#)]
 #[cfg(target_arch = "wasm32")]
 #[allow(improper_ctypes, improper_ctypes_definitions)]
@@ -276,6 +348,7 @@ extern "C" {
         date_format: &JsValue,
         time_format: &JsValue,
         picker_type: &JsValue,
+        is_disabled: &JsValue,
     );
 
     fn detach_date_picker(id: &JsValue);
@@ -283,6 +356,10 @@ extern "C" {
     fn clear_date(id: &JsValue);
 
     fn update_value(id: &JsValue, value: &JsValue);
+
+    fn hide_date_picker(id: &JsValue);
+
+    fn sync_disabled_state(id: &JsValue, is_disabled: &JsValue);
 }
 
 #[cfg(test)]
@@ -361,6 +438,24 @@ mod tests {
         assert!(
             html.contains(r#"type="datetime""#),
             "expected input type=datetime when time_format provided; got: {}",
+            html
+        );
+    }
+
+    #[test]
+    fn calendar_renders_disabled_attribute() {
+        let html = view! {
+            <Calendar
+                id="disabled-calendar".to_string()
+                disabled=true
+                update=noop()
+            />
+        }
+        .to_html();
+
+        assert!(
+            html.contains("disabled"),
+            "expected disabled attribute; got: {}",
             html
         );
     }

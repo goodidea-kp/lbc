@@ -24,6 +24,7 @@ pub fn CalendarPage() -> impl IntoView {
         info!("Selected time: {}", &v);
         set_selected_t.set(v);
     });
+    let (selected_disabled, _set_selected_disabled) = signal("2026-03-09".to_string());
 
     view! {
         <Block>
@@ -68,7 +69,7 @@ pub fn CalendarPage() -> impl IntoView {
                     "Clear Birthday"
                 </Button>
 
-               <Field label="Time)" classes="mt-4">
+                <Field label="Time)" classes="mt-4">
                     <Control>
                         <Calendar
                             id="time".to_string()
@@ -81,6 +82,20 @@ pub fn CalendarPage() -> impl IntoView {
                     </Control>
                 </Field>
                 <p class="help">"Selected (time): " {move || selected_t.get()}</p>
+
+                <Field label="Disabled calendar" classes="mt-4">
+                    <Control>
+                        <Calendar
+                            id="disabled-calendar".to_string()
+                            date_format="yyyy-MM-dd"
+                            date=selected_disabled
+                            disabled=true
+                            classes=""
+                            update=Callback::new(move |_v: String| {})
+                        />
+                    </Control>
+                </Field>
+                <p class="help">"Disabled value: " {move || selected_disabled.get()}</p>
 
                 <Notification classes="is-light mt-3">
                     "Note: bulma-calendar JS and CSS must be loaded. We've added them to index.html for the catalog."
